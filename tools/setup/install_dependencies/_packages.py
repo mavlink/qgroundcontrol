@@ -88,15 +88,10 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "gstreamer1.0-plugins-base",
         "gstreamer1.0-plugins-good",
         "gstreamer1.0-plugins-ugly",
-        "gstreamer1.0-plugins-rtp",
         "gstreamer1.0-gl",
         "gstreamer1.0-libav",
-        "gstreamer1.0-rtsp",
-        "gstreamer1.0-x",
         "libblas3",
         "libopenblas0",
-        "python3-gi",
-        "python3-gst-1.0",
     ],
     "sdl": [
         "libusb-1.0-0-dev",
@@ -111,33 +106,36 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
-    # GStreamer source builds (build_gstreamer.py): the toolchain plus the X11,
-    # Wayland, GL, VA and audio headers its Linux Meson options enable. Excluded from the aggregate
-    # (desktop) set by get_packages.
+    # GStreamer source builds (build_gstreamer.py): the toolchain, and the libraries its Linux Meson
+    # options link, which it takes from the system. Configure fails without any one of them.
+    # Excluded from the aggregate (desktop) set by get_packages.
     "gstreamer_build": [
         "build-essential",
         "pkg-config",
         "git",
+        "flex",
+        "bison",
+        "nasm",
+        "libglib2.0-dev",
         "libx11-dev",
-        "libxext-dev",
-        "libxv-dev",
+        "libx11-xcb-dev",
         "libwayland-dev",
         "wayland-protocols",
         "libegl1-mesa-dev",
         "libgles2-mesa-dev",
         "libgl1-mesa-dev",
         "libdrm-dev",
-        "libgbm-dev",
-        "libasound2-dev",
-        "libpulse-dev",
         "libva-dev",
-        "nasm",
-        "yasm",
+        "libjpeg-dev",
+        "libvpx-dev",
+        "libopenh264-dev",
     ],
     # Cerbero's Android GStreamer builds (build_gstreamer.py --platform android);
-    # Cerbero bootstraps the NDK and target toolchain itself. Excluded from the aggregate set too.
+    # Cerbero bootstraps the NDK and target toolchain itself, and installs more packages with apt
+    # as it does. It does not start without the distro module. Excluded from the aggregate set too.
     "gstreamer_build_android": [
         "python3-venv",
+        "python3-distro",
         "git",
         "autoconf",
         "automake",
@@ -220,8 +218,9 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
 # name, and Debian 12/13 have no libgstreamer-plugins-good1.0-dev.
 OPTIONAL_DEBIAN_PACKAGES: frozenset[str] = frozenset({"libgstreamer-plugins-good1.0-dev"})
 
-# Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. gstreamer ugly/libav come from RPM
-# Fusion; installer uses --skip-unavailable so a missing optional plugin is OK.
+# Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. The gstreamer ugly plugins and the libavcodec
+# with H.264 and H.265 come from RPM Fusion; installer uses --skip-unavailable so a missing
+# optional plugin is OK.
 FEDORA_PACKAGES: dict[str, list[str]] = {
     "core": [
         "dnf-plugins-core",
@@ -290,10 +289,10 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "gstreamer1-plugins-bad-free",
         "gstreamer1-plugins-ugly",
         "gstreamer1-libav",
+        # RPM Fusion: Fedora's own libavcodec has no H.264 or H.265 decoder for the libav plugin.
+        "libavcodec-freeworld",
         "blas",
         "openblas",
-        "python3-gobject",
-        "python3-gstreamer1",
     ],
     "sdl": [
         "libusb1-devel",
@@ -368,8 +367,6 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "gst-libav",
         "gst-rtsp-server",
         "openblas",
-        "python-gobject",
-        "gst-python",
     ],
     "sdl": [
         "libusb",

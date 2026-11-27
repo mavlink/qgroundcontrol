@@ -84,6 +84,17 @@ QImage VideoScreenshot::displayedImage(const QVideoFrame& frame, QtVideo::Rotati
     return image;
 }
 
+QImage VideoScreenshot::stretched(const QImage& image, double aspectRatio)
+{
+    if (image.isNull() || (aspectRatio <= 0)) {
+        return image;
+    }
+    const QSize size = (aspectRatio * image.height() > image.width())
+                           ? QSize(qRound(aspectRatio * image.height()), image.height())
+                           : QSize(image.width(), qRound(image.width() / aspectRatio));
+    return (size == image.size()) ? image : image.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+}
+
 bool VideoScreenshot::saveImage(const QImage& image, const QString& file, const Exif& exif)
 {
     if (image.isNull()) {

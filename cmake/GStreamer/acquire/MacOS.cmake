@@ -4,8 +4,9 @@
 include_guard(GLOBAL)
 
 # _qgc_gst_macos_extract(<staging> <runtime_pkg;devel_pkg>)
-# qgc_gst_acquire_sdk extractor: expands both .pkg files into <staging> and merges their payloads
-# into the flat SDK root <staging>/root.
+# qgc_gst_acquire_sdk extractor: expands both .pkg files into <staging> and merges their payloads into the flat SDK
+# root <staging>/root, which is all it leaves there. The static libraries (3.2 of the 4 GB of 1.28.8) stay out: QGC
+# links the shared ones.
 function(_qgc_gst_macos_extract staging archives)
     list(GET archives 0 _runtime_pkg)
     list(GET archives 1 _devel_pkg)
@@ -38,11 +39,17 @@ function(_qgc_gst_macos_extract staging archives)
                             )
                         endif()
                     endif()
-                    file(COPY "${_entry}" DESTINATION "${_root}")
+                    file(
+                        COPY "${_entry}"
+                        DESTINATION "${_root}"
+                        PATTERN "*.a" EXCLUDE
+                    )
                 endforeach()
             endif()
         endforeach()
     endforeach()
+    # The expanded packages hold everything a second time, and CI caches what is left here.
+    file(REMOVE_RECURSE "${staging}/expanded" "${staging}/expanded-devel")
 
     foreach(_required IN ITEMS lib/gstreamer-1.0 include/gstreamer-1.0 lib/pkgconfig/gstreamer-1.0.pc)
         if(NOT EXISTS "${_root}/${_required}")

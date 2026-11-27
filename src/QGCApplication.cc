@@ -42,6 +42,10 @@
 #include "VideoManager.h"
 #include "qgc_version.h"
 
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+#include "SignalHandler.h"
+#endif
+
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #ifdef Q_OS_ANDROID
@@ -252,6 +256,13 @@ void QGCApplication::init()
     }
 
     LogManager::instance()->init();
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    if (const SignalHandler* const signalHandler = SignalHandler::current()) {
+        (void) connect(signalHandler, &SignalHandler::terminateRequested, this,
+                       &QGCApplication::_closeWithoutConfirmation);
+    }
+#endif
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop
     // up more easily
@@ -515,6 +526,14 @@ QQuickWindow* QGCApplication::mainRootWindow()
     }
 
     return _mainRootWindow;
+}
+
+void QGCApplication::_closeWithoutConfirmation()
+{
+    // finishCloseProcess() ends by closing the main window, with which the application quits.
+    if (!_mainRootWindow || !QMetaObject::invokeMethod(_mainRootWindow, "finishCloseProcess")) {
+        quit();
+    }
 }
 
 void QGCApplication::qmlAttemptWindowClose()

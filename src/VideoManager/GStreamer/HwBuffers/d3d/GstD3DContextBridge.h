@@ -2,16 +2,16 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <gst/gst.h>
 
 #include "GstContextBridgeBase.h"
 
 /// Shares one GstD3D11Device/GstD3D12Device on QRhi's adapter through a single device-handle context type. Priming
-/// waits for QRhi to run the matching backend and retries on every request until it does. When GStreamer reports the
-/// device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped and the pipelines
-/// that got the device are told (noteDeviceRemoved()).
+/// waits for QRhi to run the matching backend and retries for each decoder a pipeline takes until it does. When
+/// GStreamer reports the device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped
+/// and the pipelines that got the device are told (noteDeviceRemoved()).
 class GstD3DContextBridge : public GstContextBridgeBase
 {
 public:
@@ -34,7 +34,8 @@ protected:
 
     ~GstD3DContextBridge() = default;
 
-    /// Wraps QRhi's device from QGCRhiCapture's snapshot; logs and returns null on failure. The mutex is held.
+    /// The device to share, from QGCRhiCapture's snapshot: D3D11 wraps QRhi's device, D3D12 creates one on QRhi's
+    /// adapter. Logs and returns null on failure. The mutex is held.
     virtual GstObject* createDevice() = 0;
 
     /// New GstContext carrying @p device (the context refs it).
@@ -62,4 +63,4 @@ private:
     bool _warnedWrongBackend = false;
 };
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

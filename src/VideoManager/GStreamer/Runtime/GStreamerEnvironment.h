@@ -13,38 +13,35 @@ namespace GStreamer::Environment {
 /// The desktop GStreamer runtime bundled with the app that prepareEnvironment() pointed GStreamer at.
 struct BundledRuntime
 {
-    QStringList pluginDirs;  ///< Empty when GStreamer uses the system's plugins, or Android's and iOS's static ones.
-    QString gioModuleDir;    ///< Empty when the bundle has no GIO modules.
+    QString pluginDir;     ///< Empty when GStreamer uses the system's plugins, or Android's and iOS's static ones.
+    QString gioModuleDir;  ///< Empty when the bundle has no GIO modules.
 };
 
-/// Where a desktop install keeps its GStreamer runtime, as candidate paths in priority order.
+/// Where a desktop install keeps its GStreamer runtime.
 struct BundleLayout
 {
-    QStringList pluginDirs;         ///< Every existing entry is searched.
-    QStringList gioModuleDirs;      ///< The first existing entry wins.
-    QStringList scannerCandidates;  ///< The first existing entry wins.
-    QStringList ptpCandidates;      ///< The first existing entry wins.
+    QString pluginDir;
+    QString gioModuleDir;
+    QStringList scannerCandidates;  ///< In priority order: the first existing entry wins.
 };
 
 /// The desktop installs prepareEnvironment() knows how to point GStreamer into.
 enum class DesktopInstall
 {
-    MacOSFramework,  ///< An app bundle with GStreamer.framework, whose paths win over the app's own lib.
-    MacOSFlat,       ///< An app bundle with a flat SDK copied next to the app, whose paths win over the framework's.
-    Windows,         ///< bin/ beside lib/gstreamer-1.0 and libexec/gstreamer-1.0.
-    Linux,           ///< An AppImage or other prefix: bin/ beside lib/ and libexec/.
+    MacOS,    ///< An app bundle: Contents/MacOS beside Contents/lib and Contents/libexec.
+    Windows,  ///< bin/ beside lib/gstreamer-1.0 and libexec/gstreamer-1.0.
+    Linux,    ///< An AppImage or other prefix: bin/ beside lib/ and libexec/.
 };
 
-/// The layout of @p install for the app in @p appDir. Only reads the filesystem to find the macOS framework's version
-/// directory, so every platform's layout can be checked on any host.
+/// The layout of @p install for the app in @p appDir. Reads nothing from the filesystem, so every platform's layout can
+/// be checked on any host.
 BundleLayout bundleLayout(DesktopInstall install, const QString& appDir);
 
-/// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in
-/// @p appDir (default: QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the
-/// default plugin path; GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is
-/// blacklisted instead of taking QGC down. Idempotent: a later call applies the same environment, as it doesn't take
-/// the values an earlier one set for the user's. Returns the validation outcome by value (threaded explicitly to
-/// initialize(), not a cross-thread global).
+/// Apply all GStreamer env vars for this process from bundled-paths discovery, for the app in @p appDir (default:
+/// QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the default plugin path;
+/// GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is blacklisted instead
+/// of taking QGC down. Idempotent: a later call applies the same environment, as it doesn't take the values an earlier
+/// one set for the user's. The result, which initialize() is handed, is always ok.
 /// Not thread-safe: call it on the GUI thread, before gst_init() and any thread that reads the environment.
 VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir = QString());
 

@@ -136,7 +136,7 @@ class TestInstall:
 
 
 @pytest.mark.parametrize(("flag", "arm64"), [("", False), ("true", True), ("false", False)])
-def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm64):
+def test_windows_installs_msvc_and_nsis(monkeypatch, flag, arm64):
     monkeypatch.setenv("INPUT_MSVC_ARM64", flag)
     with patch.object(helper, "install_with_retries", return_value=3) as install:
         assert helper.main(["windows"]) == 3
@@ -147,7 +147,6 @@ def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm
     assert command[2:] == [
         "--platform",
         "windows",
-        "--skip-gstreamer",
         "--msvc",
         "--nsis",
         *(["--msvc-arm64"] if arm64 else []),

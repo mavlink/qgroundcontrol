@@ -14,19 +14,19 @@
 
 namespace {
 
-constexpr std::chrono::milliseconds kWatchdogInterval{1000};
 // The live GPU path counters are logged every this many watchdog ticks.
 constexpr int kHwStatsLogIntervalTicks = 10;
 
 }  // namespace
 
-GstReceiverWorker::GstReceiverWorker(QObject* parent)
+GstReceiverWorker::GstReceiverWorker(const GstReceiverTimings& timings, QObject* parent)
     : QObject(parent)
+    , _timings(timings)
     , _watchdogTimer(new QTimer(this))
     , _supervisor(new StreamSupervisor(this))
     , _statsSampler(*_supervisor)
 {
-    _watchdogTimer->setInterval(kWatchdogInterval);
+    _watchdogTimer->setInterval(_timings.watchdogInterval);
     (void) connect(_watchdogTimer, &QTimer::timeout, this, [this]() { _onWatchdogTick(); });
     (void) connect(_supervisor, &StreamSupervisor::stateChanged, this,
                    [this](VideoReceiver::State state) { _updateStatus(&Status::state, state); });
@@ -79,6 +79,7 @@ void GstReceiverWorker::apply(const Request& request)
 void GstReceiverWorker::_onActiveChanged()
 {
     _supervisor->startOver();
+    _decoderFailureReported = false;
     if (_requested.active) {
         _dotDumper.setReceiverName(_requested.name);
     } else {
@@ -93,9 +94,7 @@ void GstReceiverWorker::_onConfigChanged(const VideoReceiver::Config& previous)
         return;
     }
     const VideoReceiver::Config& config = _requested.config;
-    VideoReceiver::Config sameStream = previous;
-    sameStream.autoReconnect = config.autoReconnect;
-    if (sameStream != config) {
+    if (!config.sameStreamAs(previous)) {
         _restartStream();
         return;
     }
@@ -125,7 +124,7 @@ void GstReceiverWorker::_startRecording(const RecordingRequest& request)
         return;
     }
 
-    _recording.emplace(request.file, request.format, _maxRecordingPartDuration);
+    _recording.emplace(request.file, request.format, _timings.recordingPartDuration);
     _updateStatus(&Status::recording, true);
     if (_session) {
         _session->setRecording(_recordingRequest());
@@ -167,6 +166,7 @@ void GstReceiverWorker::_reconcile()
 void GstReceiverWorker::_restartStream()
 {
     _supervisor->startOver();
+    _decoderFailureReported = false;
     _stopSession();
     _reconcile();
 }
@@ -178,6 +178,8 @@ void GstReceiverWorker::_startSession()
         .redactedUri = _redactedUri(),
         .lowLatency = _requested.config.lowLatency,
         .rtpJitterLatencyMs = _requested.config.rtpJitterLatencyMs,
+        .softwareDecoderThreads = _requested.config.softwareDecoderThreads,
+        .timings = _timings,
     };
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
     _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));
@@ -280,7 +282,10 @@ void GstReceiverWorker::_onWatchdogTick()
             qCDebug(GstVideoReceiverLog) << "Video decoder timeout, no frames for" << result.silentMs << "ms"
                                          << _redactedUri();
             _session->snapshot(QStringLiteral("pipeline-decoder-timeout"));
-            _session->restartDecoder("decoder watchdog");
+            _session->restartDecoder(
+                "decoder watchdog",
+                QCoreApplication::translate("GstVideoReceiver", "The video decoder gave no picture for %1 s.")
+                    .arg(result.silentMs / 1000));
             return;
         case StreamWatchdog::Stall::Source:
             qCDebug(GstVideoReceiverLog) << "Stream timeout, no frames for" << result.silentMs << "ms"
@@ -333,6 +338,9 @@ void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 
 void GstReceiverWorker::onDecodingChanged(bool decoding)
 {
+    if (decoding) {
+        _decoderFailureReported = false;
+    }
     _updateStatus(&Status::decoding, decoding);
 }
 
@@ -341,11 +349,15 @@ void GstReceiverWorker::onDecoderNameChanged(const QString& name)
     _updateStatus(&Status::decoderName, name);
 }
 
-void GstReceiverWorker::onDecoderFailing()
+void GstReceiverWorker::onDecoderFailed(const QString& cause)
 {
-    onSessionFailed({.reason = QStringLiteral("decoder failing"),
-                     .message = QCoreApplication::translate("GstVideoReceiver", "The video decoder keeps failing."),
-                     .permanent = false});
+    if (std::exchange(_decoderFailureReported, true)) {
+        return;
+    }
+    const QString message =
+        QCoreApplication::translate("GstVideoReceiver", "Unable to decode the video: %1").arg(cause);
+    qCWarning(GstVideoReceiverLog) << "Video stream without a picture:" << message << _redactedUri();
+    emit errorOccurred(message);
 }
 
 void GstReceiverWorker::onRecordingFileOpened(const QString& file)
@@ -384,5 +396,15 @@ void GstReceiverWorker::onRecordingNeedsNewFile(const QString& file)
     }
     _recording->nextPart();
     qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+    _session->setRecording(_recordingRequest());
+}
+
+void GstReceiverWorker::onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format)
+{
+    if (!_session || !_recording || (file != _recording->currentFile())) {
+        return;
+    }
+    _recording->setFormat(format);
+    qCDebug(GstVideoReceiverLog) << "Recording to" << _recording->currentFile() << "instead of" << file;
     _session->setRecording(_recordingRequest());
 }

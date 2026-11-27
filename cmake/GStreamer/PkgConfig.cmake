@@ -5,13 +5,14 @@
 # lookup of macOS hosts (_qgc_gst_find_apple_pkg_config).
 #
 # The pkg-config state discovery derives is scoped to the GStreamer subtree, whose
-# later probes (HwBuffers' gstreamer-{cuda,vulkan,d3d*}-1.0) need the same SDK view:
+# later probes (HwBuffers' gstreamer-d3d*-1.0) need the same SDK view:
 # PKG_CONFIG_EXECUTABLE, PKG_CONFIG_USE_CMAKE_PREFIX_PATH and the derived PKG_CONFIG_ARGN flags are normal variables of
 # the calling directory, never written to the cache, and the environment is restored
 # by qgc_gst_restore_pkgconfig_env once that subtree is configured.
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
 # _qgc_gst_save_pkgconfig_env()
@@ -44,7 +45,7 @@ endfunction()
 #                        Homebrew) ahead of the SDK. System .pc files invisible.
 # MODE SYSTEM_AUGMENT  — prepend <libdirs> to PKG_CONFIG_PATH so SDK .pc files
 #                        win but system glib/gobject .pc files stay discoverable.
-#                        Used by Linux distro-installed GStreamer.
+#                        Used for a Linux GStreamer_ROOT_DIR (platform/Linux.cmake).
 # PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN / PKG_CONFIG_USE_CMAKE_PREFIX_PATH are set as normal variables in the caller's
 # scope.
 # cmakelang reads set(ENV{<name>}) as a variable name.
@@ -95,6 +96,38 @@ function(qgc_gst_apply_pkgconfig_env)
             PARENT_SCOPE
         )
     endif()
+endfunction()
+
+# _qgc_gst_foreign_module_dir(<module> <out_var>)
+# For a GStreamer <module> ("gstreamer-...", with or without a version) that pkg-config found: sets <out_var> to the
+# directory of its .pc file when that is none of the SDK's (the layout's PKGCONFIG_DIRS), so the module is part of
+# another GStreamer. Empty otherwise: the module is the SDK's, discovery named no directories (a locked SDK, where
+# pkg-config sees nothing else, or the system's GStreamer), or the module is not GStreamer's.
+function(_qgc_gst_foreign_module_dir module out_var)
+    set(${out_var}
+        ""
+        PARENT_SCOPE
+    )
+    qgc_gst_layout_get(PKGCONFIG_DIRS _sdk_dirs)
+    string(REGEX REPLACE "[<>=].*$" "" _name "${module}")
+    if(NOT _sdk_dirs OR NOT _name MATCHES "^gstreamer-")
+        return()
+    endif()
+    pkg_get_variable(_module_dir "${_name}" pcfiledir)
+    if(NOT _module_dir)
+        return()
+    endif()
+    get_filename_component(_real_module_dir "${_module_dir}" REALPATH)
+    foreach(_sdk_dir IN LISTS _sdk_dirs)
+        get_filename_component(_sdk_dir "${_sdk_dir}" REALPATH)
+        if(_real_module_dir STREQUAL _sdk_dir)
+            return()
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_module_dir}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # qgc_gst_restore_pkgconfig_env()

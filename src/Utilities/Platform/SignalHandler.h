@@ -24,7 +24,14 @@ public:
 
 #ifdef Q_OS_WIN
     static int consoleCtrlHandler(unsigned long evt);
-#else
+#endif
+
+signals:
+    /// The process was told to terminate (SIGTERM). Nobody may be there to answer a question, so whoever takes this
+    /// closes the application without one. Unconnected, the application is asked to quit as for an interrupt.
+    void terminateRequested();
+
+#ifndef Q_OS_WIN
 private slots:
     void _onSigInt();
     void _onSigTerm();

@@ -118,10 +118,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
   (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan|SharedVideoFrame)`,
+  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|StreamWatchdog|KeyframeIntervalMeter|RecordingPlan|SharedVideoFrame|RtpPacketCounter)`,
   Unit and Integration), with the Qt Multimedia receiver, its recorder and shared frame, the USB camera classes and
-  the reconnect and recording-part policies both receivers share, so the script tests' Windows-only branches (8.3
-  short paths, SDK architecture) run on Windows. The build tree finds the
+  the reconnect, stall, keyframe-interval and recording-part policies the receivers share, so the script tests'
+  Windows-only branches (8.3 short paths, SDK architecture) run on Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
@@ -132,7 +132,11 @@ How CI runs, retries, and reports the application tests is described in
 ## Platform Notes
 
 - **macOS**: the Debug leg builds for arm64 only and runs the Unit and Integration suites; only the
-  universal (x86_64h + arm64) Release leg packages and uploads the DMG. The job's `MACOS_SIGN`
+  universal (x86_64h + arm64) Release leg packages and uploads the DMG. Both build, test and package
+  with the official GStreamer SDK that configure downloads into the CPM cache, as Windows does. The
+  DMG bundles that SDK's allowlisted plugins, GIO modules and helpers with only the libraries they
+  and QGC load ([details](../../src/VideoManager/GStreamer/README.md#macos--windows--ios)). The job's
+  `MACOS_SIGN`
   gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
@@ -252,6 +256,18 @@ How CI runs, retries, and reports the application tests is described in
   Linux legs run the integration suites and cover Release compiles. Outside pull requests it also
   installs the build stripped (`cmake --install --strip`; the Debug binary carries ~800 MB of debug
   info, measured for pull request 15375, October 2026) into an AppImage and boots that. `custom-example/` changes trigger the Linux workflow.
+- **Video without GPU paths** (`linux.yml`'s `no-gpu-path` job, behind the Linux gate): the build
+  without a GPU video path (no `QGC_HAS_ANY_GPU_PATH`) is what configure produces where it finds
+  the GStreamer pieces of none, and no other job compiles it. This one configures `Linux-debug`
+  with the GPU paths off (`QGC_GST_ENABLE_GPU_PATHS=OFF`), fails if configure still reports a path
+  enabled, and builds the `QGCGStreamer` target, about twenty files. The target's definitions are
+  public, so the job also compiles the code outside it that they reach: the application's sources
+  under `src/VideoManager/GStreamer` and the tests under `test/VideoManager/GStreamer`. Those belong to
+  the application and to `QGCUnitTests`, which the job does not build: `cmake-build`'s
+  `objects-under` builds their object files, read from `compile_commands.json`, and with them
+  what those wait for: generated sources, the two precompiled headers and the compression
+  libraries the application links. Nothing is run. The job has a compiler-cache variant of its
+  own and saves none.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF

@@ -26,6 +26,8 @@ Rectangle {
     property bool _cameraInVideoMode: !_cameraInPhotoMode
     property bool _videoCaptureIdle: _camera.captureVideoState === MavlinkCameraControlInterface.CaptureVideoStateIdle
     property bool _photoCaptureIdle: _camera.capturePhotosState === MavlinkCameraControlInterface.CapturePhotosStateIdle
+    // The thermal stream on display may belong to another camera of the vehicle than the current one.
+    property bool _thermalShown: QGroundControl.videoManager.hasThermal
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -69,7 +71,7 @@ Rectangle {
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: _camera.modelName
-                visible: _cameraManager.cameras.length > 1
+                visible: _cameraManager.cameras.count > 1
             }
 
             // Photo/Video Mode Selector
@@ -299,24 +301,28 @@ Rectangle {
 
             //-- Status Information
             ColumnLayout {
+                id: statusInfo
+
+                // Not the labels' own visible: under a hidden parent it reads false, and the column would stay hidden.
+                readonly property bool _storageReady: _camera.storageStatus === MavlinkCameraControlInterface.STORAGE_READY
+                readonly property bool _batteryReported: _camera.batteryRemaining >= 0
+
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 0
-                visible: storageStatus.visible || batteryStatus.visible
+                visible: _storageReady || _batteryReported
 
                 QGCLabel {
-                    id: storageStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Free: ") + _camera.storageFreeStr
                     font.pointSize: ScreenTools.defaultFontPointSize
-                    visible: _camera.storageStatus === MavlinkCameraControlInterface.STORAGE_READY
+                    visible: statusInfo._storageReady
                 }
 
                 QGCLabel {
-                    id: batteryStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Battery: ") + _camera.batteryRemainingStr
                     font.pointSize: ScreenTools.defaultFontPointSize
-                    visible: _camera.batteryRemaining >= 0
+                    visible: statusInfo._batteryReported
                 }
             }
 
@@ -421,13 +427,13 @@ Rectangle {
 
                         QGCLabel {
                             text: qsTr("Thermal View Mode")
-                            visible: _camera.thermalStreamInstance
+                            visible: _thermalShown
                             onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                         }
 
                         QGCLabel {
                             text: qsTr("Blend Opacity")
-                            visible: _camera.thermalStreamInstance && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
+                            visible: _thermalShown && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
                             onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                         }
 
@@ -487,7 +493,7 @@ Rectangle {
                             sizeToContents: true
                             model: [ qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture") ]
                             currentIndex: _camera.thermalMode
-                            visible: _camera.thermalStreamInstance
+                            visible: _thermalShown
                             onActivated: (index) => { _camera.thermalMode = index }
                         }
 
@@ -497,7 +503,7 @@ Rectangle {
                             from: 0
                             value: _camera.thermalOpacity
                             live: true
-                            visible: _camera.thermalStreamInstance && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
+                            visible: _thermalShown && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
                             onValueChanged: _camera.thermalOpacity = value
                         }
 

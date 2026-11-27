@@ -66,7 +66,7 @@ _LINUX_2604_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/ubuntu:26.04@sh
 _LINUX_DEBIAN_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
 _LINUX_FEDORA_BUILD_ARGS = "\n".join(
     [
-        "BASE_REF=public.ecr.aws/docker/library/fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
+        "BASE_REF=public.ecr.aws/docker/library/fedora:45@sha256:a7d72ba2745b100a3351087472e5ee7b2450af7cf331e7673007e3817612839c",
         "SETUP_BASE=setup-base-dnf.sh",
         "DEP_PLATFORM=fedora",
     ]

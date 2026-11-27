@@ -64,7 +64,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.rpm",
       "build_args": {
-        "BASE_REF": "public.ecr.aws/docker/library/fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
+        "BASE_REF": "public.ecr.aws/docker/library/fedora:45@sha256:a7d72ba2745b100a3351087472e5ee7b2450af7cf331e7673007e3817612839c",
         "SETUP_BASE": "setup-base-dnf.sh",
         "DEP_PLATFORM": "fedora"
       }

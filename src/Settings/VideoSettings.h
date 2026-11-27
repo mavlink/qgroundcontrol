@@ -24,11 +24,11 @@ public:
     DEFINE_SETTINGFACT(udpUrl)
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
-    DEFINE_SETTINGFACT(aspectRatio)
+    /// The ratio the configured video source is stretched to (aspectRatioOf()), or Auto for the video's own.
+    DEFINE_SETTINGFACT(forcedAspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
     DEFINE_SETTINGFACT(showTelemetryOverlay)
-    DEFINE_SETTINGFACT(showRecControl)
     DEFINE_SETTINGFACT(recordingFormat)
     DEFINE_SETTINGFACT(maxVideoSize)
     DEFINE_SETTINGFACT(enableStorageLimit)
@@ -41,9 +41,9 @@ public:
     DEFINE_SETTINGFACT(rtspAutoReconnect)
     DEFINE_SETTINGFACT(videoBackend)
     DEFINE_SETTINGFACT(forceVideoDecoder)
+    DEFINE_SETTINGFACT(softwareDecoderThreads)
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
-    DEFINE_SETTINGFACT(disablePixelAspectRatio)
     /// How many other video sources the video view shows in tiles beside the main video; 0 for none.
     DEFINE_SETTINGFACT(maxVideoTiles)
     /// The USB camera to show in a tile while the video source is a stream; empty for none.
@@ -72,13 +72,38 @@ public:
     };
     Q_ENUM(VideoFit)
 
+    /// forcedAspectRatio's values (Video.SettingsGroup.json).
+    enum ForcedAspectRatio
+    {
+        AspectRatioAuto = 0,
+        AspectRatio16x9 = 1,
+        AspectRatio4x3 = 2,
+        AspectRatio5x4 = 3,
+        AspectRatio3x2 = 4,
+        AspectRatio1x1 = 5,
+    };
+    Q_ENUM(ForcedAspectRatio)
+
+    /// Width over height for a forcedAspectRatio value; 0 for Auto, and for a value that is none of them.
+    static double aspectRatioOf(int forcedAspectRatio);
+
     /// videoBackend's values (Video.SettingsGroup.json).
     enum VideoBackendChoice
     {
         VideoBackendGStreamer = 0,
         VideoBackendQtMultimedia = 1,
+#ifdef QGC_FFMPEG_VIDEO
+        /// The experimental FFmpegVideoReceiver: offered only in a build with QGC_ENABLE_FFMPEG_VIDEO.
+        VideoBackendFFmpeg = 2,
+#endif
     };
     Q_ENUM(VideoBackendChoice)
+
+    /// Whether the receiver that plays for the videoBackend value @p backend takes the decoder settings
+    /// (forceVideoDecoder, softwareDecoderThreads, forceCpuVideoPath) and rtpJitterLatencyMs: GStreamer's, in a build
+    /// that has it, and the experimental FFmpeg one. Qt Multimedia's takes none of them, and it plays for
+    /// VideoBackendGStreamer in a build without GStreamer. The settings pages show those settings by it.
+    Q_INVOKABLE bool backendTakesDecoderSettings(int backend) const;
 
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
@@ -99,6 +124,9 @@ public:
     /// initialized (the registry is empty until then).
     void pruneUnavailableDecoders();
 
+    /// Lists what uvcCameraFormat offers: Auto, which lets Qt choose, then @p formats, the ones the USB camera offers.
+    void offerCameraFormats(const QStringList& formats);
+
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
     static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
     static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
@@ -114,16 +142,23 @@ public:
     static constexpr const char* videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 private:
-    void _setForceVideoDecodeList();
     /// Lists what videoSource offers: no video, the stream sources, the attached cameras and, when it is none of those,
     /// the selected source. That one is a camera that isn't attached: it stays selected, so that it plays once it is
     /// plugged in. Lists what uvcTileCamera offers the same way: no camera, then the cameras.
     void _updateVideoSources();
-    /// Gives @p fact, or its @p metaData until it exists, the choices @p values labelled @p labels, then the attached
-    /// @p cameras, then the selected value when it is none of those.
+    /// _offerChoices() with the attached @p cameras after @p values.
     void _offerCameras(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
                        const QStringList& cameras);
+    void _updateCameraFormats();
+    /// Lists what uvcRecordingCodec offers: Auto, which leaves the choice to the recorder, then the codecs Qt can
+    /// encode on this computer.
+    void _updateRecordingCodecs();
+    /// Gives @p fact, or its @p metaData until it exists, the choices @p values labelled @p labels, then the selected
+    /// value when it is none of those, labelled @p absentLabel with the value for its %1: it stays selected.
+    void _offerChoices(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                       const QString& absentLabel);
 
     /// Stands in for UVCDevices::deviceNames() in tests.
     std::function<QStringList()> _cameraNames;
+    QStringList _cameraFormats;
 };

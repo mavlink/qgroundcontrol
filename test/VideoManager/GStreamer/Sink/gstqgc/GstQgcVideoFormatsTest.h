@@ -9,7 +9,6 @@ class GstQgcVideoFormatsTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
     void _testD3D12ConvertCapsAreSinglePlane();
@@ -21,5 +20,4 @@ private slots:
     void _testAdvertisedFormatListForOffer_data();
     void _testAdvertisedFormatListForOffer();
     void _testApplyOrientationToFrameMapping();
-#endif
 };

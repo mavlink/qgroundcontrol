@@ -99,8 +99,8 @@ message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 # up by android/build.gradle as a supplementary source set. Gradle derives the same
 # location as the sibling 'extra_java_sources' of its project dir.
 set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
-# GStreamer's fonts and CA bundle are staged here; android/build.gradle adds the
-# sibling 'extra_assets' of its project dir to the APK assets.
+# GStreamer's CA bundle and license notice are staged here; android/build.gradle adds
+# the sibling 'extra_assets' of its project dir to the APK assets.
 set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
 
 set_target_properties(

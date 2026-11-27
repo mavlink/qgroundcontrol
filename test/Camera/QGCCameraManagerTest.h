@@ -9,4 +9,5 @@ class QGCCameraManagerTest : public VehicleTest
 private slots:
     void _testCameraList();
     void _testLostCameraCleanupWithPendingRequest();
+    void _testLostCurrentCameraIsAnnounced();
 };

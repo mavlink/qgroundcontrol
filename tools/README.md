@@ -59,6 +59,7 @@ tools/
 ├── moccache_launcher.py     # moccache entry point: the CMake AUTOMOC launcher and the stats/trim CLI
 ├── pre_commit.py            # Pre-commit runner with CI summaries
 ├── terrain_tiles.py         # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
+├── update_gstreamer.py      # Pin a GStreamer SDK release (versions and package checksums) in build-config.json
 ├── update_px4_metadata.py   # Refresh the bundled PX4 airframe and parameter metadata
 ├── validate_cmake_presets.py # CMake presets against the locked cmake package's schema (hook)
 ├── validate_configs.py      # Cross-field checks for build-config.json and link exceptions
@@ -152,6 +153,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | `just info`              | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
 | `just check-deps`        | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
 | `just check-gstreamer`   | Check the latest GStreamer patch common to all SDK platforms                                          |
+| `just update-gstreamer`  | Pin the GStreamer SDK release given as argument ([update_gstreamer.py](#update_gstreamerpy))          |
 | `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`); `--check` only reports bad `tr()`   |
 | `just distclean`         | Clean build, caches, generated files, and `node_modules/`                                             |
 | `just validate-configs`  | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
@@ -377,6 +379,14 @@ python tools/check_deps.py --qt         # Check Qt version
 python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK platforms
 ```
 
+### update_gstreamer.py
+
+Pins a GStreamer SDK release: `just update-gstreamer 1.28.9` sets `gstreamer.version.sdk` in
+`.github/build-config.json` and replaces `gstreamer.checksums` with the SHA-256 of the release's six packages, read
+from the `.sha256sum` file upstream publishes beside each. It writes nothing unless upstream has every package. Review
+the diff like any other pin: configure then holds each SDK download to these checksums, and `mirror-gstreamer.yml`
+copies the packages to the S3 mirror once the change reaches `master`.
+
 ### API documentation (Doxygen)
 
 Run Doxygen from the repository root, as the Doxygen workflow does; HTML goes to `docs/api/html/`.
@@ -445,8 +455,8 @@ install prefix, such as a source build's.
 | `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                                     |
 | `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                                     |
 | `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                                  |
-| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                          |
-| `install_dependencies --platform windows` | Windows               | Install GStreamer (optional `--vulkan`, `--msvc`, `--msvc-arm64`, `--nsis`)            |
+| `install_dependencies --platform macos`   | macOS                 | Install build dependencies via Homebrew                                                |
+| `install_dependencies --platform windows` | Windows               | Install on request: `--msvc`, `--msvc-arm64`, `--nsis`, `--vulkan`                     |
 | `install_uv.py`                           | Linux, macOS          | Install the uv release named by `required-version` when `uv` is not on `PATH`          |
 | `install_python.py`                       | All                   | Install locked Python tool groups via uv ([Python Environment](#python-environment))   |
 | `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (`just qt`: `local`)    |
@@ -469,10 +479,61 @@ Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, 
 `tools/.venv` and print how to activate it; CI build jobs instead use the `build.cmake_version` and
 `build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
-On macOS and Windows, the GStreamer packages come from the official server, falling back to
-QGroundControl's public S3 mirror: the official server gets two tries and three minutes, then the
-mirror resumes the partial download. Both sources are verified against the SHA-256 checksums
-pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
+On macOS and Windows the script installs no GStreamer: CMake downloads the SDK when it configures
+([details](../src/VideoManager/GStreamer/README.md#macos--windows--ios)).
+
+`build_gstreamer.py --platform linux`, `macos` and `windows` build GStreamer with Meson, from its
+monorepo at the tag of the GStreamer version, into `--prefix`: the `GStreamer_ROOT_DIR` to configure
+QGC with.
+
+- The build is a minimal one (`auto_features=disabled`): the plugins of `gstreamer.plugins` in
+  `build-config.json`, the libraries QGC links (the RTSP server and check libraries among them),
+  `gst-plugin-scanner` and the command-line tools. It adds the `videotestsrc` and `mpegtsmux`
+  plugins (`gstreamer_plugin_policy.mock_server_debug`), which a Debug QGC's MockLink video server
+  and QGC's tests make their streams with and QGC never installs. Its `libav` plugin holds an
+  FFmpeg built without GPL parts that decodes H.264, H.265, MPEG-2, MPEG-4 and H.263 video,
+  encodes MPEG-2 video for one of the tests, and has no other codec (`FFMPEG_FEATURES` in
+  `config.py`): FFmpeg's Meson port makes each codec an option, which that setting turns off.
+- **Linux** links the system's libraries (GLib, libva, libdrm, the X11, Wayland and GL
+  libraries, libjpeg, libvpx, OpenH264), so its VA decoders find the system's drivers. Debian's
+  `gstreamer_build` category installs them, and configure stops at a missing one. Only orc and
+  FFmpeg are built with GStreamer. Everything installed has the prefix's `lib/` as its run path:
+  without one, a program built against the prefix loads the libraries it does not link itself
+  (`libgstaudio`, for one) from the system's GStreamer.
+- **macOS and Windows** build every dependency GStreamer has a fallback for into the prefix. A
+  Windows build also copies the `pkg-config.exe` that GStreamer's build downloads into `bin/`, where
+  QGC's configure runs it. On macOS `--arch universal`, the default, builds x86_64 and arm64 for
+  the prefix and merges their libraries, plugins and programs into it with `lipo`; headers and
+  other files are the arm64 build's.
+
+Only the Linux build has been run (GStreamer 1.28.9, x86_64, Ubuntu 24.04 with only the
+`gstreamer_build` packages). A Debug QGC built against its prefix loads every GStreamer library from
+it, and its video tests skip only what the build leaves out: the H.265 streams MockLink's server
+encodes with the GPL `x265enc`, and the decoder table rows of decoders the build doesn't have. The
+macOS and Windows builds have not been run.
+
+`build_gstreamer.py --platform android` and `--platform ios` build the SDK that the official package
+holds, with [Cerbero](https://gitlab.freedesktop.org/gstreamer/cerbero) at the tag of the GStreamer
+version, for a debug or patched SDK. Cerbero leaves package files, which the script unpacks into
+`--prefix`: that directory is then the `GStreamer_ROOT_DIR` to configure QGC with.
+
+- **Android** (`--arch arm64`, `armv7`, `x86`, `x86_64` or `universal`, the default): one ABI's SDK
+  tree, or for `universal` one tree per ABI, of which configure uses the build's.
+- **iOS** (on a Mac with Xcode): a `GStreamer.xcframework`. `--arch universal`, the default, builds
+  the device (arm64) and the simulator (arm64 and x86_64) and combines them, as the official SDK
+  does; `--arch arm64` builds the device alone, and `--simulator` the simulator alone (`arm64`,
+  `x86_64` or `universal`).
+- `--type debug` builds without optimization (Cerbero keeps debug symbols either way), and
+  `--jobs N` limits each recipe's compile jobs, and the recipes Cerbero handles at once, to N.
+- The script replaces `--prefix`, so it refuses one that holds anything but an earlier build's SDK.
+  The Cerbero checkout and its packages stay in `--work-dir` (`cerbero/`, `cerbero-packages/`).
+- A build takes hours and tens of gigabytes. Cerbero downloads the NDK and a Rust toolchain, installs
+  system packages with `sudo`, and runs only on the Linux distributions it knows: not on Linux Mint
+  22.3, for one.
+
+No Cerbero build has been run through the script. Its unpacking has been run on the official
+Android package, which Cerbero makes with the same command, and QGC builds for Android against the
+result; its iOS steps have not been run.
 
 ```bash
 # Linux: Install all dependencies
@@ -493,9 +554,13 @@ uv run --frozen --project tools --group build python tools/setup/install_qt.py l
 # Install a chosen kit of the configured Qt; without --outdir it lands in ./.qt, which configure does not search
 uv run --frozen --project tools --group build python tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64 --outdir ~/Qt
 
-# Build GStreamer from source (optional — CMake auto-downloads pre-built SDKs)
+# Build GStreamer from source for Linux, then configure QGC with -DGStreamer_ROOT_DIR=$HOME/gst/gst-linux-x86_64
 uv run --frozen --project tools python tools/setup/install_dependencies --platform debian --category gstreamer_build
-uv run --frozen --project tools python tools/setup/build_gstreamer.py --platform linux --prefix /opt/gstreamer
+uv run --frozen --project tools python tools/setup/build_gstreamer.py --platform linux --work-dir ~/gst
+
+# Build the Android SDK for one ABI from source, then configure QGC with -DGStreamer_ROOT_DIR=$HOME/gst/gst-android-x86_64
+uv run --frozen --project tools python tools/setup/install_dependencies --platform debian --category gstreamer_build_android
+uv run --frozen --project tools python tools/setup/build_gstreamer.py --platform android --arch x86_64 --work-dir ~/gst
 
 # Build Clazy like the Code Analysis workflow; then put .cache/clazy/bin on PATH
 uv run --frozen --project tools python tools/setup/build_clazy.py --prefix .cache/clazy

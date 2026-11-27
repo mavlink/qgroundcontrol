@@ -10,6 +10,12 @@ inputs:
     description: 'Build target'
     required: false
     default: 'all'
+  objects-under:
+    description: >-
+      Source directories, relative to the checkout and separated by spaces. Builds the object files of the sources
+      below them, whichever targets compile them, in place of target
+    required: false
+    default: ''
   parallel:
     description: 'Enable parallel builds'
     required: false
@@ -41,6 +47,7 @@ runs:
       # collapsed, the failed targets and first errors (also error annotations) and slowest steps.
       env:
         INPUT_TARGET: ${{ inputs.target }}
+        INPUT_OBJECTS_UNDER: ${{ inputs.objects-under }}
         INPUT_PARALLEL: ${{ inputs.parallel }}
         INPUT_PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
         INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
@@ -48,7 +55,9 @@ runs:
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" build
 
     - name: Save successful build caches
-      if: steps.compile.outputs.build_success == 'true' && (inputs.target == 'all' || inputs.target == 'autogen')
+      if: >-
+        steps.compile.outputs.build_success == 'true' && inputs.objects-under == ''
+        && (inputs.target == 'all' || inputs.target == 'autogen')
       uses: ./.github/actions/save-build-cache
 
     - name: Upload build timings

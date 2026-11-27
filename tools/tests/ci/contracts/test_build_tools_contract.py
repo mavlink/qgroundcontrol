@@ -91,10 +91,13 @@ def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
         pin["repository"]: pin["version"] for pin in CONFIG["tools"].values() if "repository" in pin
     }
     appimage_tools = {pin["repository"]: pin["tag"] for pin in CONFIG["appimage"].values()}
+    ca_bundle_date = re.fullmatch(r".*/cacert-(.+)\.pem", CONFIG["gstreamer"]["ca_bundle_url"])
+    assert ca_bundle_date is not None
     assert _tracked_pins() == {
         "lukka/get-cmake": CONFIG["build"]["cmake_version"],
         "ninja-build/ninja": CONFIG["build"]["ninja_version"],
         "openssl/openssl": CONFIG["android"]["openssl_version"],
+        "curl-ca-bundle": ca_bundle_date[1],
         **released_tools,
         **appimage_tools,
     }
@@ -118,7 +121,7 @@ def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
         if rule.get("dependencyDashboardApproval") is True and rule.get("groupName", "") is None
         for name in rule.get("matchDepNames", [])
     }
-    assert {*released_tools, *appimage_tools, "openssl/openssl"} - rolling <= held
+    assert {*released_tools, *appimage_tools, "openssl/openssl", "curl-ca-bundle"} - rolling <= held
 
 
 def test_workflows_read_only_build_config_keys_that_exist() -> None:

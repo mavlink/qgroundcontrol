@@ -1,9 +1,9 @@
 # Acquiring a GStreamer SDK: qgc_gst_acquire_sdk downloads a platform's packages (Packages.cmake) into
 # CPM_SOURCE_CACHE and extracts them once into the SDK tree, and the per-platform acquirers in acquire/<platform>.cmake,
 # included at the end, name the packages, the cache directory and the extractor. CI keys its cache of the extracted
-# trees on this file, acquire/, Packages.cmake and the gstreamer section of .github/build-config.json
-# (.github/actions/cache/action.yml), so keep everything that decides an extracted tree in those files and nothing
-# else.
+# trees on this file, acquire/, Packages.cmake and the gstreamer section of .github/build-config.json without its plugin
+# lists (.github/actions/cache/action.yml), so keep everything that decides an extracted tree in those files and
+# nothing else.
 
 include_guard(GLOBAL)
 
@@ -48,17 +48,13 @@ endfunction()
 
 # _qgc_gst_pinned_stamp(<platform> <version> <stamp_out> <archive>...)
 # Sets <stamp_out> to the completion stamp (see _qgc_gst_extract_once) of the <archive>s, the primary one for <platform>
-# and a second one for <platform>_devel, when every one is pinned in build-config.json, else to "".
+# and a second one for <platform>_devel: each archive's line names its checksum pinned in build-config.json.
 function(_qgc_gst_pinned_stamp platform version stamp_out)
     set(_platforms "${platform}" "${platform}_devel")
     set(_stamp "")
     foreach(_archive IN LISTS ARGN)
         list(POP_FRONT _platforms _platform)
-        qgc_gst_get_fallback_checksum(${_platform} ${version} _pin)
-        if(NOT _pin)
-            set(_stamp "")
-            break()
-        endif()
+        qgc_gst_get_pinned_checksum(${_platform} ${version} _pin)
         string(APPEND _stamp "${_archive}=${_pin}\n")
     endforeach()
     set(${stamp_out}
@@ -67,30 +63,19 @@ function(_qgc_gst_pinned_stamp platform version stamp_out)
     )
 endfunction()
 
-# _qgc_gst_download_archives(<dir> <platform> <version> <paths_out> <stamp_out> <archive>...)
-# Downloads the <archive>s, the primary one for <platform> and a second one for <platform>_devel, into <dir>; sets
-# <paths_out> to their paths and <stamp_out> to their completion stamp, each archive's line naming the checksum it was
-# verified against, else its own SHA256.
-function(_qgc_gst_download_archives dir platform version paths_out stamp_out)
+# _qgc_gst_download_archives(<dir> <platform> <version> <paths_out> <archive>...)
+# Downloads the <archive>s, the primary one for <platform> and a second one for <platform>_devel, into <dir> and sets
+# <paths_out> to their paths.
+function(_qgc_gst_download_archives dir platform version paths_out)
     set(_platforms "${platform}" "${platform}_devel")
     set(_paths "")
-    set(_stamp "")
     foreach(_archive IN LISTS ARGN)
         list(POP_FRONT _platforms _platform)
-        _qgc_gst_download_archive(${_platform} ${version} "${_archive}" "${dir}" _hash)
-        if(NOT _hash)
-            file(SHA256 "${dir}/${_archive}" _sha256)
-            set(_hash "SHA256=${_sha256}")
-        endif()
+        _qgc_gst_download_archive(${_platform} ${version} "${_archive}" "${dir}")
         list(APPEND _paths "${dir}/${_archive}")
-        string(APPEND _stamp "${_archive}=${_hash}\n")
     endforeach()
     set(${paths_out}
         "${_paths}"
-        PARENT_SCOPE
-    )
-    set(${stamp_out}
-        "${_stamp}"
         PARENT_SCOPE
     )
 endfunction()
@@ -122,12 +107,12 @@ endfunction()
 #                     EXTRACT_FUNCTION <command> CONTENT_DIR_OUT <var>)
 # Downloads the SDK archive(s) for <platform> (the second one as <platform>_devel) into
 # <cache>/<subdir> and extracts them once, with <command>(<staging> <archives> <name>), into
-# <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version. When every archive is pinned,
-# a tree already extracted from them is used without downloading them.
+# <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version. Every archive must be pinned
+# in build-config.json and is verified against that checksum; a tree already extracted from the pinned archives is used
+# without downloading them.
 # <cache> is CPM_SOURCE_CACHE, which the top-level CMakeLists.txt always sets, so build directories and CI jobs
 # share it. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
-# tree is stamped with the archive hashes; see _qgc_gst_extract_once. <command> sees
-# _qgc_gst_archives_pinned TRUE when every archive was verified against its checksum pinned in build-config.json.
+# tree is stamped with the archive hashes; see _qgc_gst_extract_once.
 # Records the packages in QGC_GST_RESOLVED_PACKAGES (_qgc_gst_record_packages).
 function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(
@@ -175,25 +160,16 @@ function(qgc_gst_acquire_sdk)
 
     # A tree stamped with the pinned checksums is used without hashing, or even having, its archives: CI caches keep
     # only the tree.
-    _qgc_gst_pinned_stamp(${ARG_PLATFORM} ${ARG_VERSION} _pinned_stamp ${ARG_ARCHIVES})
+    _qgc_gst_pinned_stamp(${ARG_PLATFORM} ${ARG_VERSION} _stamp ${ARG_ARCHIVES})
     set(_content_dir "${_cache_dir}/${ARG_CONTENT}")
-    if(_pinned_stamp AND EXISTS "${_content_dir}/.complete")
+    set(_existing_stamp "")
+    if(EXISTS "${_content_dir}/.complete")
         file(READ "${_content_dir}/.complete" _existing_stamp)
-        if(_existing_stamp STREQUAL _pinned_stamp)
-            _qgc_gst_record_packages(${ARG_PLATFORM} ${ARG_VERSION} "${_pinned_stamp}")
-            set(${ARG_CONTENT_DIR_OUT}
-                "${_content_dir}"
-                PARENT_SCOPE
-            )
-            return()
-        endif()
     endif()
-    _qgc_gst_download_archives("${_cache_dir}" ${ARG_PLATFORM} ${ARG_VERSION} _archive_paths _stamp ${ARG_ARCHIVES})
-    set(_qgc_gst_archives_pinned FALSE)
-    if(_pinned_stamp)
-        set(_qgc_gst_archives_pinned TRUE)
+    if(NOT _existing_stamp STREQUAL _stamp)
+        _qgc_gst_download_archives("${_cache_dir}" ${ARG_PLATFORM} ${ARG_VERSION} _archive_paths ${ARG_ARCHIVES})
+        _qgc_gst_extract_once("${_content_dir}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
     endif()
-    _qgc_gst_extract_once("${_content_dir}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
     _qgc_gst_record_packages(${ARG_PLATFORM} ${ARG_VERSION} "${_stamp}")
     set(${ARG_CONTENT_DIR_OUT}
         "${_content_dir}"
@@ -202,8 +178,8 @@ function(qgc_gst_acquire_sdk)
 endfunction()
 
 # Expands <pkg> with pkgutil --expand-full into <expanded_dir> and fails configure unless that yields package payloads.
-# Used by the macOS (runtime+devel) and iOS SDK extractors; qgc_gst_acquire_sdk clears their staging directory, which
-# holds <expanded_dir>, before every attempt.
+# Used by the macOS SDK extractor for the runtime and devel packages; qgc_gst_acquire_sdk clears its staging directory,
+# which holds <expanded_dir>, before every attempt.
 function(_qgc_gst_pkgutil_expand_and_validate pkg expanded_dir label)
     message(STATUS "Expanding GStreamer ${label} package...")
     execute_process(COMMAND pkgutil --expand-full "${pkg}" "${expanded_dir}" RESULT_VARIABLE _pkgutil_rc)

@@ -1,16 +1,9 @@
 #pragma once
 
-#include <optional>
-
-#include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QTimer>
-#include <QtCore/QUrl>
 #include <QtMultimedia/QMediaPlayer>
 
-#include "StreamSupervisor.h"
-#include "VideoReceiver.h"
-#include "VideoStreamStatsSampler.h"
+#include "SessionVideoReceiver.h"
 
 class QMediaCaptureSession;
 class QtVideoRecorder;
@@ -18,72 +11,46 @@ class QVideoFrameInput;
 
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
-/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
-/// displays anew (QtVideoRecorder), as recordingEncoding() says: only while an output displays the stream, and after a
-/// reconnect in the same file.
+/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about (VideoStreamUri::ffmpegSource()).
+/// Records by encoding the frames it displays anew (QtVideoRecorder), as startRecording() is told: only while an output
+/// displays the stream, and after a reconnect in the same file.
 ///
-/// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
-/// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
-/// has failed: its StreamSupervisor reconnects it after 1 s, doubling up to 30 s, while autoReconnect is on, and it
-/// stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't failed: once FFmpeg gives up on it, the
-/// receiver listens again at once, for as long as it takes.
-class QtMultimediaVideoReceiver : public VideoReceiver
+/// Streaming once the player has buffered the stream or its first frame arrives; decoding while frames reach the
+/// output. A stream that errors, ends, or shows no frame for the config's timeout while displaying (5 s more for the
+/// first, while FFmpeg probes the stream) has failed, and SessionVideoReceiver reconnects or stops it. The player
+/// doesn't tell when its stream arrives, so the frames at the output are all its watchdog is told.
+class QtMultimediaVideoReceiver : public SessionVideoReceiver
 {
     Q_OBJECT
 
     friend class QtMultimediaVideoReceiverTest;
 
 public:
-    /// What QMediaPlayer plays for a stream URI: a URL, or for RTP over UDP an SDP description of it.
-    struct Source
-    {
-        QUrl url;
-        QByteArray sdp;
-        /// RTSP interleaved over its TCP connection, rather than over UDP with FFmpeg's fallback to TCP.
-        bool rtspOverTcp = false;
-        /// An SDP names the streams, this one's or the RTSP server's: FFmpeg needn't read the stream to find them.
-        bool streamsDescribed = false;
-    };
-
     explicit QtMultimediaVideoReceiver(QObject* parent = nullptr);
     ~QtMultimediaVideoReceiver() override;
-
-    /// The source for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, rtspt:// as rtsp:// over
-    /// TCP, as GStreamer plays it, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP as an SDP
-    /// description. Other URLs play as they are; nullopt for an invalid one.
-    static std::optional<Source> playerSource(const QString& uri);
 
     bool encodesRecordings() const override { return true; }
 
 protected:
-    void onConfigChanged() override;
-    void onActiveChanged() override;
-    void onRestartRequested() override;
-    void onReconnectRequested() override;
     void onVideoOutputChanged() override;
-    void onStartRecording(const QString& file, FileFormat format) override;
-    void onStopRecording() override;
+
+    bool hasSession() const override { return _player != nullptr; }
+
+    /// Queued, after the event loop has unloaded the replaced player.
+    void openWhenReady() override;
+    void openSession(const VideoStreamUri::FFmpegSource& source) override;
+    void closeSession() override;
+    bool pictureDue() const override;
+    void sampleSession() override;
+    /// A start while a recording is in progress, or awaits its first frame, is refused: reported as
+    /// recordingFinished() for @p file with the reason, while that recording goes on.
+    void beginRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
+    void endRecording() override;
 
 private:
-    /// A user start, stop or restart, a new config, or the output going: the backoff and the reconnect count start
-    /// over.
-    void _startOver();
-    /// Starts a new session when the stream should run; stops it otherwise.
-    void _start();
-    /// Opens the session _start() started, once the event loop has unloaded the replaced player.
-    void _open();
-    /// Ends the session: no player, frame or stats.
-    void _stopSession();
-    /// The session listens on a UDP port, for at least its timeout, and no stream has arrived.
-    bool _awaitingSender() const;
-    /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its
-    /// sender starts anew instead.
-    void _fail(const QString& reason);
     void _bindVideoSink();
     void _onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void _onVideoFrame(const QVideoFrame& frame);
-    /// Once a second while a session runs: the stats, and the frame watchdog.
-    void _sample();
     /// Hands @p frame, on display, to the recording.
     void _recordFrame(const QVideoFrame& frame);
     /// The time in the recording, in µs, of a frame of stream time @p streamUs that arrived @p arrivalUs after the
@@ -96,23 +63,14 @@ private:
     bool _openPending = false;
     /// Set by the destructor: no session opens while it waits for a recording's file to be finished.
     bool _closing = false;
-    /// The config the session started with.
-    Config _sessionConfig;
     QMetaObject::Connection _frameConnection;
-    StreamSupervisor* const _supervisor;
-    QTimer _sampleTimer;
-    /// Since the session's player was created.
-    QElapsedTimer _sinceOpened;
-    /// Since the session started, or its last frame.
-    QElapsedTimer _sinceFrame;
-    VideoStreamStatsSampler _statsSampler;
     quint64 _frames = 0;
     bool _gpuFrames = false;
     QtVideoRecorder* const _recorder;
     /// Created for the first recording: the frames on display reach the recorder through its frame input.
     QMediaCaptureSession* _recordingSession = nullptr;
     QVideoFrameInput* _frameInput = nullptr;
-    /// Since the recorder started a file: the times of the frames in it.
+    /// Since the first frame of the file being recorded: the times of the frames in it.
     QElapsedTimer _sinceRecordingStarted;
     /// The recording and stream times of the last frame the recording took; -1 before its first.
     qint64 _lastRecordedUs = -1;

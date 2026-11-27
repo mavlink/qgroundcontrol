@@ -1,7 +1,5 @@
 #include "GstRecordingSinkTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
@@ -17,7 +15,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
-#include "RecordingBranch.h"
+#include "RecordingSink.h"
 #include "VideoReceiver.h"
 
 namespace {
@@ -36,7 +34,7 @@ GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClo
     return gst_app_src_push_buffer(GST_APP_SRC(appsrc), buffer);
 }
 
-/// The H.264 test stream's first frames through h264parse into RecordingBranch's file sink.
+/// The H.264 test stream's first frames through h264parse into the recording sink.
 struct SinkRecording
 {
     /// Builds appsrc ! h264parse name=parse ! the file sink for @p path. Why not, or an empty string.
@@ -49,7 +47,7 @@ struct SinkRecording
         }
         const GStreamer::GstCapsPtr recordingCaps =
             GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
-        sinkBin = RecordingBranch::makeFileSink(path, format, recordingCaps.get());
+        sinkBin = GStreamer::RecordingSink::create(path, format, recordingCaps.get()).bin;
         if (!sinkBin || !gst_bin_add(pipeline.bin(), sinkBin.get()) ||
             !gst_element_link(pipeline.element("parse").get(), sinkBin.get())) {
             return QStringLiteral("%1: no file sink linked to the parser").arg(path);
@@ -139,7 +137,7 @@ void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
 
     const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get());
+        GStreamer::RecordingSink::create(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get()).bin;
     QVERIFY(fileSink);
     QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
     QVERIFY(gst_element_link(recorderValve.get(), fileSink.get()));
@@ -373,7 +371,5 @@ void GstRecordingSinkTest::_testRecordingIsSyncedAtItsEnd()
     QVERIFY(!finished.isEmpty());
     QVERIFY2(ending.written == finished, "The file changed after its last sync");
 }
-
-#endif
 
 UT_REGISTER_TEST(GstRecordingSinkTest, TestLabel::Integration)

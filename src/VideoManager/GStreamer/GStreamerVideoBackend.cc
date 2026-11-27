@@ -9,17 +9,8 @@
 #include "GstVideoReceiver.h"
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
-#include "QtMultimediaVideoReceiver.h"
 
 QGC_LOGGING_CATEGORY(GStreamerVideoBackendLog, "Video.GStreamer.VideoBackend")
-
-#ifdef Q_OS_ANDROID
-#include <jni.h>
-
-// GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which keeps what
-// this sets (Platform/gst_android_jni.c).
-extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
-#endif
 
 void GStreamerVideoBackend::configureQtGraphics(bool softwareRendering)
 {
@@ -33,14 +24,14 @@ VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
 #else
     constexpr bool gpuVideoPath = false;
 #endif
-    return {.streaming = true, .pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
+    return {.pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
 }
 
-VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
+VideoReceiver* GStreamerVideoBackend::createOwnReceiver(QObject* parent)
 {
     // GStreamer's setup isn't retried, so nothing plays through it in this process any more.
     if (state() == State::Failed) {
-        return new QtMultimediaVideoReceiver(parent);
+        return nullptr;
     }
     return new GstVideoReceiver(parent);
 }
@@ -107,14 +98,18 @@ void GStreamerVideoBackend::setDebugLevel(int level)
 
 void GStreamerVideoBackend::onMainWindowReady(QQuickWindow* window)
 {
+    // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
+    // decoders wait for it. The render thread publishes it; the ranks and the receivers are the GUI thread's.
+    HwBuffers::setGraphicsDevicePublishedHandler([] {
+        if (QCoreApplication* const app = QCoreApplication::instance()) {
+            (void) QMetaObject::invokeMethod(
+                app,
+                [] {
+                    GStreamer::DecoderRankApplier::instance().reapply();
+                    GstVideoReceiver::onGraphicsDeviceSettled();
+                },
+                Qt::QueuedConnection);
+        }
+    });
     GStreamer::onMainWindowReady(window);
-}
-
-void GStreamerVideoBackend::setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
-                                               [[maybe_unused]] void* classLoader)
-{
-#ifdef Q_OS_ANDROID
-    qgc_gst_android_set_jni_state(static_cast<JavaVM*>(javaVm), static_cast<jobject>(appContext),
-                                  static_cast<jobject>(classLoader));
-#endif
 }

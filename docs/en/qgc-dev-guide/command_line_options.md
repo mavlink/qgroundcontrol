@@ -47,6 +47,7 @@ The options/command line arguments are listed in the table below.
 | `--allow-multiple`                                        | (Desktop only) Allows more than one instance of _QGroundControl_ to run at a time.                                                |
 | `--swrast`                                                | (Windows and macOS only) Forces software rendering. Video decodes in software too, unless a decoder is selected in settings.      |
 | `--no-windows-assert-ui`                                  | (Windows only) Disables the assert dialog boxes.                                                                                  |
+| `--gst-debug=rtspsrc:5`, `--gst-debug-level=4`            | (Builds with GStreamer) GStreamer's own options, such as these two, go to GStreamer. Give a value after `=`, in one argument.     |
 
 ### Unit Test Options
 

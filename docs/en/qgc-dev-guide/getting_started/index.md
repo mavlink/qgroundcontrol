@@ -65,7 +65,7 @@ just run
 git clone -j8 https://github.com/mavlink/qgroundcontrol.git && cd qgroundcontrol
 uv run --frozen --project tools python tools/setup/install_python.py dev   # just and the other developer tools
 . tools/.venv/bin/activate
-just setup   # Homebrew packages and GStreamer, Qt, configure and build
+just setup   # Homebrew packages, Qt, configure and build
 just run
 ```
 
@@ -84,7 +84,7 @@ just run
 - `just setup` runs `just deps` ([Install Additional Packages](#install-additional-packages)), `just qt` ([Install Qt](#install-qt)), `just configure` and `just build`.
 - `just qt` downloads 0.3 to 0.4 GB and installs about 2.2 GB on Linux, 2.4 GB on macOS and 3.5 GB on Windows (measured for Qt 6.12.0 in November 2026). It does nothing when `just configure` already finds Qt {{ $frontmatter.qt_version }}.
 - On Windows, `just` runs its recipes with `sh`, so the `sh` from Git for Windows (by default in `C:\Program Files\Git\bin`) must be on your `PATH`.
-  `just deps` is left out there because it needs an Administrator prompt and is optional: CMake downloads the GStreamer SDK when you configure.
+  `just deps` is left out there because it needs an Administrator prompt and installs only optional tools: CMake downloads the GStreamer SDK when you configure.
 
 #### Prerequisites
 
@@ -149,10 +149,9 @@ Run the dependency script from the root of the cloned repository (`cd qgroundcon
 
 - **Linux** (Debian/Ubuntu, Fedora or Arch) and **macOS:** `uv run --frozen --project tools python tools/setup/install_dependencies` (or `just deps`).
   The platform is detected automatically; override it with `--platform debian|fedora|arch|macos`.
-  It installs system packages with apt, dnf or pacman (using `sudo`), or with Homebrew plus the GStreamer framework on macOS.
+  It installs system packages with apt, dnf or pacman (using `sudo`), or with Homebrew on macOS.
 - **Windows:** `uv run --frozen --project tools python tools/setup/install_dependencies --platform windows`, from an Administrator prompt.
-  By default it installs only GStreamer (x64 only, from the QGC dependency mirror).
-  Optional flags: `--nsis` installs NSIS (needed to build the installer), `--msvc` installs the Visual Studio 2022 Build Tools C++ workload, and `--vulkan` installs the Vulkan SDK.
+  It installs only what its flags ask for: `--nsis` installs NSIS (needed to build the installer), `--msvc` installs the Visual Studio 2022 Build Tools C++ workload, and `--vulkan` installs the Vulkan SDK.
 
 Useful options: `--dry-run` shows what would be installed, `--list` lists the packages by category, and on Linux `--category <name>` installs a single category (`core`, `qt`, `gstreamer`, `sdl`, `audio` or `misc`; on Debian/Ubuntu also `android`, which is `core` plus the JDK for Gradle).
 
@@ -166,7 +165,7 @@ See [Android and iOS](#android-and-ios) below for the QGC-specific settings.
 Optional features that depend on the operating system and user-installed libraries are described below.
 Features can be forcibly enabled or disabled by passing `-D` options to CMake (for example `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF`).
 
-- **Video Streaming/GStreamer:** Installed by the dependency script on Linux. On Windows, macOS, Android and iOS, CMake also downloads the GStreamer SDK at configure time if it isn't already installed. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/GStreamer/README.md) for details. Without GStreamer, network streams play through Qt Multimedia's player, which records a stream by encoding the video on display anew, so only while it is shown.
+- **Video Streaming/GStreamer:** Installed by the dependency script on Linux. On Windows, macOS, Android and iOS, CMake downloads the GStreamer SDK at configure time. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/GStreamer/README.md) for details. Without GStreamer, network streams play through Qt Multimedia's player, which records a stream by encoding the video on display anew, so only while it is shown.
   When cross-compiling for Windows ARM64 from an x64 host, disable video streaming with `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF` (this is what CI does): the ARM64 GStreamer SDK installer cannot run on an x64 host, so the automatic download fails.
 - **Windows Installer:** Building the Windows installer requires [NSIS](https://nsis.sourceforge.io/Download), which the dependency script installs when run with `--nsis`.
 

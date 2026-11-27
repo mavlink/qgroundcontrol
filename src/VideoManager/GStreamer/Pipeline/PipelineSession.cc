@@ -166,30 +166,25 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     qCDebug(GstVideoReceiverLog) << "Starting" << _settings.redactedUri << "lowLatency" << _settings.lowLatency;
 
     _pipeline = GStreamer::adoptFloating(gst_pipeline_new(_dotDumper.pipelineName().constData()));
-    // The sync handler is in place before anything can post: the context bridges must see NEED_CONTEXT, which upstream
-    // queries during PAUSED->PLAYING.
-    if (!_pipeline || !_bus.attach(
-                          _pipeline.get(), [this](GstMessage* message) { return _onBusSync(message); },
-                          [this](GstMessage* message) {
-                              if (_phase != Phase::Down) {
-                                  _handleMessage(message);
-                              }
-                          })) {
-        return Failure{.reason = QStringLiteral("pipeline creation failed"),
-                       .message = tr("Unable to create the video pipeline."),
-                       .permanent = true};
-    }
+    _bus.attach(
+        _pipeline.get(), [this](GstMessage* message) { return _onBusSync(message); },
+        [this](GstMessage* message) {
+            if (_phase != Phase::Down) {
+                _handleMessage(message);
+            }
+        });
     // Branch EOS reaches the bus wrapped in GstBinForwarded, so the recorder's own EOS can be told apart.
     g_object_set(_pipeline.get(), "message-forward", TRUE, nullptr);
 
     _tee = GStreamer::addToBin(_pipeline.get(), GStreamer::makeElement("tee"), "tee");
     const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(_tee ? gst_element_get_static_pad(_tee, "sink") : nullptr);
-    // The probe feeds the watchdog; without it the watchdog fires spuriously instead of reporting a real failure.
-    if (!teeSink || !_teeFrameProbe.add(teeSink.get(), GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this)) {
+    if (!teeSink) {
         return Failure{.reason = QStringLiteral("tee creation failed"),
                        .message = tr("Unable to create the video pipeline."),
                        .permanent = true};
     }
+    // The probe feeds the watchdog.
+    (void) _teeFrameProbe.add(teeSink.get(), GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this);
 
     const BranchContext context{
         .pipeline = _pipeline.get(),
@@ -197,9 +192,11 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
         .redactedUri = _settings.redactedUri,
         .dotDumper = &_dotDumper,
         .watchdog = &_watchdog,
+        .timings = _settings.timings,
         .post = [this](std::function<void()> task) { _post(std::move(task)); },
     };
-    _decoding = std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency);
+    _decoding =
+        std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency, _settings.softwareDecoderThreads);
     _recording = std::make_unique<RecordingBranch>(context, _listener);
     if (!_decoding->build() || !_recording->build()) {
         return Failure{.reason = QStringLiteral("branch creation failed"),
@@ -215,6 +212,7 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     sourceConfig.latencyMs = _settings.rtpJitterLatencyMs;
     sourceConfig.doRetransmission = (_settings.rtpJitterLatencyMs >= kMinRetransmissionLatencyMs) &&
                                     (sourceConfig.jitterBuffer != GStreamer::SourceFactory::JitterBuffer::None);
+    sourceConfig.rtspTcpTimeout = _settings.timings.rtspTcpTimeout;
     // Floating: the pipeline takes it over.
     _source = GStreamer::SourceFactory::create(_settings.uri, sourceConfig);
     if (!_source || !gst_bin_add(GST_BIN(_pipeline.get()), _source)) {
@@ -245,7 +243,7 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     return std::nullopt;
 }
 
-void PipelineSession::setVideoSink(GstElement* sink)
+void PipelineSession::setVideoSink(const GstQgc::SinkBin* sink)
 {
     if (_decoding && !_tearingDown()) {
         _decoding->setVideoSink(sink);
@@ -259,10 +257,10 @@ void PipelineSession::setRecording(const std::optional<RecordingBranch::Request>
     }
 }
 
-void PipelineSession::restartDecoder(const char* reason)
+void PipelineSession::restartDecoder(const char* reason, const QString& cause)
 {
     if (_decoding && !_tearingDown()) {
-        _decoding->restartDecoder(reason);
+        _decoding->restartDecoder(reason, cause);
     }
 }
 
@@ -305,8 +303,8 @@ void PipelineSession::shutdown()
     _phase = Phase::TearingDown;
 
     if (_recording && _pipeline && _recording->beginTeardown()) {
-        // Handles the recorder's messages until it is finalized. The pump discards every other type, which
-        // _handleMessage() ignores anyway while tearing down.
+        // Handles the recorder's messages until it is finalized. The pump discards every other type: while tearing
+        // down, _handleMessage() would only log rtspsrc's progress from them.
         _bus.pumpUntil(
             static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT),
             [this]() { return !_recording->finalizing(); }, QDeadlineTimer(RecordingBranch::kFinalizeTimeout));
@@ -382,12 +380,6 @@ void PipelineSession::_handleMessage(GstMessage* message)
             }
             break;
         case GST_MESSAGE_ELEMENT:
-            if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceServedMessage)) {
-                if (!_tearingDown()) {
-                    _decoding->onGraphicsDeviceServed();
-                }
-                break;
-            }
             if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceLostMessage)) {
                 if (_phase == Phase::Running) {
                     qCDebug(GstVideoReceiverLog) << "The graphics device is gone" << _settings.redactedUri;
@@ -453,12 +445,12 @@ void PipelineSession::_onBusError(GstMessage* message)
         }
         qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text
                                        << "debug:" << debugText;
+        // Either way the stream goes on, for a recording if not for the display. A plugin one decoder misses, the
+        // next one misses too.
         if (isPermanentError(message, error.get())) {
-            _fail({.reason = QStringLiteral("decoder error"),
-                   .message = tr("Unable to decode the video: %1").arg(description),
-                   .permanent = true});
+            _decoding->failDecoder(description);
         } else {
-            _decoding->restartDecoder("decoder error");
+            _decoding->restartDecoder("decoder error", description);
         }
         return;
     }
@@ -538,11 +530,6 @@ void PipelineSession::_logLatency()
 
 GstBusSyncReply PipelineSession::_onBusSync(GstMessage* message)
 {
-    // The context bridges answer NEED_CONTEXT synchronously and consume (unref) the requests they handle.
-    if (HwBuffers::onBusSyncMessage(message) == GST_BUS_DROP) {
-        return GST_BUS_DROP;
-    }
-
     if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
         // Closed now, before the failing element returns its flow error: the valve reports OK for a push that fails
         // after drop was set, which keeps the error out of the tee and so out of the other branch.

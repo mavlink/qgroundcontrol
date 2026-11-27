@@ -3,19 +3,26 @@
 #include <QtCore/QVariantList>
 #include <QtMultimedia/QMediaDevices>
 
+#include "QtVideoRecorder.h"
 #include "UVCDevices.h"
 #include "VideoBackend.h"
 
 namespace {
 
-bool hasStreaming()
-{
-    return VideoBackend::instance().capabilities().streaming;
-}
-
 bool hasPipelineSettings()
 {
     return VideoBackend::instance().capabilities().pipelineSettings;
+}
+
+/// Whether a receiver of this build takes the decoder settings and the RTP jitter latency: GStreamer's or the
+/// experimental FFmpeg one.
+bool hasDecoderSettings()
+{
+#ifdef QGC_FFMPEG_VIDEO
+    return true;
+#else
+    return hasPipelineSettings();
+#endif
 }
 
 }  // namespace
@@ -26,9 +33,10 @@ DECLARE_SETTINGGROUP(Video, "Video")
     (void) connect(new QMediaDevices(this), &QMediaDevices::videoInputsChanged, this,
                    &VideoSettings::_updateVideoSources);
 
-    _setForceVideoDecodeList();
-
     _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+#ifdef QGC_FFMPEG_VIDEO
+    _nameToMetaDataMap[videoBackendName]->addEnumInfo(VideoSettings::tr("FFmpeg (experimental)"), VideoBackendFFmpeg);
+#endif
 }
 
 void VideoSettings::_updateVideoSources()
@@ -79,10 +87,49 @@ void VideoSettings::_offerCameras(FactMetaData* metaData, Fact* fact, QVariantLi
         values.append(camera);
         labels.append(camera);
     }
+    _offerChoices(metaData, fact, values, labels, tr("%1 (not connected)"));
+}
+
+void VideoSettings::offerCameraFormats(const QStringList& formats)
+{
+    _cameraFormats = formats;
+    _updateCameraFormats();
+}
+
+void VideoSettings::_updateCameraFormats()
+{
+    QVariantList values{QString()};
+    QStringList labels{tr("Auto")};
+    for (const QString& format : std::as_const(_cameraFormats)) {
+        values.append(format);
+        labels.append(format);
+    }
+    _offerChoices(_nameToMetaDataMap.value(uvcCameraFormatName), _uvcCameraFormatFact, values, labels,
+                  tr("%1 (not offered)"));
+}
+
+void VideoSettings::_updateRecordingCodecs()
+{
+    QVariantList values{QString()};
+    QStringList labels{tr("Auto")};
+    for (const QString& key : QtVideoRecorder::recordingCodecs()) {
+        values.append(key);
+        labels.append(QtVideoRecorder::recordingCodecName(key));
+    }
+    _offerChoices(_nameToMetaDataMap.value(uvcRecordingCodecName), _uvcRecordingCodecFact, values, labels,
+                  tr("%1 (not available)"));
+}
+
+void VideoSettings::_offerChoices(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                                  const QString& absentLabel)
+{
+    if (!metaData) {
+        return;
+    }
     const QString selected = fact ? fact->rawValue().toString() : QString();
     if (!selected.isEmpty() && !values.contains(selected)) {
         values.append(selected);
-        labels.append(tr("%1 (not connected)").arg(selected));
+        labels.append(absentLabel.arg(selected));
     }
 
     if ((values == metaData->enumValues()) && (labels == metaData->enumStrings())) {
@@ -96,11 +143,9 @@ void VideoSettings::_offerCameras(FactMetaData* metaData, Fact* fact, QVariantLi
     }
 }
 
-DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
 DECLARE_SETTINGSFACT(VideoSettings, videoFit)
 DECLARE_SETTINGSFACT(VideoSettings, gridLines)
 DECLARE_SETTINGSFACT(VideoSettings, showTelemetryOverlay)
-DECLARE_SETTINGSFACT(VideoSettings, showRecControl)
 DECLARE_SETTINGSFACT(VideoSettings, recordingFormat)
 DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
@@ -110,41 +155,34 @@ DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
 DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, maxVideoTiles)
 DECLARE_SETTINGSFACT(VideoSettings, uvcTileCameraAsMainPicture)
-DECLARE_SETTINGSFACT(VideoSettings, uvcCameraFormat)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraRotation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraMirror)
 DECLARE_SETTINGSFACT(VideoSettings, uvcWhiteBalance)
 DECLARE_SETTINGSFACT(VideoSettings, uvcZoom)
 DECLARE_SETTINGSFACT(VideoSettings, uvcExposureCompensation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcFocusMode)
-DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingCodec)
 DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingQuality)
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
-{
-    if (!_videoSourceFact) {
-        _videoSourceFact = _createSettingsFact(videoSourceName);
-        // The stored source may be a camera that isn't attached, which is listed only while it is selected. Queued:
-        // the combo box that sets the source deletes its items when its model changes, which it mustn't do while one
-        // of them reports its click.
-        _updateVideoSources();
-        (void) connect(_videoSourceFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
-                       Qt::QueuedConnection);
+// DECLARE_SETTINGSFACT for a setting whose choices UPDATE lists. It lists them as the Fact is created, when the stored
+// value may be one that is no longer offered, and after each change of the value. Queued: the combo box that sets the
+// value deletes its items when its model changes, which it mustn't do while one of them reports its click.
+#define DECLARE_VIDEO_SETTINGSFACT_OFFERED(NAME, UPDATE)                                                               \
+    DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, NAME)                                                                  \
+    {                                                                                                                  \
+        if (!_##NAME##Fact) {                                                                                          \
+            _##NAME##Fact = _createSettingsFact(NAME##Name);                                                           \
+            UPDATE();                                                                                                  \
+            (void) connect(_##NAME##Fact, &Fact::rawValueChanged, this, &VideoSettings::UPDATE, Qt::QueuedConnection); \
+        }                                                                                                              \
+        return _##NAME##Fact;                                                                                          \
     }
-    return _videoSourceFact;
-}
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
-{
-    if (!_uvcTileCameraFact) {
-        _uvcTileCameraFact = _createSettingsFact(uvcTileCameraName);
-        // As for videoSource: the stored camera may not be attached, and the list changes only after the click.
-        _updateVideoSources();
-        (void) connect(_uvcTileCameraFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
-                       Qt::QueuedConnection);
-    }
-    return _uvcTileCameraFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(videoSource, _updateVideoSources)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcTileCamera, _updateVideoSources)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcCameraFormat, _updateCameraFormats)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcRecordingCodec, _updateRecordingCodecs)
+
+#undef DECLARE_VIDEO_SETTINGSFACT_OFFERED
 
 // DECLARE_SETTINGSFACT for a setting shown only where VISIBLE holds, read as the Fact is created.
 #define DECLARE_VIDEO_SETTINGSFACT_VISIBLE(NAME, VISIBLE)    \
@@ -157,54 +195,57 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
         return _##NAME##Fact;                                \
     }
 
+#ifdef QGC_FFMPEG_VIDEO
+// The experimental FFmpeg backend is a choice also without GStreamer, whose choice then plays through Qt Multimedia.
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, true)
+#else
 // Only a GStreamer build offers a choice: without GStreamer, Qt Multimedia plays the streams.
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
+#endif
 
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(lowLatencyMode, hasStreaming())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspAutoReconnect, hasStreaming())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasDecoderSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasDecoderSettings())
+DECLARE_SETTINGSFACT(VideoSettings, lowLatencyMode)
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasDecoderSettings())
+DECLARE_SETTINGSFACT(VideoSettings, rtspAutoReconnect)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceCpuVideoPath, VideoBackend::instance().capabilities().gpuVideoPath)
 
-// videoConversionElement / disablePixelAspectRatio reach the receivers' display sinks as construct-only properties
-// (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when they
-// change.
+// videoConversionElement reaches the receivers' display sinks as a construct-only property
+// (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when it
+// changes.
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoConversionElement, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(disablePixelAspectRatio, hasPipelineSettings())
+DECLARE_SETTINGSFACT(VideoSettings, forcedAspectRatio)
 
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspTimeout, hasStreaming())
+DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 
 #undef DECLARE_VIDEO_SETTINGSFACT_VISIBLE
 
-void VideoSettings::_setForceVideoDecodeList()
+double VideoSettings::aspectRatioOf(int forcedAspectRatio)
 {
-    if (!hasPipelineSettings()) {
-        return;
+    switch (forcedAspectRatio) {
+        case AspectRatio16x9:
+            return 16.0 / 9.0;
+        case AspectRatio4x3:
+            return 4.0 / 3.0;
+        case AspectRatio5x4:
+            return 5.0 / 4.0;
+        case AspectRatio3x2:
+            return 3.0 / 2.0;
+        case AspectRatio1x1:
+            return 1.0;
+        default:
+            return 0.0;
     }
-    static const QList<VideoDecoderOption> removeForceVideoDecodeList{
-#if defined(Q_OS_ANDROID)
-        VideoDecoderOption::DirectX3D, VideoDecoderOption::VideoToolbox, VideoDecoderOption::VAAPI,
-        VideoDecoderOption::NVIDIA,    VideoDecoderOption::Intel,
-#elif defined(Q_OS_LINUX)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VideoToolbox,
-#elif defined(Q_OS_WIN)
-        VideoDecoderOption::VideoToolbox,
-        VideoDecoderOption::Vulkan,
-#elif defined(Q_OS_MACOS)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VAAPI,
-#elif defined(Q_OS_IOS)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VAAPI,
-        VideoDecoderOption::NVIDIA,
-        VideoDecoderOption::Intel,
-#endif
-    };
+}
 
-    for (const VideoDecoderOption option : removeForceVideoDecodeList) {
-        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(static_cast<int>(option));
+bool VideoSettings::backendTakesDecoderSettings(int backend) const
+{
+#ifdef QGC_FFMPEG_VIDEO
+    if (backend == VideoBackendFFmpeg) {
+        return true;
     }
+#endif
+    return (backend == VideoBackendGStreamer) && hasPipelineSettings();
 }
 
 void VideoSettings::pruneUnavailableDecoders()
@@ -214,7 +255,7 @@ void VideoSettings::pruneUnavailableDecoders()
     }
     static const QList<VideoDecoderOption> hardwareFamilies{
         VideoDecoderOption::NVIDIA,       VideoDecoderOption::VAAPI, VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel, VideoDecoderOption::Vulkan,
+        VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel,
     };
 
     const QList<VideoDecoderOption> available = VideoBackend::instance().availableDecoderFamilies();

@@ -10,7 +10,7 @@
         "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
         "usbCamera": "QGroundControl.videoManager.hasUvcCamera",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
-        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0",
+        "decoderSettings": "QGroundControl.settingsManager.videoSettings.backendTakesDecoderSettings(QGroundControl.settingsManager.videoSettings.videoBackend.rawValue)",
         "recordingEncoded": "QGroundControl.videoManager.isUvc || (isStreamSource && QGroundControl.videoManager.primaryStream.encodesRecordings)"
     },
     "groups": [
@@ -30,8 +30,8 @@
                     "showWhen": "isStreamSource && tilesShown"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCCameraFormatComboBox",
+                    "setting": "videoSettings.uvcCameraFormat",
+                    "control": "combobox",
                     "showWhen": "usbCamera"
                 },
                 {
@@ -104,7 +104,8 @@
                     "control": "combobox"
                 },
                 {
-                    "setting": "videoSettings.aspectRatio",
+                    "setting": "videoSettings.forcedAspectRatio",
+                    "control": "combobox",
                     "showWhen": "!autoStreamConfig"
                 },
                 {
@@ -118,18 +119,39 @@
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "rtpLatencyVisible && gstreamer"
+                    "showWhen": "rtpLatencyVisible && decoderSettings"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect"
                 },
                 {
                     "setting": "videoSettings.forceCpuVideoPath",
-                    "showWhen": "gstreamer"
+                    "showWhen": "decoderSettings"
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder",
-                    "showWhen": "gstreamer"
+                    "showWhen": "decoderSettings"
+                },
+                {
+                    "setting": "videoSettings.softwareDecoderThreads",
+                    "showWhen": "decoderSettings"
+                }
+            ]
+        },
+        {
+            "heading": "Video Display",
+            "keywords": ["grid lines", "telemetry overlay", "osd", "display fit", "fit width", "fit height", "fill", "crop"],
+            "showWhen": "!sourceDisabled",
+            "controls": [
+                {
+                    "setting": "videoSettings.videoFit",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "videoSettings.gridLines"
+                },
+                {
+                    "setting": "videoSettings.showTelemetryOverlay"
                 }
             ]
         },
@@ -142,8 +164,8 @@
                     "setting": "videoSettings.recordingFormat"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCRecordingCodecComboBox",
+                    "setting": "videoSettings.uvcRecordingCodec",
+                    "control": "combobox",
                     "showWhen": "recordingEncoded"
                 },
                 {

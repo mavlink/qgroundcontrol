@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <chrono>
 #include <gst/gst.h>
@@ -70,7 +68,7 @@ GstPadProbeReturn countBuffers(GstPad* pad, GstPadProbeInfo* info, gpointer user
 /// @p bin's children, recursing into child bins when @p recurse.
 std::vector<GStreamer::GstElementPtr> childElements(GstBin* bin, bool recurse = false);
 
-/// Factory names of @p bin's children, sorted.
+/// Factory names of @p bin's children, sorted; the type name for one made without a factory (qgcqvideosink).
 QStringList childFactoryNames(GstBin* bin, bool recurse = false);
 
 /// The first element made by @p factoryName anywhere inside the bin @p bin, or null (also for a null @p bin).
@@ -124,6 +122,10 @@ public:
 
     /// Builds the pipeline from a gst-launch @p description; false, with error() set, when it doesn't parse.
     bool launch(const QString& description);
+    /// Builds the pipeline from a gst-launch @p description that leaves one source pad unlinked, and links it to
+    /// @p sink, which the pipeline takes over, floating or not. Raw video caps as the description's last item filter
+    /// that link, as they would in front of a sink the description named. False, with error() set, on failure.
+    bool launchInto(const QString& description, GstElement* sink);
 
     const QString& error() const { return _error; }
 
@@ -185,6 +187,10 @@ public:
     bool start(quint16 port);
     /// Stops sending, as a camera losing its link.
     void stop();
+    /// Stops, and sends to @p port again as an encoder that started over: from the stream's first frame, under another
+    /// SSRC, with sequence numbers that go on @p skipped after the last one sent and timestamps that go on from it. A
+    /// jitter buffer takes that for a stream that lost @p skipped packets.
+    bool restartAfterSkipping(quint16 port, quint16 skipped);
 
     /// Units sent since construction.
     int frames() const { return _frames.load(std::memory_order_relaxed); }
@@ -213,6 +219,9 @@ private:
     bool _keyframesHeld = false;
     std::atomic<int> _frames{0};
     std::atomic<int> _dropOneIn{0};
+    /// Payloader properties for the sequence number and timestamp of the next start()'s first packet; empty to have
+    /// the payloader choose them, at random.
+    QString _firstPacket;
     // Only the sender's streaming thread uses it.
     int _rtpPushes = 0;
     // Declared last, so the pipeline stops before the state its callback and probe use goes away.
@@ -236,6 +245,22 @@ private:
 /// Name and current rank of the registry's video decoder factories: all of them, or with @p hardware only the hardware
 /// (true) or the software (false) ones, as GStreamer::isHardwareDecoderFactory() tells them.
 QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware = std::nullopt);
+
+/// The factory name of the stub decoder.
+inline constexpr char kStubDecoderName[] = "qgcstubh264dec";
+
+/// How the stub decoder fails, as a hardware decoder may in a VM.
+enum class StubDecoderFailure
+{
+    None,          ///< It takes the stream and gives nothing back, no frame and no message either.
+    AtFirstFrame,  ///< It posts an error for the first frame.
+    AtCaps,        ///< It refuses the stream's caps with an error, as one whose hardware session can't be created.
+};
+
+/// Registers the stub decoder, unranked, and returns its factory: an H.264 "hardware" decoder (so says its klass) that
+/// fails as @p failure says. The factory stays registered: the element class points at it for good. Null when the
+/// registry refuses it.
+GStreamer::GstFeaturePtr registerStubDecoder(StubDecoderFailure failure = StubDecoderFailure::None);
 
 /// An RTSP server on a free loopback port, for driving rtspsrc without gst-rtsp-server. Given an SDP, it answers
 /// OPTIONS and DESCRIBE and records each SETUP URL without answering it, so the client stops right after picking
@@ -296,5 +321,3 @@ private:
             QSKIP(qPrintable(QStringLiteral("GStreamer factory unavailable: %1").arg(gstTestMissing))); \
         }                                                                                               \
     } while (false)
-
-#endif

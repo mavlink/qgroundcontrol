@@ -11,7 +11,7 @@
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_WIN
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #endif
 
 QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
@@ -46,7 +46,8 @@ constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     {"amcviddec-omxgoogle", VideoDecoderOption::Default, false},
     {"amcviddec-c2android", VideoDecoderOption::Default, false},
     {"amcviddec-", VideoDecoderOption::Default, true},
-    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by VideoDecoderOption::VAAPI (modern va* only).
+    // Legacy gstreamer-vaapi: out of autoplug under VideoDecoderOption::Default on Linux, and never bumped by
+    // VideoDecoderOption::VAAPI (modern va* only).
     {"vaapi", VideoDecoderOption::Default, true},
     {"va", VideoDecoderOption::VAAPI, true},
     {"nv", VideoDecoderOption::NVIDIA, true},
@@ -57,7 +58,8 @@ constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     {"vt", VideoDecoderOption::VideoToolbox, true},
     {"qsv", VideoDecoderOption::Intel, true},
     {"msdk", VideoDecoderOption::Intel, true},
-    {"vulkan", VideoDecoderOption::Vulkan, true},
+    // No family: gst-vulkan's decoders output VulkanImage memory only, which no sink takes.
+    {"vulkan", VideoDecoderOption::Default, true},
 };
 
 const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
@@ -90,10 +92,6 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
     }
 
     const gchar* factoryName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-    if (!factoryName) {
-        return false;
-    }
-
     if (const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName)) {
         return entry->isHardware;
     }
@@ -175,7 +173,8 @@ QList<DecoderInfo> installedDecoders()
     return decoders;
 }
 
-/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows.
+/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows,
+/// VideoToolbox on iOS.
 RankTraits currentRankTraits()
 {
     RankTraits traits;
@@ -204,6 +203,8 @@ RankTraits currentRankTraits()
     // Both known once the scene graph has published Qt's device, which has the ranks applied again (reapply()).
     traits.d3d11OpensD3D12 = !d3d12 && HwBuffers::d3d11OpensD3D12();
     traits.rhiAdapterLuid = HwBuffers::graphicsAdapterLuid();
+#elif defined(Q_OS_IOS)
+    traits.preferVideoToolbox = true;
 #endif
     traits.softwareRendering = HwBuffers::softwareRenderingRequested();
     return traits;
@@ -309,14 +310,7 @@ bool DecoderRankApplier::_setRank(GstRegistry* registry, const char* featureName
 
 GstRegistry* DecoderRankApplier::_registry()
 {
-    if (!gst_is_initialized()) {
-        return nullptr;
-    }
-    GstRegistry* const registry = gst_registry_get();
-    if (!registry) {
-        qCCritical(GStreamerDecoderRanksLog) << "Failed to get gstreamer registry.";
-    }
-    return registry;
+    return gst_is_initialized() ? gst_registry_get() : nullptr;
 }
 
 void DecoderRankApplier::_restore(GstRegistry* registry)
@@ -345,11 +339,6 @@ ScopedDecoderOption::~ScopedDecoderOption()
     }
 }
 
-bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
-{
-    return DecoderRankApplier::instance().setRank(registry, featureName, rank);
-}
-
 void setCodecPriorities(VideoDecoderOption option)
 {
     DecoderRankApplier::instance().apply(option);
@@ -366,12 +355,6 @@ QList<VideoDecoderOption> availableDecoderFamilies()
     forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
         const VideoDecoderOption family =
             decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
-#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
-        // Only a build with the opt-in Vulkan GPU path has a use for them: no sink takes their VulkanImage memory.
-        if (family == VideoDecoderOption::Vulkan) {
-            return;
-        }
-#endif
         if ((family != VideoDecoderOption::Default) && !families.contains(family)) {
             families.append(family);
         }

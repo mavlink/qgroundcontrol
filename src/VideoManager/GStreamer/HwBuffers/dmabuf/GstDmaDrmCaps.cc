@@ -1,6 +1,6 @@
 #include "GstDmaDrmCaps.h"
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <algorithm>
 #include <drm_fourcc.h>
 #include <gst/video/video-info-dma.h>
@@ -10,6 +10,7 @@
 
 #include "GstDmaBufVulkanImport.h"
 #include "GstEglHelpers.h"
+#include "GstQtDmaBufImport.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
 #include <EGL/egl.h>
@@ -20,8 +21,6 @@ QGC_LOGGING_CATEGORY(GstDmaDrmCapsLog, "Video.GStreamer.HwBuffers.GstDmaDrmCaps"
 namespace GstHw {
 
 namespace {
-
-constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 
 // Qt's importer binds one EGLImage per format plane, so compressed layouts and those with auxiliary planes (CCS, DCC,
 // AFBC, UBWC) can't be imported. Plain vendor tilings can: the modifier goes with each plane.
@@ -43,28 +42,12 @@ bool modifierImportable(guint64 modifier) noexcept
     }
 }
 
-// What GstQtDmaBufImport::planeFourccs() picks for the Qt counterpart of @p format: one R8/GR88 (8-bit) or
-// R16/GR1616 (16-bit) image per plane of a multi-plane format, the format's own fourcc for a single-plane one.
-guint32 planeImportFourcc(GstVideoFormat format, guint plane) noexcept
+// The DRM fourcc the importer samples plane @p plane of a @p pixelFormat frame through; 0 when it imports no such
+// plane.
+guint32 planeImportFourcc(QVideoFrameFormat::PixelFormat pixelFormat, guint plane)
 {
-    const GstVideoFormatInfo* finfo = gst_video_format_get_info(format);
-    if (!finfo || (plane >= GST_VIDEO_FORMAT_INFO_N_PLANES(finfo))) {
-        return 0;
-    }
-    if (GST_VIDEO_FORMAT_INFO_N_PLANES(finfo) == 1) {
-        return gst_video_dma_drm_fourcc_from_format(format);
-    }
-    gint components[GST_VIDEO_MAX_COMPONENTS];
-    gst_video_format_info_component(finfo, plane, components);
-    const int count = static_cast<int>(std::ranges::count_if(components, [](gint c) { return c >= 0; }));
-    const int pixelStride = (components[0] >= 0) ? GST_VIDEO_FORMAT_INFO_PSTRIDE(finfo, components[0]) : 0;
-    if (count == 1) {
-        return (pixelStride == 1) ? DRM_FORMAT_R8 : (pixelStride == 2) ? DRM_FORMAT_R16 : 0;
-    }
-    if (count == 2) {
-        return (pixelStride == 2) ? DRM_FORMAT_GR88 : (pixelStride == 4) ? DRM_FORMAT_GR1616 : 0;
-    }
-    return 0;
+    const GstQtDmaBufImport::PlaneFourccs fourccs = GstQtDmaBufImport::planeFourccs(pixelFormat);
+    return (plane < static_cast<guint>(fourccs.count)) ? fourccs.fourcc[plane] : 0;
 }
 
 /// Appends the drm-format entry for (@p fourcc, @p modifier) to the comma-separated @p entries; false when GStreamer
@@ -140,14 +123,15 @@ private:
 
 }  // namespace
 
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, QtPixelFormatOf pixelFormatOf,
+                                     void* display)
 {
-    if (formats.empty()) {
+    if (formats.empty() || !pixelFormatOf) {
         return std::string();
     }
 
     const auto dpy = static_cast<EGLDisplay>(display);
-    if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
+    if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, GstEglHelpers::kDmaBufModifiersExt)) {
         qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (no DMABuf import display, or no "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";
         return std::string();
@@ -183,7 +167,7 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, vo
         for (const EGLuint64KHR mod : modifiers.all(fourcc)) {
             bool importable = modifierImportable(mod);
             for (guint plane = 0; importable && (plane < planes); ++plane) {
-                const guint32 planeFourcc = planeImportFourcc(format, plane);
+                const guint32 planeFourcc = planeImportFourcc(pixelFormatOf(format), plane);
                 importable = (planeFourcc != 0) && std::ranges::any_of(modifiers.sampleable(planeFourcc),
                                                                        [mod](EGLuint64KHR m) { return m == mod; });
             }
@@ -203,10 +187,14 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, vo
     return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
 }
 
-std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoFormat> formats)
+std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoFormat> formats,
+                                  [[maybe_unused]] QtPixelFormatOf pixelFormatOf)
 {
     std::string entries;
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    if (!pixelFormatOf) {
+        return std::string();
+    }
     for (const GstVideoFormat format : formats) {
         const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(format);
         const guint planes = GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(format));
@@ -214,11 +202,12 @@ std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoForma
             continue;
         }
         // The modifiers the first plane imports with, kept when every other plane imports with them too.
-        for (const quint64 modifier : GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, 0))) {
+        const QVideoFrameFormat::PixelFormat pixelFormat = pixelFormatOf(format);
+        for (const quint64 modifier : GstDmaBufVulkan::importableModifiers(planeImportFourcc(pixelFormat, 0))) {
             bool importable = modifierImportable(modifier);
             for (guint plane = 1; importable && (plane < planes); ++plane) {
                 const std::vector<quint64> planeModifiers =
-                    GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, plane));
+                    GstDmaBufVulkan::importableModifiers(planeImportFourcc(pixelFormat, plane));
                 importable = std::ranges::find(planeModifiers, modifier) != planeModifiers.end();
             }
             if (importable) {
@@ -238,13 +227,8 @@ bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept
 {
     return modifierImportable(modifier);
 }
-
-guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexcept
-{
-    return planeImportFourcc(format, plane);
-}
 #endif
 
 }  // namespace GstHw
 
-#endif  // QGC_HAS_GST_DMABUF_GPU_PATH && GST_CHECK_VERSION(1, 24, 0)
+#endif  // QGC_HAS_GST_DMABUF_GPU_PATH

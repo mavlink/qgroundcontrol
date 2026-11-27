@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import io
-import os
-import sys
 from email.message import Message
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call, patch
 from urllib.error import HTTPError
 
 import pytest
-from common.build_config import get_gstreamer_version
 from setup.install_dependencies import _cli, _debian, _linux, _macos, _windows
 from setup.install_dependencies import _common as install_common
 from setup.install_dependencies._cli import parse_args
@@ -165,7 +162,7 @@ def test_gstreamer_build_excluded_from_aggregate() -> None:
         for pkg in pkgs
     }
     only_gstreamer_build = set(get_debian_packages("gstreamer_build")) - others
-    assert {"libva-dev", "yasm"} <= only_gstreamer_build
+    assert {"libva-dev", "libopenh264-dev"} <= only_gstreamer_build
     assert not only_gstreamer_build & set(get_debian_packages())
 
 
@@ -254,6 +251,20 @@ def test_install_macos_installs_the_requested_homebrew_packages() -> None:
         assert _macos.install_macos(packages=["nasm"]) is False
 
     brew.assert_called_once_with(["nasm"])
+
+
+def test_install_macos_installs_only_homebrew_packages() -> None:
+    with (
+        patch.object(_macos._c, "has_command", return_value=True),
+        patch.object(_macos._c, "is_ci", return_value=True),
+        patch.object(_macos._c, "get_brew_install_command", return_value=["brew", "install"]),
+        patch.object(_macos._c, "download_file") as download,
+        patch.object(_macos._c, "run_command", return_value=True) as run_command,
+    ):
+        assert _macos.install_macos() is True
+
+    download.assert_not_called()
+    assert [entry.args[0] for entry in run_command.call_args_list] == [["brew", "install"]]
 
 
 @pytest.mark.parametrize(
@@ -404,11 +415,6 @@ def test_parse_args_category() -> None:
     assert args.category == "qt"
 
 
-def test_parse_args_skip_gstreamer() -> None:
-    args = parse_args(["--platform", "windows", "--skip-gstreamer"])
-    assert args.skip_gstreamer is True
-
-
 def test_parse_args_vulkan() -> None:
     args = parse_args(["--platform", "windows", "--vulkan"])
     assert args.vulkan is True
@@ -435,23 +441,18 @@ def test_download_file_dry_run(tmp_path: Path) -> None:
     assert not dest.exists()
 
 
-@pytest.mark.parametrize("warn_on_failure", [False, True])
-def test_download_file_network_error(tmp_path: Path, warn_on_failure: bool) -> None:
+def test_download_file_network_error(tmp_path: Path) -> None:
     dest = tmp_path / "test.bin"
     with (
         patch("urllib.request.urlopen", side_effect=OSError("unreachable")) as request,
         patch("common.net.time.sleep") as sleep,
-        patch.object(install_common, "log_warn") as warn,
         patch.object(install_common, "log_error") as error,
     ):
-        result = download_file(
-            "https://example.com/test.bin", dest, retries=2, warn_on_failure=warn_on_failure
-        )
+        result = download_file("https://example.com/test.bin", dest, retries=2)
     assert result is False
     assert request.call_count == 3
     assert sleep.call_count == 2
-    assert warn.call_count == int(warn_on_failure)
-    assert error.call_count == int(not warn_on_failure)
+    assert error.call_count == 1
     assert not dest.exists()
 
 
@@ -588,87 +589,6 @@ def test_get_brew_install_command_brew_list_failure_passes_all() -> None:
     assert cmd == ["brew", "install", "--quiet", "pkgconf", "ninja"]
 
 
-@pytest.mark.parametrize(
-    ("fallback_package", "mirror_succeeds"),
-    [(None, True), ("runtime", True), ("devel", True), ("runtime", False), ("devel", False)],
-)
-def test_install_macos_gstreamer_fallback(
-    fallback_package: str | None, mirror_succeeds: bool, tmp_path: Path
-) -> None:
-    from common.gstreamer import mirror_url, package_filename, package_url
-
-    version = "1.28.4"
-    packages = _macos.GSTREAMER_PACKAGES
-    filenames = {label: package_filename(package, version) for label, package in packages.items()}
-    checksums = {"macos": "a" * 64, "macos_devel": "b" * 64}
-
-    def download(url: str, dest: Path, *args: object, **kwargs: object) -> bool:
-        if fallback_package is None or dest.name != filenames[fallback_package]:
-            return True
-        return mirror_succeeds and url.startswith(mirror_url("macos", version).rsplit("/", 1)[0])
-
-    with (
-        patch.object(_macos._c, "has_command", return_value=True),
-        patch.object(_macos._c, "is_ci", return_value=True),
-        patch.object(_macos._c, "get_brew_install_command", return_value=["brew", "install"]),
-        patch.object(_macos._c, "get_build_config_value", return_value=version),
-        patch.object(
-            _macos._c, "pinned_checksum", side_effect=lambda _, artifact: checksums[artifact]
-        ),
-        patch.object(_macos.Path, "exists", return_value=False),
-        patch.object(_macos._c, "download_dir", return_value=tmp_path),
-        patch.object(_macos._c, "download_file", side_effect=download) as dl,
-        patch.object(_macos._c, "run_command", return_value=True) as run_command,
-    ):
-        assert _macos.install_macos() is mirror_succeeds
-
-    for label, package in packages.items():
-        package_calls = [
-            entry for entry in dl.call_args_list if entry.args[1].name == filenames[label]
-        ]
-        expected_urls = [package_url(package, version)]
-        if label == fallback_package:
-            expected_urls.append(mirror_url(package, version))
-        assert [entry.args[0] for entry in package_calls] == expected_urls
-        assert all(entry.kwargs["expected_sha256"] == checksums[package] for entry in package_calls)
-        assert package_calls[0].kwargs["warn_on_failure"] is True
-
-    installs = [
-        entry.args[0] for entry in run_command.call_args_list if entry.args[0][0] == "installer"
-    ]
-    if mirror_succeeds:
-        assert [os.path.basename(command[2]) for command in installs] == list(filenames.values())
-        for entry in run_command.call_args_list[1:]:
-            assert entry.kwargs == {"sudo": True}
-        assert all(command[3:] == ["-target", "/"] for command in installs)
-    else:
-        assert installs == []
-
-
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX cache directory and permissions")
-def test_download_dir_is_private_to_the_user(monkeypatch, tmp_path: Path) -> None:
-    # Not a shared temporary directory, where another user could swap a package before install.
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
-    path = install_common.download_dir("gstreamer")
-    assert path == tmp_path / "qgc/gstreamer-downloads"
-    assert path.stat().st_mode & 0o777 == 0o700
-
-
-def test_dry_run_keeps_downloads_from_earlier_attempts(tmp_path: Path) -> None:
-    kept = tmp_path / "gstreamer-1.0-1.28.4-universal.pkg"
-    kept.write_bytes(b"pkg")
-    with (
-        patch.object(_macos._c, "has_command", return_value=True),
-        patch.object(_macos._c, "get_brew_install_command", return_value=["true"]),
-        patch.object(_macos._c, "get_build_config_value", return_value="1.28.4"),
-        patch.object(_macos._c, "pinned_checksum", return_value="a" * 64),
-        patch.object(_macos.Path, "exists", return_value=False),
-        patch.object(_macos._c, "download_dir", return_value=tmp_path),
-    ):
-        assert _macos.install_macos(dry_run=True) is True
-    assert kept.read_bytes() == b"pkg"
-
-
 def test_homebrew_bootstrap_downloads_with_retries_and_runs_non_interactively() -> None:
     def download(url: str, dest: Path, *args: object, **kwargs: object) -> bool:
         dest.write_bytes(b"echo brew")
@@ -707,58 +627,6 @@ def test_windows_installers_are_pinned_and_verified(install: str, url: str, sha2
         assert getattr(_windows, install)() is False
     assert dl.call_args.args[0] == pinned_url
     assert dl.call_args.kwargs["expected_sha256"] == getattr(_windows, sha256)
-
-
-def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
-    version = get_gstreamer_version("windows")
-    monkeypatch.setenv("PROCESSOR_ARCHITECTURE", "AMD64")
-    monkeypatch.setattr(_windows, "WINDOWS_GSTREAMER_PREFIX", str(tmp_path))
-    monkeypatch.setattr(_windows._c, "download_dir", lambda _name: tmp_path)
-    with (
-        patch.object(_windows._c, "download_file", side_effect=[False, True]) as dl,
-        patch.object(_windows._c, "run_command", return_value=True) as rc,
-        patch.object(_windows._c, "set_env_var"),
-        patch.object(_windows._c, "add_to_path"),
-    ):
-        assert _windows.install_windows_gstreamer(version) is True
-
-    installer = dl.call_args_list[0].args[1]
-    assert installer.name == f"gstreamer-1.0-msvc-x86_64-{version}.exe"
-    # Upstream first, then QGC's mirror.
-    assert [call.args[0] for call in dl.call_args_list] == [
-        (
-            f"https://gstreamer.freedesktop.org/data/pkg/windows/{version}/msvc/"
-            f"gstreamer-1.0-msvc-x86_64-{version}.exe"
-        ),
-        (
-            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
-            f"gstreamer-1.0-msvc-x86_64-{version}.exe"
-        ),
-    ]
-    expected_sha256 = _windows._c.pinned_checksum(version, "windows_msvc_x64")
-    assert expected_sha256
-    # Upstream gets fewer retries and a time limit, so a slow upstream cannot use up the attempt.
-    assert dl.call_args_list[0].kwargs == {
-        "retries": _windows._c.FALLBACK_RETRIES,
-        "warn_on_failure": True,
-        "expected_sha256": expected_sha256,
-        "time_limit": _windows._c.FALLBACK_TIME_LIMIT,
-    }
-    assert dl.call_args_list[1].kwargs == {
-        "retries": 3,
-        "warn_on_failure": False,
-        "expected_sha256": expected_sha256,
-        "time_limit": None,
-    }
-    assert rc.call_args.args[0] == [
-        str(installer),
-        "/VERYSILENT",
-        "/SUPPRESSMSGBOXES",
-        "/SP-",
-        "/NORESTART",
-        "/TYPE=devel",
-        f"/DIR={_windows.WINDOWS_GSTREAMER_PREFIX}",
-    ]
 
 
 def test_install_windows_nsis_already_installed(monkeypatch, tmp_path: Path) -> None:
@@ -908,13 +776,11 @@ def test_install_windows_dispatch_invokes_msvc_and_nsis() -> None:
     with (
         patch.object(_windows, "install_windows_msvc", return_value=True) as msvc,
         patch.object(_windows, "install_windows_nsis", return_value=True) as nsis,
-        patch.object(_windows, "install_windows_gstreamer", return_value=True),
         patch.object(_windows, "install_windows_vulkan", return_value=True),
     ):
         assert (
             _windows.install_windows(
                 dry_run=False,
-                skip_gstreamer=True,
                 msvc=True,
                 msvc_arm64=True,
                 nsis=True,

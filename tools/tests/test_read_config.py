@@ -43,16 +43,6 @@ def _write_config(path: Path) -> None:
             "minimum_version": "6.8.0",
             "modules": "qtpositioning qtserialport qtscxml",
         },
-        "gstreamer": {
-            "version": {
-                "default": "1.28.2",
-                "minimum": "1.24.0",
-                "android": "1.28.1",
-                "macos": "1.28.2",
-                "ios": "1.28.2",
-                "windows": "1.26.6",
-            },
-        },
         "android": {"platform": "35"},
     }
     path.write_text(json.dumps(config), encoding="utf-8")
@@ -115,7 +105,6 @@ def test_export_bash_format(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert 'export QT_VERSION="6.10.2"' in result.stdout
     assert 'export QT_MODULES="qtpositioning qtserialport qtscxml"' in result.stdout
-    assert 'export GSTREAMER_VERSION="1.28.2"' in result.stdout
 
 
 def test_export_bash_preserves_bang_character(tmp_path: Path) -> None:
@@ -139,12 +128,6 @@ def test_github_output_includes_ios_modules(tmp_path: Path, gh_output: Path, gh_
     expected = {
         "qt_version": "6.10.2",
         "qt_minimum_version": "6.8.0",
-        "gstreamer_version": "1.28.2",
-        "gstreamer_windows_version": "1.26.6",
-        "gstreamer_minimum_version": "1.24.0",
-        "gstreamer_android_version": "1.28.1",
-        "gstreamer_macos_version": "1.28.2",
-        "gstreamer_ios_version": "1.28.2",
         # Derived value excludes qtserialport and normalizes spacing.
         "qt_modules_ios": "qtpositioning qtscxml",
     }

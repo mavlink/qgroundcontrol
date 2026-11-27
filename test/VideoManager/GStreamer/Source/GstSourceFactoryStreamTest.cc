@@ -1,7 +1,5 @@
 #include "GstSourceFactoryStreamTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/gst.h>
 #include <thread>
@@ -9,11 +7,13 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QRegularExpression>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
 #include "GStreamerTestHelpers.h"
+#include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
 #include "PipelineStatsProbe.h"
@@ -156,6 +156,81 @@ private:
     QTcpServer _server;
     QHash<QTcpSocket*, QByteArray> _pending;
     QList<QByteArray> _methods;
+};
+
+/// An mpegts:// source bin listening on a free loopback port, with the buffers it hands on counted at a fakesink, and
+/// a sender that muxes each buffer it is given into a PES packet. The sender stays up after the last one, as nothing
+/// tells a UDP receiver that a stream is over.
+class MpegTsLoopback
+{
+public:
+    /// Why the receiver doesn't play or the sender of @p mediaType isn't ready; empty when they are.
+    QString start(const char* mediaType = "video/x-h264")
+    {
+        source = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:0"), GStreamer::SourceFactory::Config{});
+        GstElement* const sink = gst_element_factory_make("fakesink", nullptr);
+        if (!source || !sink) {
+            return QStringLiteral("no mpegts:// source bin or no fakesink");
+        }
+        g_object_set(sink, "sync", FALSE, "async", FALSE, nullptr);
+        if (!gst_bin_add(_receiver.bin(), source.get()) || !gst_bin_add(_receiver.bin(), sink)) {
+            return QStringLiteral("the receiver's elements don't go into its pipeline");
+        }
+        (void) g_signal_connect(source.get(), "pad-added", G_CALLBACK(linkSourcePadToSink), sink);
+        sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
+        if (!gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr) ||
+            !_receiver.play()) {
+            return QStringLiteral("the receiver doesn't play");
+        }
+        gint port = 0;
+        g_object_get(GstTest::findByFactory(source.get(), "udpsrc").get(), "port", &port, nullptr);
+        if (port <= 0) {
+            return QStringLiteral("the source listens on no port");
+        }
+        if (!_sender.launch(QStringLiteral("appsrc name=src format=time "
+                                           "caps=%2,stream-format=byte-stream,alignment=au ! "
+                                           "mpegtsmux ! udpsink host=127.0.0.1 port=%1 sync=false async=false")
+                                .arg(port)
+                                .arg(QLatin1StringView(mediaType))) ||
+            !_sender.play()) {
+            return QStringLiteral("the sender doesn't play: %1").arg(_sender.error());
+        }
+        _appSource = _sender.element("src");
+        return {};
+    }
+
+    /// Sends @p payload as the PES packet of the picture @p frame, in the test streams' frame rate.
+    bool send(const QByteArray& payload, qsizetype frame) const
+    {
+        GstBuffer* const buffer = gst_buffer_new_memdup(payload.constData(), static_cast<gsize>(payload.size()));
+        GST_BUFFER_PTS(buffer) = frame * (GST_SECOND / GstTest::kStreamFrameRate);
+        GstFlowReturn pushed = GST_FLOW_ERROR;
+        g_signal_emit_by_name(_appSource.get(), "push-buffer", buffer, &pushed);
+        gst_buffer_unref(buffer);
+        return pushed == GST_FLOW_OK;
+    }
+
+    /// The "alignment" the source bin's @p parserFactory is told its input has; empty when told none, or without
+    /// that parser.
+    QByteArray parserInputAlignment(const char* parserFactory = "h264parse") const
+    {
+        const GStreamer::GstElementPtr parser = GstTest::findByFactory(source.get(), parserFactory);
+        const GStreamer::GstPadPtr parserSink =
+            GStreamer::adoptPad(parser ? gst_element_get_static_pad(parser.get(), "sink") : nullptr);
+        const GStreamer::GstCapsPtr caps =
+            GStreamer::adoptCaps(parserSink ? gst_pad_get_current_caps(parserSink.get()) : nullptr);
+        return caps ? QByteArray(gst_structure_get_string(gst_caps_get_structure(caps.get(), 0), "alignment"))
+                    : QByteArray();
+    }
+
+    GStreamer::GstElementPtr source;
+    GStreamer::GstPadPtr sinkPad;
+    std::atomic<int> frames{0};
+
+private:
+    GstTest::TestPipeline _receiver{gst_pipeline_new("mpegts-loopback")};
+    GstTest::TestPipeline _sender;
+    GStreamer::GstElementPtr _appSource;
 };
 
 }  // namespace
@@ -356,63 +431,101 @@ void GstSourceFactoryStreamTest::_testMpegTsStreamObjectCarriesParsedCaps()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mpegtsmux", "tsdemux");
 
-    const GStreamer::GstElementPtr source =
-        GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:0"), GStreamer::SourceFactory::Config{});
-    QVERIFY(source);
-
-    GstTest::TestPipeline receiver(gst_pipeline_new("mpegts-stream-object"));
-    GstElement* const sink = gst_element_factory_make("fakesink", nullptr);
-    QVERIFY(sink);
-    g_object_set(sink, "sync", FALSE, "async", FALSE, nullptr);
-    QVERIFY(gst_bin_add(receiver.bin(), source.get()));
-    QVERIFY(gst_bin_add(receiver.bin(), sink));
-    (void) g_signal_connect(source.get(), "pad-added", G_CALLBACK(linkSourcePadToSink), sink);
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
-    std::atomic<int> frames{0};
-    QVERIFY(gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr));
-    QVERIFY(receiver.play());
-    gint port = 0;
-    g_object_get(GstTest::findByFactory(source.get(), "udpsrc").get(), "port", &port, nullptr);
-    QVERIFY(port > 0);
+    MpegTsLoopback loopback;
+    const QString startError = loopback.start();
+    QVERIFY2(startError.isEmpty(), qPrintable(startError));
 
     // The test stream in MPEG-TS, all of it at once.
     QString loadError;
     const QList<GstTest::AccessUnit> units =
         GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
     QVERIFY2(!units.isEmpty(), qPrintable(loadError));
-    GstTest::TestPipeline sender;
-    QVERIFY2(sender.launch(QStringLiteral("appsrc name=src format=time "
-                                          "caps=video/x-h264,stream-format=byte-stream,alignment=au ! h264parse ! "
-                                          "mpegtsmux ! udpsink host=127.0.0.1 port=%1 sync=false async=false")
-                               .arg(port)),
-             qPrintable(sender.error()));
-    QVERIFY(sender.play());
-    const GStreamer::GstElementPtr appSource = sender.element("src");
     for (qsizetype i = 0; i < units.size(); ++i) {
-        GstBuffer* const buffer =
-            gst_buffer_new_memdup(units.at(i).bytes.constData(), static_cast<gsize>(units.at(i).bytes.size()));
-        GST_BUFFER_PTS(buffer) = i * (GST_SECOND / GstTest::kStreamFrameRate);
-        GstFlowReturn pushed = GST_FLOW_ERROR;
-        g_signal_emit_by_name(appSource.get(), "push-buffer", buffer, &pushed);
-        gst_buffer_unref(buffer);
-        QCOMPARE(pushed, GST_FLOW_OK);
+        QVERIFY(loopback.send(units.at(i).bytes, i));
     }
-    QVERIFY_TRUE_WAIT(frames.load() > 0, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(loopback.frames.load() > 0, TestTimeout::mediumMs());
 
     // decodebin3 picks the decoder by the caps on the stream object. tsdemux's has those of the unparsed stream,
     // which no decoder takes.
     const GStreamer::GstEventPtr streamStart =
-        GStreamer::adoptEvent(gst_pad_get_sticky_event(sinkPad.get(), GST_EVENT_STREAM_START, 0));
+        GStreamer::adoptEvent(gst_pad_get_sticky_event(loopback.sinkPad.get(), GST_EVENT_STREAM_START, 0));
     QVERIFY(streamStart);
     GstStream* rawStream = nullptr;
     gst_event_parse_stream(streamStart.get(), &rawStream);
     const GStreamer::GstObjectPtr stream = GStreamer::adoptObject(GST_OBJECT_CAST(rawStream));
     QVERIFY2(stream, "tsdemux sent no stream object");
     const GStreamer::GstCapsPtr streamCaps = GStreamer::adoptCaps(gst_stream_get_caps(GST_STREAM_CAST(stream.get())));
-    const GStreamer::GstCapsPtr padCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(sinkPad.get()));
+    const GStreamer::GstCapsPtr padCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(loopback.sinkPad.get()));
     QVERIFY(streamCaps && padCaps);
     const GStreamer::GCharPtr streamCapsText = GStreamer::adoptGChar(gst_caps_to_string(streamCaps.get()));
     QVERIFY2(gst_caps_is_equal(streamCaps.get(), padCaps.get()), streamCapsText.get());
+}
+
+void GstSourceFactoryStreamTest::_testMpegTsFrameLeavesBeforeTheNextArrives_data()
+{
+    QTest::addColumn<QString>("stream");
+    QTest::addColumn<QByteArray>("mediaType");
+    QTest::addColumn<QByteArray>("parser");
+
+    QTest::newRow("h264") << QString::fromLatin1(GstTest::kH264Stream) << QByteArrayLiteral("video/x-h264")
+                          << QByteArrayLiteral("h264parse");
+    QTest::newRow("h265") << QString::fromLatin1(GstTest::kH265Stream) << QByteArrayLiteral("video/x-h265")
+                          << QByteArrayLiteral("h265parse");
+}
+
+void GstSourceFactoryStreamTest::_testMpegTsFrameLeavesBeforeTheNextArrives()
+{
+    QFETCH(QString, stream);
+    QFETCH(QByteArray, mediaType);
+    QFETCH(QByteArray, parser);
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mpegtsmux", "tsdemux", parser.constData());
+
+    MpegTsLoopback loopback;
+    const QString startError = loopback.start(mediaType.constData());
+    QVERIFY2(startError.isEmpty(), qPrintable(startError));
+
+    QString loadError;
+    const QList<GstTest::AccessUnit> units = GstTest::loadAccessUnits(stream, &loadError);
+    QVERIFY2(units.size() > 2, qPrintable(loadError));
+    for (qsizetype i = 0; i < units.size(); ++i) {
+        QVERIFY(loopback.send(units.at(i).bytes, i));
+    }
+
+    // The last frame sent arrives too. tsdemux hands on a PES packet that tells its length, as these do, once it has
+    // it all, and the parser keeps none back: told that each packet holds whole frames, it needn't see the next frame
+    // to end one.
+    QCOMPARE_TRUE_WAIT(loopback.frames.load(), int(units.size()), TestTimeout::mediumMs());
+    QCOMPARE(loopback.parserInputAlignment(parser.constData()), QByteArrayLiteral("au"));
+}
+
+void GstSourceFactoryStreamTest::_testMpegTsPacketWithinFrameEndsAlignment()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mpegtsmux", "tsdemux", "h264parse");
+
+    MpegTsLoopback loopback;
+    const QString startError = loopback.start();
+    QVERIFY2(startError.isEmpty(), qPrintable(startError));
+
+    QString loadError;
+    const QList<GstTest::AccessUnit> units =
+        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
+    QVERIFY2(units.size() > 3, qPrintable(loadError));
+
+    // A sender that cuts a frame in two PES packets: the second one starts within the frame.
+    expectLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("starts within a frame")));
+    const QByteArray& cut = units.at(1).bytes;
+    QVERIFY(loopback.send(units.at(0).bytes, 0));
+    QVERIFY(loopback.send(cut.left(cut.size() / 2), 1));
+    QVERIFY(loopback.send(cut.mid(cut.size() / 2), 1));
+    for (qsizetype i = 2; i < units.size(); ++i) {
+        QVERIFY(loopback.send(units.at(i).bytes, i));
+    }
+
+    // The parser is no longer told that each packet holds whole frames, so it finds their ends itself.
+    QVERIFY_TRUE_WAIT((loopback.frames.load() > 2) && loopback.parserInputAlignment().isEmpty(),
+                      TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
 }
 
 void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()
@@ -435,13 +548,15 @@ void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()
 
 void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
 {
+    if (!GStreamer::udpSrcUnlockSerialized()) {
+        QSKIP("This udpsrc needs no workaround: the cycles would only test GStreamer itself");
+    }
+
     // An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.
     constexpr int kImmediateStopCycles = 10000;
 
-    // The factory's UDP sources are udpsrc. Before gst-plugins-good 1.24.10, leaving PLAYING while its streaming thread
-    // still clears the previous unlock cancels a freed GCancellable and corrupts the heap; GStreamer::completeInit()
-    // serializes the two. Downstream elements delay the source's own state change and hide the race, so the source
-    // runs bare.
+    // The udpsrc defect of the factory's UDP sources that GStreamer::serializeUdpSrcUnlock() works around. Downstream
+    // elements delay the source's own state change and hide the race, so the source runs bare.
     for (int cycle = 0; cycle < kImmediateStopCycles; ++cycle) {
         GstTest::TestPipeline pipeline;
         QVERIFY2(pipeline.launch(QStringLiteral("udpsrc address=127.0.0.1 port=0 ! fakesink")),
@@ -450,7 +565,5 @@ void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
         QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
     }
 }
-
-#endif
 
 UT_REGISTER_TEST(GstSourceFactoryStreamTest, TestLabel::Integration)

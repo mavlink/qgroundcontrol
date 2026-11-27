@@ -15,7 +15,7 @@
 #include "VideoDecoderOptions.h"
 
 // Video decoder classification and the autoplug rank overrides behind the forceVideoDecoder setting. Every rank change
-// goes through here, so a feature named in GST_PLUGIN_FEATURE_RANK keeps the user's rank.
+// goes through DecoderRankApplier.
 namespace GStreamer {
 
 /// Invokes @p visitor for every video decoder factory of at least @p minRank in the default registry. The factory is
@@ -33,7 +33,7 @@ VideoDecoderOption decoderFamilyForFactory(const char* factoryName);
 
 /// Hardware decoder families currently present in the GStreamer registry (never VideoDecoderOption::Default or
 /// Software). Lets the settings layer validate a persisted forceVideoDecoder choice against what the running build can
-/// actually provide. Vulkan is only offered with the opt-in Vulkan GPU path.
+/// actually provide.
 QList<VideoDecoderOption> availableDecoderFamilies();
 
 /// Applies decoder rank plans (planRanks()) to the default registry. It remembers the rank each feature had before QGC
@@ -96,9 +96,6 @@ public:
 private:
     const std::optional<VideoDecoderOption> _previous;
 };
-
-/// DecoderRankApplier::setRank() on the process's applier, so setCodecPriorities() restores the rank too.
-bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
 
 /// DecoderRankApplier::apply() on the process's applier. GUI thread.
 void setCodecPriorities(VideoDecoderOption option);

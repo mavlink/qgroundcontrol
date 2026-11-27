@@ -20,6 +20,7 @@ struct VideoStreamStats;
 
 namespace GstQgc {
 struct PathStats;
+struct SinkBin;
 }
 
 /// \brief One receiver pipeline: source ! tee, with the display and recording branches behind the tee.
@@ -28,13 +29,13 @@ struct PathStats;
 /// and the branches. Streaming threads hand their work to the session as queued calls, so once shutdown() has stopped
 /// the pipeline and detached the bus, deleting the session drops whatever they left behind.
 ///
-/// Bus handling, through a GstBusPump: a sync handler does only what can't wait (GPU context requests, stream
-/// selection, and closing the valve in front of a failing branch); everything else is popped on the worker, where the
-/// bus's poll fd wakes it up.
+/// Bus handling, through a GstBusPump: a sync handler does only what can't wait, closing the valve in front of a
+/// failing branch; everything else is popped on the worker, where the bus's poll fd wakes it up.
 ///
-/// The session recovers its branches from their errors itself: a failing decoder is replaced, a failing recorder ends
-/// the recording. A stalled decoder is the listener's to notice, and to replace through restartDecoder(). Failures of
-/// the stream as a whole go to the Listener, which decides whether to reconnect.
+/// The session recovers its branches from their errors itself: a failing decoder is replaced, or given up for a while
+/// when it keeps failing or misses a plugin, and a failing recorder ends the recording. A stalled decoder is the
+/// listener's to notice, and to replace through restartDecoder(). Failures of the stream as a whole go to the
+/// Listener, which decides whether to reconnect: a stream that only can't be decoded hasn't failed.
 class PipelineSession : public QObject
 {
     Q_OBJECT
@@ -46,6 +47,8 @@ public:
         QString redactedUri;
         bool lowLatency = false;
         int rtpJitterLatencyMs = 0;
+        int softwareDecoderThreads = 1;
+        GstReceiverTimings timings{};
     };
 
     struct Failure
@@ -55,8 +58,8 @@ public:
         bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin, refused credentials.
     };
 
-    /// Called on the worker. Only the failure reports (onSessionFailed(), onDecoderFailing()), which come from the
-    /// event loop, may change the session; the others can come from inside a call into it.
+    /// Called on the worker. Only onSessionFailed(), which comes from the event loop, may end the session; the others
+    /// can come from inside a call into it.
     class Listener : public DecodingBranch::Listener, public RecordingBranch::Listener
     {
     public:
@@ -79,9 +82,10 @@ public:
     /// Builds the pipeline and sets it PLAYING. Returns why when it can't; shut the session down then.
     [[nodiscard]] std::optional<Failure> start();
 
-    void setVideoSink(GstElement* sink);
+    void setVideoSink(const GstQgc::SinkBin* sink);
     void setRecording(const std::optional<RecordingBranch::Request>& request);
-    void restartDecoder(const char* reason);
+    /// DecodingBranch::restartDecoder().
+    void restartDecoder(const char* reason, const QString& cause);
 
     bool displaying() const;
     GstQgc::PathStats sinkPathStats() const;

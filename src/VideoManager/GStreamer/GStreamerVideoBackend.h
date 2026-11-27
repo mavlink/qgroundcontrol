@@ -27,7 +27,6 @@ public:
 
     Capabilities capabilities() const override;
 
-    VideoReceiver* createReceiver(QObject* parent) override;
     void configureQtGraphics(bool softwareRendering) override;
     /// Points GStreamer at its plugins, scanner and registry (GStreamer::Environment::prepareEnvironment()).
     EnvPrepResult prepareEnvironment() override;
@@ -40,8 +39,9 @@ public:
     QList<VideoDecoderOption> availableDecoderFamilies() override;
     void setDebugLevel(int level) override;
     void onMainWindowReady(QQuickWindow* window) override;
-    void setAndroidJniState(void* javaVm, void* appContext, void* classLoader) override;
 
 private:
+    VideoReceiver* createOwnReceiver(QObject* parent) override;
+
     std::atomic<State> _state{State::Unprepared};
 };

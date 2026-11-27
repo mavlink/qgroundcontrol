@@ -1,37 +1,35 @@
 #include "gstqgc/GstQgcTestSupport.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <memory>
 
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "QGCQVideoSinkController.h"
 
 namespace GstQgcTest {
 
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers,
-                                               bool gpuZerocopy, const char* sourceProperties, bool captureCenterPixel)
+                                               const GstQgc::SinkBinConfig& config, const char* sourceProperties,
+                                               bool captureCenterPixel)
 {
     PipelineRunResult r;
     const auto owner = std::make_unique<QObject>();
     // Declared after the binding's owner, so the pipeline stops first.
     GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(
-            QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
-                .arg(QString::fromUtf8(sourceProperties))
-                .arg(numBuffers)
-                .arg(QString::fromUtf8(capsLine))
-                .arg(gpuZerocopy ? "true" : "false"))) {
+    const GstQgc::SinkBin sinkBin = launchIntoSinkBin(pipeline,
+                                                      QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3")
+                                                          .arg(QString::fromUtf8(sourceProperties))
+                                                          .arg(numBuffers)
+                                                          .arg(QString::fromUtf8(capsLine)),
+                                                      config);
+    if (!sinkBin) {
         r.errorMessage = pipeline.error();
         return r;
     }
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
+    if (!GStreamer::setupQVideoSinkElement(sinkBin.qvideosink.get(), &videoSink, owner.get())) {
         r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
         return r;
     }
@@ -73,5 +71,3 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
 }
 
 }  // namespace GstQgcTest
-
-#endif

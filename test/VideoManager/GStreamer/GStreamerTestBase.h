@@ -9,13 +9,6 @@ class GStreamerTestBase : public UnitTest
     Q_OBJECT
 
 protected slots:
-#ifdef QGC_GST_STREAMING
     void initTestCase() override;
     void init() override;
-#endif
-
-private slots:
-#ifndef QGC_GST_STREAMING
-    void _testGStreamerDisabled();
-#endif
 };

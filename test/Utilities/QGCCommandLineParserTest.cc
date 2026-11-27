@@ -145,6 +145,19 @@ void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
     QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
 }
 
+void QGCCommandLineParserTest::_testNormalizeArgs_GStreamerOptionsLeftToGStreamer()
+{
+#ifdef QGC_GST_STREAMING
+    // Not split at its colon, and not handed to QGC's parser, which knows none of them.
+    const QStringList out =
+        QGCCommandLineParser::normalizeArgs({QStringLiteral("qgc"), QStringLiteral("--gst-debug=rtspsrc:5"),
+                                             QStringLiteral("--clear-cache"), QStringLiteral("--gst-debug-no-color")});
+    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--clear-cache")}));
+#else
+    QSKIP("Built without GStreamer: its options are unknown options");
+#endif
+}
+
 void QGCCommandLineParserTest::_testParseSystemId_data()
 {
     QTest::addColumn<QString>("value");

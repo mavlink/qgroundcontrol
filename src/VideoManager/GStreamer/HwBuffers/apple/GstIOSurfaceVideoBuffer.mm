@@ -1,8 +1,6 @@
 #include "GstIOSurfaceVideoBuffer.h"
 
-#include "GstHwFrameTexturesBase.h"
 #include "GstHwPathRegistry.h"
-#include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 
 #if (defined(Q_OS_MACOS) || defined(Q_OS_IOS)) && defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
@@ -12,9 +10,8 @@
 #include <atomic>
 #include <cstddef>
 #include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
+#include <memory>
 #include <rhi/qrhi.h>
-#include <span>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
@@ -34,26 +31,10 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-// One-shot per failure cause; teardown emits the running counter. Shared causes come from
-// GstHw::MapDiagnostics; the remainder are IOSurface/Metal-specific.
-struct IOSurfaceDiagnostics : GstHw::MapDiagnostics
-{
-    std::atomic<bool> loggedNoMemory{false};
-    std::atomic<bool> loggedMetaLayoutMismatch{false};
-    std::atomic<bool> loggedPixelBufferExtractFail{false};
-    std::atomic<bool> loggedNoIOSurface{false};
-    std::atomic<bool> loggedNoMtlDevice{false};
-    std::atomic<bool> loggedUnsupportedFormat{false};
-    std::atomic<bool> loggedCacheCreateFail{false};
-};
-
-IOSurfaceDiagnostics s_diag;
-
-// Process-wide CVMetalTextureCache, keyed by MTLDevice*. Apple's documented bridge between
-// CVPixelBuffer/IOSurface and Metal — reuses MTLTexture objects when the decoder recycles
-// IOSurfaces (typical with VideoToolbox), and avoids per-frame MTLTextureDescriptor allocation.
-// Apple's docs guarantee thread-safety. Recreated on QRhi device change (window
-// destroy/recreate); the live cache is released by reset() at receiver teardown.
+// Process-wide CVMetalTextureCache, keyed by MTLDevice*. Apple's documented bridge between CVPixelBuffer/IOSurface and
+// Metal — reuses MTLTexture objects when the decoder recycles IOSurfaces (typical with VideoToolbox), and avoids
+// per-frame MTLTextureDescriptor allocation. Apple's docs guarantee thread-safety. Recreated on QRhi device change
+// (window destroy/recreate); resetTextureCache() releases it when the GPU caches are reset.
 struct MetalTextureCache
 {
     CVMetalTextureCacheRef cache = nullptr;
@@ -77,9 +58,7 @@ CVMetalTextureCacheRef ensureCacheLocked(id<MTLDevice> device)
     CVMetalTextureCacheRef cache = nullptr;
     const CVReturn r = CVMetalTextureCacheCreate(kCFAllocatorDefault, nullptr, device, nullptr, &cache);
     if (r != kCVReturnSuccess || !cache) {
-        if (!s_diag.loggedCacheCreateFail.exchange(true, std::memory_order_relaxed)) {
-            qCWarning(GstIOSurfaceLog) << "CVMetalTextureCacheCreate failed (CVReturn=" << int(r) << ")";
-        }
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "CVMetalTextureCacheCreate failed (CVReturn=" << int(r) << ")");
         return nullptr;
     }
     s_cache.cache = cache;
@@ -108,41 +87,31 @@ MTLPixelFormat metalPixelFormatForPlane(QVideoFrameFormat::PixelFormat fmt, int 
     }
 }
 
-class FrameTextures final : public GstHwFrameTexturesBase
+/// The frame's MTLTextures, each held by the CVMetalTextureRef it came from, which goes back to the cache with the
+/// handles. CVMetalTextureRefs hold the underlying MTLTexture and the CVPixelBuffer's IOSurface refcount.
+class IOSurfaceTextureHandles final : public GstHwTextureHandles
 {
 public:
-    /// @p handles are the planes' MTLTexture pointers; @p cvtex the CVMetalTextureRefs that keep them alive.
-    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, std::span<const quint64> handles,
-                  std::array<CVMetalTextureRef, kMaxPlanes> cvtex)
-        : _cvtex(cvtex)
-    {
-        wrapPlanes(rhi, size, pixelFormat, handles);
-    }
+    using GstHwTextureHandles::GstHwTextureHandles;
 
-    ~FrameTextures() override
+    ~IOSurfaceTextureHandles() override
     {
-        // CVMetalTextureRefs hold the underlying MTLTexture and the CVPixelBuffer's IOSurface
-        // refcount; releasing returns them to the cache for reuse. Base dtor clears _srcSample.
-        for (int i = 0; i < _count; ++i) {
-            if (_cvtex[i])
-                CFRelease(_cvtex[i]);
+        for (CVMetalTextureRef texture : _cvtex) {
+            if (texture) {
+                CFRelease(texture);
+            }
         }
     }
 
-    // Replace the per-plane CVMetalTextureRef holders with fresh ones (transferring the
-    // IOSurface ref). The underlying MTLTexture handles are unchanged so wrappers stay valid.
-    void adoptCvRefs(std::array<CVMetalTextureRef, kMaxPlanes>& cvtex)
+    /// Plane @p plane's MTLTexture, of @p texture, whose reference the handles take over.
+    void adoptPlane(int plane, CVMetalTextureRef texture, id<MTLTexture> metalTexture)
     {
-        for (int i = 0; i < _count; ++i) {
-            if (_cvtex[i])
-                CFRelease(_cvtex[i]);
-            _cvtex[i] = cvtex[i];
-            cvtex[i] = nullptr;
-        }
+        _cvtex[std::size_t(plane)] = texture;
+        setHandle(plane, static_cast<void*>(metalTexture));
     }
 
 private:
-    std::array<CVMetalTextureRef, kMaxPlanes> _cvtex;
+    std::array<CVMetalTextureRef, kMaxPlanes> _cvtex{};
 };
 
 }  // namespace
@@ -165,16 +134,14 @@ void GstIOSurfaceVideoBuffer::resetTextureCache() noexcept
     s_cache = MetalTextureCache{};
 }
 
-QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
 {
-    // *** UNTESTED on macOS hardware. CI compiles this path; runtime validation TBD. ***
-    // Pulls a CVPixelBufferRef from the GstBuffer (gst-vt path), grabs its
-    // IOSurfaceRef, imports each plane via [MTLDevice newTextureWithDescriptor:
-    // iosurface:plane:], and wraps each MTLTexture in a QRhiTexture.
+    // Untested on Apple hardware: CI only compiles this path. Takes the CVPixelBufferRef from the buffer's
+    // GstCoreVideoMeta (vtdec) and each plane's MTLTexture from the CVMetalTextureCache, which Qt then wraps.
     // IOSurface is device-agnostic so no shared-MTLDevice bridge is required.
     GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Metal), GstIOSurfaceLog(), s_diag, buffer)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Metal), GstIOSurfaceLog(), buffer)) {
+        return {};
     }
 
     // Mirror of GstCoreVideoMeta from gst-plugins-bad sys/applemedia/corevideobuffer.h (plugin-private, not installed;
@@ -196,40 +163,37 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
     auto* cvMeta = reinterpret_cast<CoreVideoMetaMirror*>(
         coreVideoMetaApiType ? gst_buffer_get_meta(buffer, coreVideoMetaApiType) : nullptr);
     if (!cvMeta) {
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedNoMemory, "mapTextures: GstCoreVideoMeta not found on buffer");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: GstCoreVideoMeta not found on buffer");
+        return {};
     }
     if (!cvMeta->meta.info || cvMeta->meta.info->size != sizeof(CoreVideoMetaMirror)) {
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedMetaLayoutMismatch,
-                         "mapTextures: GstCoreVideoMeta size"
-                             << (cvMeta->meta.info ? cvMeta->meta.info->size : 0) << "!= mirrored layout size"
-                             << sizeof(CoreVideoMetaMirror) << "— upstream layout changed");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: GstCoreVideoMeta size"
+                                              << (cvMeta->meta.info ? cvMeta->meta.info->size : 0)
+                                              << "!= mirrored layout size" << sizeof(CoreVideoMetaMirror)
+                                              << "— upstream layout changed");
+        return {};
     }
 
     CVPixelBufferRef pixelBuffer = cvMeta->pixbuf;
     if (!pixelBuffer) {
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedPixelBufferExtractFail,
-                         "mapTextures: GstCoreVideoMeta.pixbuf is null");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: GstCoreVideoMeta.pixbuf is null");
+        return {};
     }
     CFRetain(pixelBuffer);
 
     IOSurfaceRef ioSurface = CVPixelBufferGetIOSurface(pixelBuffer);
     if (!ioSurface) {
         CFRelease(pixelBuffer);
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedNoIOSurface,
-                         "mapTextures: CVPixelBufferGetIOSurface returned null "
-                         "(non-IOSurface-backed CVPixelBuffer?)");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: CVPixelBufferGetIOSurface returned null "
+                                          "(non-IOSurface-backed CVPixelBuffer?)");
+        return {};
     }
 
     const auto* nh = static_cast<const QRhiMetalNativeHandles*>(rhi.nativeHandles());
     if (!nh || !nh->dev) {
         CFRelease(pixelBuffer);
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedNoMtlDevice,
-                         "mapTextures: QRhiMetalNativeHandles missing MTLDevice");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: QRhiMetalNativeHandles missing MTLDevice");
+        return {};
     }
     id<MTLDevice> device = (__bridge id<MTLDevice>) nh->dev;
 
@@ -239,10 +203,9 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
         return n == 0 ? 1 : int(n);  // non-planar IOSurfaces report 0 planes
     }();
     if (gstPlaneCount != ioSurfacePlaneCount) {
-        static std::atomic<bool> s_warnedPlaneMismatch{false};
-        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_warnedPlaneMismatch,
-                         "GstVideoInfo plane count" << gstPlaneCount << "differs from IOSurface plane count"
-                                                    << ioSurfacePlaneCount << "— using minimum");
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, "GstVideoInfo plane count" << gstPlaneCount
+                                                                     << "differs from IOSurface plane count"
+                                                                     << ioSurfacePlaneCount << "— using minimum");
     }
     const int planeCount = (std::min) ({gstPlaneCount, ioSurfacePlaneCount, kMaxPlanes});
     CVMetalTextureCacheRef cache = nullptr;
@@ -256,27 +219,18 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
     }
     if (!cache) {
         CFRelease(pixelBuffer);
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+        return {};
     }
 
-    std::array<quint64, kMaxPlanes> handles{};
-    std::array<CVMetalTextureRef, kMaxPlanes> cvtex{};
-    auto cleanupAndFail = [&](int upto) {
-        for (int j = 0; j < upto; ++j) {
-            if (cvtex[j]) {
-                CFRelease(cvtex[j]);
-                cvtex[j] = nullptr;
-            }
-        }
-        CFRelease(pixelBuffer);
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
-    };
+    // Each plane's CVMetalTextureRef is the handles' as soon as it is created, so a failure releases what came before.
+    auto handles = std::make_unique<IOSurfaceTextureHandles>(refSample());
     for (int i = 0; i < planeCount; ++i) {
         const MTLPixelFormat fmt = metalPixelFormatForPlane(_format.pixelFormat(), i);
         if (fmt == MTLPixelFormatInvalid) {
-            QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedUnsupportedFormat,
+            QGC_HW_WARN_ONCE(GstIOSurfaceLog,
                              "mapTextures: unsupported pixel format" << int(_format.pixelFormat()) << "for plane" << i);
-            return cleanupAndFail(i);
+            CFRelease(pixelBuffer);
+            return {};
         }
         // IOSurface plane getters work for both planar and non-planar (plane=0 returns full dims),
         // unlike CVPixelBufferGetWidthOfPlane which is undefined on non-planar buffers.
@@ -286,46 +240,25 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
         const CVReturn r = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pixelBuffer, nullptr,
                                                                      fmt, w, h, NSUInteger(i), &ct);
         if (r != kCVReturnSuccess || !ct) {
-            QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedTextureCreateFail,
-                             "mapTextures: CVMetalTextureCacheCreateTextureFromImage failed for plane"
-                                 << i << "(format=" << int(fmt) << "size=" << QSize(w, h) << "CVReturn=" << int(r)
-                                 << ")");
-            return cleanupAndFail(i);
+            QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: CVMetalTextureCacheCreateTextureFromImage failed for plane"
+                                                  << i << "(format=" << int(fmt) << "size=" << QSize(w, h)
+                                                  << "CVReturn=" << int(r) << ")");
+            CFRelease(pixelBuffer);
+            return {};
         }
         id<MTLTexture> t = CVMetalTextureGetTexture(ct);
         if (!t) {
             CFRelease(ct);
-            QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedTextureCreateFail,
-                             "mapTextures: CVMetalTextureGetTexture returned nil for plane" << i);
-            return cleanupAndFail(i);
+            CFRelease(pixelBuffer);
+            QGC_HW_WARN_ONCE(GstIOSurfaceLog, "mapTextures: CVMetalTextureGetTexture returned nil for plane" << i);
+            return {};
         }
-        cvtex[i] = ct;
-        handles[i] = reinterpret_cast<quint64>(static_cast<void*>(t));
+        handles->adoptPlane(i, ct, t);
     }
 
     CFRelease(pixelBuffer);
 
-    // No preflight: the CVMetalTextureRefs above are already created, and only the bundle releases them.
-    const GstHwMapTail tail{.path = HwVideoBufferPath::IOSurface,
-                            .frameSize = _format.frameSize(),
-                            .pixelFormat = _format.pixelFormat(),
-                            .log = &GstIOSurfaceLog(),
-                            .diag = &s_diag,
-                            .preflight = false,
-                            .successTag = "IOSurface"};
-    const std::span<const quint64> planes(handles.data(), std::size_t(planeCount));
-    // VideoToolbox recycles CVPixelBuffer/IOSurface across frames and the CVMetalTextureCache returns the same
-    // MTLTexture for a repeated IOSurface, so a bundle over the same textures samples the new frame unchanged.
-    return GstHwFrameTexturesBase::finishMap<FrameTextures>(
-        *this, rhi, old, tail,
-        [&](FrameTextures& prev) {
-            if (!prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, planes)) {
-                return false;
-            }
-            prev.adoptCvRefs(cvtex);
-            return true;
-        },
-        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, planes, cvtex); });
+    return wrapTextures(rhi, std::move(handles), GstIOSurfaceLog(), "IOSurface");
 }
 
 // gst-applemedia exports no public gst_is_apple_core_video_memory() predicate, so match the allocator's memory type.

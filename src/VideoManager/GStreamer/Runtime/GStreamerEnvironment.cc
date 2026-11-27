@@ -17,9 +17,6 @@
 #include "QGCLoggingCategory.h"
 
 #ifdef Q_OS_ANDROID
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
-
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #endif
@@ -32,6 +29,12 @@
 
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 
+#ifdef Q_OS_ANDROID
+// GStreamer's Android plugins (androidmedia) look the JNI state up in libgstreamer_android.so, which keeps what this
+// sets (Platform/gst_android_jni.c).
+extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
+#endif
+
 namespace {
 
 using GStreamer::Environment::BundledRuntime;
@@ -39,7 +42,7 @@ using GStreamer::Environment::BundleLayout;
 using GStreamer::Environment::DesktopInstall;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
-// and logDiagnostics from drifting. Each site layers its own extras (GIO/PTP, registry) on top.
+// and logDiagnostics from drifting. Each site layers its own extras (GIO, registry) on top.
 constexpr const char* kManagedGstPathVars[] = {
     "GST_PLUGIN_PATH",    "GST_PLUGIN_PATH_1_0",    "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0",
     "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
@@ -88,17 +91,6 @@ bool _setByUser(const char* name)
     }
     const auto managed = s_managedEnvValues.constFind(name);
     return (managed == s_managedEnvValues.constEnd()) || (qEnvironmentVariable(name) != managed.value());
-}
-
-QString _firstExistingPath(const QStringList& paths)
-{
-    for (const QString& path : paths) {
-        if (QFileInfo::exists(path)) {
-            return path;
-        }
-    }
-
-    return {};
 }
 
 // An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
@@ -162,39 +154,33 @@ void _setCaBundleIfUnset(const QString& caBundle)
 #endif
 
 #ifdef Q_OS_ANDROID
-// Extracts an APK asset to destPath, which outlives the APK: an updated app replaces what an earlier version left.
-bool _extractApkAsset(const char* assetPath, const QString& destPath)
+// Hands GStreamer's Android plugins the JavaVM, the application context and its class loader, which they look up as
+// gst_init() registers them.
+void _setAndroidJniState()
 {
-    QJniObject ctx = QNativeInterface::QAndroidApplication::context();
-    if (!ctx.isValid()) {
-        qCWarning(GStreamerEnvLog) << "Cannot resolve Android Context for asset extraction";
-        return false;
+    const QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    const QJniObject context = activity.isValid()
+                                   ? activity.callObjectMethod("getApplicationContext", "()Landroid/content/Context;")
+                                   : QJniObject();
+    const QJniObject classLoader =
+        context.isValid() ? context.callObjectMethod("getClassLoader", "()Ljava/lang/ClassLoader;") : QJniObject();
+    if (!classLoader.isValid()) {
+        qCWarning(GStreamerEnvLog) << "No application class loader: GStreamer's MediaCodec decoders won't register";
     }
+    qgc_gst_android_set_jni_state(QJniEnvironment::javaVM(), context.object(), classLoader.object());
+}
 
-    QJniObject jAssetMgr = ctx.callObjectMethod("getAssets", "()Landroid/content/res/AssetManager;");
-    if (!jAssetMgr.isValid()) {
-        qCWarning(GStreamerEnvLog) << "Context.getAssets() returned null";
-        return false;
-    }
-
-    QJniEnvironment env;
-    AAssetManager* am = AAssetManager_fromJava(env.jniEnv(), jAssetMgr.object());
-    if (!am) {
-        qCWarning(GStreamerEnvLog) << "AAssetManager_fromJava failed";
-        return false;
-    }
-
-    AAsset* asset = AAssetManager_open(am, assetPath, AASSET_MODE_BUFFER);
-    if (!asset) {
+// Extracts an APK asset to destPath, which outlives the APK: an updated app replaces what an earlier version left.
+// Through the assets: file engine of Qt's Android platform plugin, so once the QGuiApplication exists.
+bool _extractApkAsset(const QString& assetPath, const QString& destPath)
+{
+    QFile asset(QStringLiteral("assets:/") + assetPath);
+    if (!asset.open(QIODevice::ReadOnly)) {
         qCDebug(GStreamerEnvLog) << "APK asset not present:" << assetPath;
         return false;
     }
-    const off_t assetLen = AAsset_getLength(asset);
-    const void* const buf = AAsset_getBuffer(asset);
-    const bool ok = buf && (assetLen > 0) &&
-                    GStreamer::Environment::writeIfChanged(
-                        destPath, QByteArrayView(static_cast<const char*>(buf), static_cast<qsizetype>(assetLen)));
-    AAsset_close(asset);
+    const QByteArray content = asset.readAll();
+    const bool ok = !content.isEmpty() && GStreamer::Environment::writeIfChanged(destPath, content);
     if (!ok) {
         qCWarning(GStreamerEnvLog) << "Failed writing asset" << assetPath << "to" << destPath;
     }
@@ -202,9 +188,7 @@ bool _extractApkAsset(const char* assetPath, const QString& destPath)
 }
 #endif
 
-// QGC_GST_SYSTEM_PLUGINS: a Linux build with QGC_GST_BUNDLE_PLUGINS=OFF, packaged with the system's plugins, which it
-// always uses as they are.
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(QGC_GST_SYSTEM_PLUGINS)
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 
 void _unsetEnv(const char* name)
 {
@@ -220,27 +204,11 @@ bool _isExecutableFile(const QString& path)
     return fileInfo.exists() && fileInfo.isFile() && fileInfo.isExecutable();
 }
 
-QString _joinExistingPaths(const QStringList& paths)
-{
-    QStringList existing;
-    existing.reserve(paths.size());
-
-    for (const QString& path : paths) {
-        if (QFileInfo::exists(path) && !existing.contains(path)) {
-            existing.append(path);
-        }
-    }
-
-    return existing.join(QDir::listSeparator());
-}
-
 void _clearManagedGstEnvVars()
 {
-    static constexpr const char* gioPtpVars[] = {
-        "GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS", "GST_PTP_HELPER_1_0", "GST_PTP_HELPER",
-    };
+    static constexpr const char* gioVars[] = {"GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS"};
 
-    for (const char* name : gioPtpVars) {
+    for (const char* name : gioVars) {
         _unsetEnv(name);
     }
     for (const char* name : kManagedGstPathVars) {
@@ -255,8 +223,7 @@ void _setGstEnvIfExecutable(const char* name, const QString& path)
     }
 }
 
-void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath,
-                      const QString& ptpPath)
+void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath)
 {
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
@@ -264,8 +231,6 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     if (!gioModDir.isEmpty()) {
         _setGstEnv("GIO_EXTRA_MODULES", gioModDir);
     }
-    _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
-    _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER_1_0", scannerPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER", scannerPath);
     // SYSTEM_PATH replaces the default system/user plugin dirs. GST_PLUGIN_PATH (cleared above) would
@@ -302,26 +267,36 @@ void _warnIfScannerMissing(const QString& platformLabel, const QString& scannerP
     }
 }
 
+QString _firstExistingPath(const QStringList& paths)
+{
+    for (const QString& path : paths) {
+        if (QFileInfo::exists(path)) {
+            return path;
+        }
+    }
+
+    return {};
+}
+
 // Points GStreamer at the bundled runtime. Returns false, leaving the environment untouched, when no
 // bundled plugin directory exists (system GStreamer is used as-is).
 bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout)
 {
-    const QString pluginDirs = _joinExistingPaths(layout.pluginDirs);
-    if (pluginDirs.isEmpty()) {
+    if (!QFileInfo::exists(layout.pluginDir)) {
         return false;
     }
 
     const QString scanner = _firstExistingPath(layout.scannerCandidates);
     _warnIfScannerMissing(platformLabel, scanner);
-    const QString gioModuleDir = _firstExistingPath(layout.gioModuleDirs);
-    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, _firstExistingPath(layout.ptpCandidates));
+    const QString gioModuleDir = QFileInfo::exists(layout.gioModuleDir) ? layout.gioModuleDir : QString();
+    _applyGstEnvVars(layout.pluginDir, gioModuleDir, scanner);
     (void) GStreamer::Environment::usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
-                                                      pluginDirs);
-    s_bundledRuntime = {.pluginDirs = pluginDirs.split(QDir::listSeparator()), .gioModuleDir = gioModuleDir};
+                                                      layout.pluginDir);
+    s_bundledRuntime = {.pluginDir = layout.pluginDir, .gioModuleDir = gioModuleDir};
     return true;
 }
 
-#endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
+#endif  // !Q_OS_ANDROID && !Q_OS_IOS
 
 VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
 {
@@ -331,21 +306,8 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
 
 #if defined(Q_OS_MACOS)
-    const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-#if defined(QGC_GST_MACOS_FRAMEWORK)
-    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFramework, appDir);
-#else
-    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFlat, appDir);
-#endif
-    const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
-
-    if (!_applyBundleLayout(QStringLiteral("macOS"), layout) && hasBundledFramework) {
-        result.ok = false;
-        result.error =
-            QStringLiteral("GStreamer: bundled macOS framework found but plugin directory is missing under %1")
-                .arg(frameworkDir);
-        qCCritical(GStreamerEnvLog) << result.error;
-    }
+    (void) _applyBundleLayout(QStringLiteral("macOS"),
+                              GStreamer::Environment::bundleLayout(DesktopInstall::MacOS, appDir));
 
 #elif defined(Q_OS_WIN)
     if (_applyBundleLayout(QStringLiteral("Windows"),
@@ -397,16 +359,17 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
 
 #elif defined(Q_OS_ANDROID)
     // Static plugins — no GST_PLUGIN_PATH; APK assets are read-only, so the CA bundle is extracted
-    // to filesDir, and again when an update changes it (we run gst_init from C++, not Java's GStreamer.init).
+    // to filesDir, and again when an update changes it (gst_init runs from C++, not from Java's GStreamer.init).
     {
+        _setAndroidJniState();
+
         const QString filesDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 
         if (!filesDir.isEmpty()) {
             _setGstEnv("HOME", filesDir);
-            _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
             const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
-            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)) {
+            if (_extractApkAsset(QStringLiteral("ssl/certs/ca-certificates.crt"), caBundle)) {
                 _setCaBundleIfUnset(caBundle);
             }
             _setGstEnv("XDG_DATA_DIRS", filesDir);
@@ -426,7 +389,7 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
         _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     }
 
-#elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
+#elif defined(Q_OS_LINUX)
     // An AppImage or other bundle ships its runtime under <prefix>/lib; a plugin path set by the user wins.
     if (!_setByUser("GST_PLUGIN_PATH_1_0") && !_setByUser("GST_PLUGIN_PATH") &&
         !_setByUser("GST_PLUGIN_SYSTEM_PATH_1_0") && !_setByUser("GST_PLUGIN_SYSTEM_PATH")) {
@@ -447,27 +410,11 @@ namespace GStreamer::Environment {
 BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
 {
     const QString appLib = _cleanJoin(appDir, "../lib");
-    QStringList libDirs{appLib};
     QStringList helperDirs{_cleanJoin(appDir, "../libexec/gstreamer-1.0")};
     QString exeSuffix;
     switch (install) {
-        case DesktopInstall::MacOSFramework:
-        case DesktopInstall::MacOSFlat: {
-            const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-            QString rootDir = _firstExistingPath({
-                _cleanJoin(frameworkDir, "Versions/1.0"),
-                _cleanJoin(frameworkDir, "Versions/Current"),
-                frameworkDir,
-            });
-            if (rootDir.isEmpty()) {
-                rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
-            }
-            const QString frameworkLib = _cleanJoin(rootDir, "lib");
-            libDirs = (install == DesktopInstall::MacOSFramework) ? QStringList{frameworkLib, appLib}
-                                                                  : QStringList{appLib, frameworkLib};
-            helperDirs.append(_cleanJoin(rootDir, "libexec/gstreamer-1.0"));
+        case DesktopInstall::MacOS:
             break;
-        }
         case DesktopInstall::Windows:
             exeSuffix = QStringLiteral(".exe");
             break;
@@ -476,10 +423,9 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
             break;
     }
     return {
-        .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
-        .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
+        .pluginDir = _cleanJoin(appLib, "gstreamer-1.0"),
+        .gioModuleDir = _cleanJoin(appLib, "gio/modules"),
         .scannerCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-plugin-scanner") + exeSuffix),
-        .ptpCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-ptp-helper") + exeSuffix),
     };
 }
 

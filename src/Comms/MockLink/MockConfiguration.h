@@ -35,6 +35,8 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool cameraHasTrackingPoint               READ cameraHasTrackingPoint              WRITE setCameraHasTrackingPoint              NOTIFY cameraHasTrackingPointChanged)
     Q_PROPERTY(bool cameraHasTrackingRectangle           READ cameraHasTrackingRectangle          WRITE setCameraHasTrackingRectangle          NOTIFY cameraHasTrackingRectangleChanged)
     Q_PROPERTY(int  videoStreamType                      READ videoStreamType                     WRITE setVideoStreamType                     NOTIFY videoStreamTypeChanged)
+    Q_PROPERTY(
+        int cameraThermalStream READ cameraThermalStream WRITE setCameraThermalStream NOTIFY cameraThermalStreamChanged)
     Q_PROPERTY(int homeLocation READ homeLocation WRITE setHomeLocation NOTIFY homeLocationChanged)
 
 public:
@@ -70,6 +72,16 @@ public:
         VideoStreamMpegTsTcp,   ///< MPEG-TS over TCP -> tcp://
     };
     Q_ENUM(VideoStreamType)
+
+    /// Which of the simulated cameras' video streams is a thermal one (VIDEO_STREAM_STATUS_FLAGS_THERMAL).
+    enum CameraThermalStream
+    {
+        CameraThermalStreamNone = 0,      ///< None: camera 1 has two visible-light streams, camera 2 no stream
+        CameraThermalStreamSecondStream,  ///< Camera 1's second stream, beside its visible-light one
+        CameraThermalStreamSecondCamera,  ///< Camera 2's only stream, camera 1 having one stream as well: a camera
+                                          ///< component for each stream, as mavlink-camera-manager has
+    };
+    Q_ENUM(CameraThermalStream)
 
     /// Simulated vehicle home position.
     /// Order must match the combo box model in MockLinkSettings.qml / MockLink.qml.
@@ -166,6 +178,25 @@ public:
     static VideoStreamType videoStreamTypeFromInt(int value)
     {
         return ((value >= VideoStreamNone) && (value <= VideoStreamMpegTsTcp)) ? static_cast<VideoStreamType>(value) : VideoStreamNone;
+    }
+
+    int cameraThermalStream() const { return static_cast<int>(_cameraThermalStream); }
+
+    void setCameraThermalStream(int value)
+    {
+        _cameraThermalStream = cameraThermalStreamFromInt(value);
+        emit cameraThermalStreamChanged();
+    }
+
+    CameraThermalStream cameraThermalStreamEnum() const { return _cameraThermalStream; }
+
+    /// Maps an int (persisted setting) to a valid CameraThermalStream.
+    /// Out-of-range values (e.g. corrupted settings) map to CameraThermalStreamNone.
+    static CameraThermalStream cameraThermalStreamFromInt(int value)
+    {
+        return ((value >= CameraThermalStreamNone) && (value <= CameraThermalStreamSecondCamera))
+                   ? static_cast<CameraThermalStream>(value)
+                   : CameraThermalStreamNone;
     }
 
     int homeLocation() const { return static_cast<int>(_homeLocation); }
@@ -265,6 +296,7 @@ signals:
     void cameraHasTrackingPointChanged();
     void cameraHasTrackingRectangleChanged();
     void videoStreamTypeChanged();
+    void cameraThermalStreamChanged();
     void homeLocationChanged();
 
 private:
@@ -299,6 +331,7 @@ private:
     bool _cameraHasTrackingPoint = true;
     bool _cameraHasTrackingRectangle = true;
     VideoStreamType _videoStreamType = VideoStreamNone;
+    CameraThermalStream _cameraThermalStream = CameraThermalStreamNone;
     HomeLocation _homeLocation = HomeLocationPX4SITL;
 
     // Gimbal capability flags (defaults - all enabled)
@@ -339,6 +372,7 @@ private:
     static constexpr const char *_cameraHasTrackingPointKey = "CameraHasTrackingPoint";
     static constexpr const char *_cameraHasTrackingRectangleKey = "CameraHasTrackingRectangle";
     static constexpr const char *_videoStreamTypeKey = "VideoStreamType";
+    static constexpr const char* _cameraThermalStreamKey = "CameraThermalStream";
     static constexpr const char* _homeLocationKey = "HomeLocation";
 };
 

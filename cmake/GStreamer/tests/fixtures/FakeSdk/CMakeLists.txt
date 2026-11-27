@@ -17,9 +17,9 @@ string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
 file(READ "${QGC_MODULE_DIR}/../.github/build-config.json" _qgc_test_real_config)
 string(JSON _qgc_test_policy_json GET "${_qgc_test_real_config}" gstreamer_plugin_policy)
 string(
-    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"bundled_minimum\": "
-           "\"1.20.0\", \"android\": \"1.20.0\", \"macos\": \"1.22.0\"}, \"plugins\": {\"common\": "
-           "[\"${_qgc_test_plugins_json}\"]}}, \"gstreamer_plugin_policy\": ${_qgc_test_policy_json}}"
+    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"sdk\": \"1.22.0\"}, "
+           "\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}, "
+           "\"gstreamer_plugin_policy\": ${_qgc_test_policy_json}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -56,7 +56,7 @@ set(_qgc_pkg_config_libdir_before "$ENV{PKG_CONFIG_LIBDIR}")
 include(GStreamer/Orchestrator)
 
 # EXPECT_PROBE_ROOT: probe the optional gstreamer-qgcprobe-1.0 library before the pkg-config environment is restored, as
-# HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-vulkan, and check that it and the core resolved to that SDK.
+# HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-d3d12, and check that it and the core resolved to that SDK.
 if(EXPECT_PROBE_ROOT)
     qgc_gst_probe_library(
         QGCProbe
@@ -77,12 +77,22 @@ if(EXPECT_PROBE_ROOT)
     qgc_test_assert_streq("probe library" "${EXPECT_PROBE_ROOT}/lib/libgstqgcprobe-1.0.so" "${QGCProbe_LIBRARIES}")
 endif()
 
+# EXPECT_PROBE_REASON: the optional library is one the SDK lacks, so the probe finds none and says this.
+if(EXPECT_PROBE_REASON)
+    qgc_gst_probe_library(
+        QGCProbe
+        HAS_VAR QGC_GST_HAS_TEST_PROBE
+        HEADER gst/qgcprobe.h
+        SYMBOL qgc_probe
+        PC_MODULE gstreamer-qgcprobe-1.0
+    )
+    qgc_test_assert_streq("probe found" FALSE "${QGCProbe_FOUND}")
+    qgc_test_assert_streq("probe reason" "${EXPECT_PROBE_REASON}" "${QGCProbe_REASON}")
+endif()
+
 # Discovery state stays out of the cache and the global search paths; the derived pkg-config flags
 # remain visible to the rest of the GStreamer directory and the environment is restored afterwards.
-if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)
-    set(EXPECT_CACHED_PKG_CONFIG_ARGN "")
-endif()
-qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "${EXPECT_CACHED_PKG_CONFIG_ARGN}" "$CACHE{PKG_CONFIG_ARGN}")
+qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "" "$CACHE{PKG_CONFIG_ARGN}")
 if(QGC_TEST_ANDROID_ABI)
     qgc_test_assert_in_list("derived pkg-config flags" --static PKG_CONFIG_ARGN)
 endif()
@@ -129,18 +139,14 @@ foreach(_target IN LISTS _qgc_state_targets)
     endforeach()
 endforeach()
 foreach(
-    _var IN
-    ITEMS
-        GStreamer_VERSION
-        GStreamer_ROOT_DIR
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_SELECTED_COMPONENTS
-        GSTREAMER_PLUGINS
-        QGC_GST_HAS_DMABUF
+    _var IN ITEMS GStreamer_VERSION GStreamer_ROOT_DIR GSTREAMER_SELECTED_COMPONENTS GSTREAMER_PLUGINS
+                  QGC_GST_HAS_DMABUF
 )
     string(APPEND _qgc_state "${_var}=${${_var}}\n")
+endforeach()
+foreach(_key IN ITEMS LIB_PATH PLUGIN_PATH INCLUDE_PATH)
+    qgc_gst_layout_get(${_key} _qgc_value)
+    string(APPEND _qgc_state "${_key}=${_qgc_value}\n")
 endforeach()
 foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RESOLVED_AUTO)
     string(APPEND _qgc_state "${_var}=$CACHE{${_var}}\n")
@@ -165,18 +171,10 @@ if(QGC_TEST_INSTALL_REQUIRED_PLUGINS)
     string(REPLACE "," ";" _qgc_required_plugins "${QGC_TEST_INSTALL_REQUIRED_PLUGINS}")
     qgc_gst_install_platform_sdk(QGCFake REQUIRED_PLUGINS ${_qgc_required_plugins})
 endif()
-# QGC_TEST_INSTALL_MACOS_FRAMEWORK: install this GStreamer.framework into a QGCFake.app bundle.
-# QGC_TEST_INSTALL_MACOS_FLAT: install the SDK's .dylib files into a QGCFake.app bundle.
-if(QGC_TEST_INSTALL_MACOS_FRAMEWORK)
-    qgc_gst_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
+# QGC_TEST_INSTALL_MACOS: install the SDK's .dylib files into a QGCFake.app bundle.
+if(QGC_TEST_INSTALL_MACOS)
     qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
-    qgc_test_assert_streq(
-        "framework plugin dir" "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
-        "${_qgc_plugin_dest}"
-    )
-elseif(QGC_TEST_INSTALL_MACOS_FLAT)
-    qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
-    qgc_test_assert_streq("flat plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
+    qgc_test_assert_streq("plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
 endif()
 
 if(NOT DEFINED EXPECT_ROOT)
@@ -204,7 +202,8 @@ qgc_test_assert_property(
 if(TARGET GStreamer::plugin_coreelements)
     message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::plugin_coreelements was created")
 endif()
-qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${GSTREAMER_PLUGIN_PATH}")
+qgc_gst_layout_get(PLUGIN_PATH _qgc_plugin_path)
+qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${_qgc_plugin_path}")
 qgc_test_assert_streq("recorded version" "${EXPECT_VERSION}" "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")
 if(NOT DEFINED EXPECT_AUTO)
     set(EXPECT_AUTO FALSE)

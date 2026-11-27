@@ -7,7 +7,7 @@
 
 #include "GstHwTypes.h"
 
-/// Per-path telemetry counters (map failures, reuse hits, sync waits) keyed by `HwVideoBufferPath`; atomics,
+/// Per-path telemetry counters (map failures, sync waits) keyed by `HwVideoBufferPath`; atomics,
 /// thread-safe. Counters only grow: readers diff against their own Snapshot, so several receivers never consume each
 /// other's counts.
 namespace GstHwPathTelemetry {
@@ -22,18 +22,16 @@ enum class HwFallbackReason
     MapFailed,
     VulkanNoSync,
     ImportUnsupported,
+    FdDupFailed,  ///< A frame's dma-buf fd could not be duplicated for the import: no fault of the driver's.
     Count,
 };
 
 /// Per-path event counts.
 enum class Counter
 {
-    MapFailures,   ///< mapTextures() returned an invalid bundle (GPU import failed).
-    TextureReuse,  ///< Prior frame's QRhiTexture wrappers reused (decoder pool returned same native handle).
-    GpuWaits,      ///< GPU-side waits on the producer's writes before sampling a frame.
-    CpuWaits,      ///< CPU-blocking waits on the producer's writes before sampling a frame.
-    ImageCacheHits,
-    ImageCacheMisses,
+    MapFailures,  ///< mapTextures() returned no textures (GPU import failed).
+    GpuWaits,     ///< GPU-side waits on the producer's writes before sampling a frame.
+    CpuWaits,     ///< CPU-blocking waits on the producer's writes before sampling a frame.
     /// DMABuf wait on the producer's write fences (poll() on the dma-buf fds) timed out or failed; the frame was
     /// imported without a producer barrier.
     ProducerFenceTimeouts,

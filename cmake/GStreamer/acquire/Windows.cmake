@@ -24,26 +24,14 @@ function(_qgc_gst_windows_sdk_complete root_dir out_var)
 endfunction()
 
 # _qgc_gst_windows_extract(<staging> <installer>)
-# qgc_gst_acquire_sdk extractor: runs the SDK installer silently into <staging>, which becomes the SDK root, and checks
-# the result.
+# qgc_gst_acquire_sdk extractor: runs the SDK installer, which the download verified against its pinned checksum,
+# silently into <staging>, which becomes the SDK root, and checks the result.
 function(_qgc_gst_windows_extract staging installer)
     cmake_path(NATIVE_PATH installer _installer_native)
     cmake_path(NATIVE_PATH staging _staging_native)
     cmake_path(GET staging PARENT_PATH _cache_dir)
     set(_installer_log "${_cache_dir}/installer.log")
     cmake_path(NATIVE_PATH _installer_log _installer_log_native)
-
-    # The .exe is auto-run with /VERYSILENT below. Only its in-tree pin authenticates it: GStreamer_REQUIRE_CHECKSUM=OFF
-    # also accepts upstream's same-origin .sha256sum sidecar, or no checksum at all.
-    if(NOT _qgc_gst_archives_pinned)
-        message(
-            FATAL_ERROR
-                "GStreamer: refusing to silently run the downloaded Windows installer "
-                "'${_installer_native}' because its checksum is not pinned in .github/build-config.json "
-                "(gstreamer.checksums), so its integrity was not verified. Pin it or install the SDK "
-                "manually and point GStreamer_ROOT_DIR at it."
-        )
-    endif()
 
     # /portable=1 (cerbero's Inno script, 1.28+) skips the uninstaller, the GSTREAMER_1_0_ROOT_* environment
     # variable, the InstallDir registry key, the VC++ redistributable and the Visual Studio templates. Without

@@ -1,7 +1,5 @@
 #include "GStreamerTestHelpers.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -19,13 +17,75 @@
 #include "GStreamerEnvironment.h"
 #include "GstSourceFactory.h"
 
+namespace {
+
+struct GstTestStubDecoder
+{
+    GstElement parent;
+};
+
+struct GstTestStubDecoderClass
+{
+    GstElementClass parentClass;
+};
+
+GstStaticPadTemplate s_stubDecoderSink =
+    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-h264"));
+GstStaticPadTemplate s_stubDecoderSrc =
+    GST_STATIC_PAD_TEMPLATE("src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw"));
+
+G_DEFINE_TYPE(GstTestStubDecoder, gst_test_stub_decoder, GST_TYPE_ELEMENT)
+
+std::atomic<GstTest::StubDecoderFailure> s_stubDecoderFailure = GstTest::StubDecoderFailure::None;
+
+GstFlowReturn stubDecoderChain([[maybe_unused]] GstPad* pad, GstObject* parent, GstBuffer* buffer)
+{
+    gst_buffer_unref(buffer);
+    if (s_stubDecoderFailure.load() != GstTest::StubDecoderFailure::AtFirstFrame) {
+        return GST_FLOW_OK;
+    }
+    GST_ELEMENT_ERROR(GST_ELEMENT(parent), STREAM, DECODE, ("Simulated hardware decoder failure"), (nullptr));
+    return GST_FLOW_ERROR;
+}
+
+gboolean stubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
+{
+    // Takes the stream's caps without passing them on: nothing ever leaves the decoder.
+    if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
+        gst_event_unref(event);
+        if (s_stubDecoderFailure.load() != GstTest::StubDecoderFailure::AtCaps) {
+            return TRUE;
+        }
+        GST_ELEMENT_ERROR(GST_ELEMENT(parent), RESOURCE, FAILED, ("Simulated hardware decoder failure"), (nullptr));
+        return FALSE;
+    }
+    return gst_pad_event_default(pad, parent, event);
+}
+
+void gst_test_stub_decoder_class_init(GstTestStubDecoderClass* klass)
+{
+    GstElementClass* const elementClass = GST_ELEMENT_CLASS(klass);
+    gst_element_class_add_static_pad_template(elementClass, &s_stubDecoderSink);
+    gst_element_class_add_static_pad_template(elementClass, &s_stubDecoderSrc);
+    gst_element_class_set_static_metadata(elementClass, "QGC test decoder", "Codec/Decoder/Video/Hardware",
+                                          "Decodes nothing", "QGroundControl");
+}
+
+void gst_test_stub_decoder_init(GstTestStubDecoder* self)
+{
+    GstPad* const sink = gst_pad_new_from_static_template(&s_stubDecoderSink, "sink");
+    gst_pad_set_chain_function(sink, stubDecoderChain);
+    gst_pad_set_event_function(sink, stubDecoderEvent);
+    (void) gst_element_add_pad(GST_ELEMENT(self), sink);
+    (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_stubDecoderSrc, "src"));
+}
+
+}  // namespace
+
 namespace GstTest {
 
 QString initGStreamer()
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    return QStringLiteral("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
-#else
     if (gst_is_initialized()) {
         return {};
     }
@@ -38,7 +98,6 @@ QString initGStreamer()
             .arg(owned ? QString::fromUtf8(owned->message) : QStringLiteral("unknown error"));
     }
     return {};
-#endif
 }
 
 QString firstMissingFactory(std::initializer_list<const char*> names)
@@ -103,7 +162,7 @@ QStringList childFactoryNames(GstBin* bin, bool recurse)
     QStringList names;
     for (const GStreamer::GstElementPtr& child : childElements(bin, recurse)) {
         GstElementFactory* const factory = gst_element_get_factory(child.get());
-        names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : "?");
+        names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : G_OBJECT_TYPE_NAME(child.get()));
     }
     names.sort();
     return names;
@@ -259,6 +318,41 @@ bool TestPipeline::launch(const QString& description)
     return true;
 }
 
+bool TestPipeline::launchInto(const QString& description, GstElement* sink)
+{
+    const GStreamer::GstElementPtr sinkOwner =
+        sink ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(sink))) : GStreamer::GstElementPtr();
+    if (!sinkOwner) {
+        _error = QStringLiteral("no sink to launch into");
+        return false;
+    }
+    const QString separator = QStringLiteral(" ! ");
+    const qsizetype lastLink = description.lastIndexOf(separator);
+    const QString lastItem = description.mid((lastLink < 0) ? 0 : (lastLink + separator.size())).trimmed();
+    const bool filtered = (lastLink >= 0) && lastItem.startsWith(QLatin1String("video/x-raw"));
+    const GStreamer::GstCapsPtr filter =
+        filtered ? GStreamer::adoptCaps(gst_caps_from_string(lastItem.toUtf8().constData())) : GStreamer::GstCapsPtr();
+
+    GError* rawError = nullptr;
+    GstElement* const upstream = gst_parse_bin_from_description(
+        (filtered ? description.left(lastLink) : description).toUtf8().constData(), TRUE, &rawError);
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    if (error || !upstream || (filtered && !filter)) {
+        _error = error ? QString::fromUtf8(error->message) : QStringLiteral("gst_parse_bin_from_description failed");
+        if (upstream) {
+            gst_object_unref(gst_object_ref_sink(upstream));
+        }
+        return false;
+    }
+    _pipeline = GStreamer::adoptFloating(gst_pipeline_new(nullptr));
+    gst_bin_add_many(bin(), upstream, sink, nullptr);
+    if (!gst_element_link_filtered(upstream, sink, filter.get())) {
+        _error = QStringLiteral("the pipeline doesn't link to its sink");
+        return false;
+    }
+    return true;
+}
+
 GStreamer::GstElementPtr TestPipeline::element(const char* name) const
 {
     return GStreamer::adoptElement(gst_bin_get_by_name(bin(), name));
@@ -374,12 +468,13 @@ bool FixtureRtpSender::start(quint16 port)
     const char* const codec = _h265 ? "h265" : "h264";
     _pipeline = std::make_unique<TestPipeline>();
     // max-bytes keeps one unit queued, so switchTo() and holdKeyframes() apply to the next frame sent.
-    if (!_pipeline->launch(
-            QStringLiteral("appsrc name=src is-live=true format=time max-bytes=1 "
-                           "caps=video/x-%1,stream-format=byte-stream,alignment=au ! "
-                           "rtp%1pay config-interval=-1 pt=96 ! udpsink host=127.0.0.1 port=%2 sync=true async=false")
-                .arg(QLatin1String(codec))
-                .arg(port))) {
+    if (!_pipeline->launch(QStringLiteral("appsrc name=src is-live=true format=time max-bytes=1 "
+                                          "caps=video/x-%1,stream-format=byte-stream,alignment=au ! "
+                                          "rtp%1pay name=pay config-interval=-1 pt=96 %3 ! "
+                                          "udpsink host=127.0.0.1 port=%2 sync=true async=false")
+                               .arg(QLatin1String(codec))
+                               .arg(port)
+                               .arg(_firstPacket))) {
         _error = _pipeline->error();
         return false;
     }
@@ -404,6 +499,26 @@ bool FixtureRtpSender::start(quint16 port)
 void FixtureRtpSender::stop()
 {
     _pipeline.reset();
+}
+
+bool FixtureRtpSender::restartAfterSkipping(quint16 port, quint16 skipped)
+{
+    const GStreamer::GstElementPtr payloader = _pipeline ? _pipeline->element("pay") : GStreamer::GstElementPtr();
+    if (!payloader) {
+        return false;
+    }
+    // Later than the last one by less than the restart takes: timestamps ahead of the time that passed would have a
+    // jitter buffer hold the packets back, and drop those beyond its latency.
+    constexpr guint kTimestampStep = 90;
+    guint lastSequenceNumber = 0;
+    guint lastTimestamp = 0;
+    g_object_get(payloader.get(), "seqnum", &lastSequenceNumber, "timestamp", &lastTimestamp, nullptr);
+    _firstPacket = QStringLiteral("seqnum-offset=%1 timestamp-offset=%2")
+                       .arg(static_cast<quint16>(lastSequenceNumber + skipped + 1))
+                       .arg(lastTimestamp + kTimestampStep);
+    const bool started = start(port);
+    _firstPacket.clear();
+    return started;
 }
 
 bool FixtureRtpSender::switchTo(const QString& resource)
@@ -489,6 +604,15 @@ QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware)
     return ranks;
 }
 
+GStreamer::GstFeaturePtr registerStubDecoder(StubDecoderFailure failure)
+{
+    s_stubDecoderFailure.store(failure);
+    if (!gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, gst_test_stub_decoder_get_type())) {
+        return nullptr;
+    }
+    return GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
+}
+
 FakeRtspServer::FakeRtspServer(const QByteArray& sdp)
     : _sdp(sdp)
 {
@@ -545,5 +669,3 @@ void FakeRtspServer::_serve(QTcpSocket* socket)
 }
 
 }  // namespace GstTest
-
-#endif

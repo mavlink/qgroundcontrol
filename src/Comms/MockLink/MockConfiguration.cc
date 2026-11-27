@@ -37,6 +37,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration* copy, QObject* par
     , _cameraHasTrackingPoint(copy->cameraHasTrackingPoint())
     , _cameraHasTrackingRectangle(copy->cameraHasTrackingRectangle())
     , _videoStreamType(copy->videoStreamTypeEnum())
+    , _cameraThermalStream(copy->cameraThermalStreamEnum())
     , _homeLocation(copy->homeLocationEnum())
     , _gimbalHasRollAxis(copy->gimbalHasRollAxis())
     , _gimbalHasPitchAxis(copy->gimbalHasPitchAxis())
@@ -85,6 +86,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setCameraHasTrackingPoint(mockLinkSource->cameraHasTrackingPoint());
     setCameraHasTrackingRectangle(mockLinkSource->cameraHasTrackingRectangle());
     setVideoStreamType(mockLinkSource->videoStreamType());
+    setCameraThermalStream(mockLinkSource->cameraThermalStream());
     setHomeLocation(mockLinkSource->homeLocation());
     setGimbalHasRollAxis(mockLinkSource->gimbalHasRollAxis());
     setGimbalHasPitchAxis(mockLinkSource->gimbalHasPitchAxis());
@@ -126,6 +128,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setCameraHasTrackingPoint(settings.value(_cameraHasTrackingPointKey, true).toBool());
     setCameraHasTrackingRectangle(settings.value(_cameraHasTrackingRectangleKey, true).toBool());
     setVideoStreamType(settings.value(_videoStreamTypeKey, static_cast<int>(VideoStreamNone)).toInt());
+    setCameraThermalStream(settings.value(_cameraThermalStreamKey, static_cast<int>(CameraThermalStreamNone)).toInt());
     setHomeLocation(settings.value(_homeLocationKey, static_cast<int>(HomeLocationPX4SITL)).toInt());
     setGimbalHasRollAxis(settings.value(_gimbalHasRollAxisKey, true).toBool());
     setGimbalHasPitchAxis(settings.value(_gimbalHasPitchAxisKey, true).toBool());
@@ -163,6 +166,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_cameraHasTrackingPointKey, cameraHasTrackingPoint());
     settings.setValue(_cameraHasTrackingRectangleKey, cameraHasTrackingRectangle());
     settings.setValue(_videoStreamTypeKey, videoStreamType());
+    settings.setValue(_cameraThermalStreamKey, cameraThermalStream());
     settings.setValue(_homeLocationKey, homeLocation());
     settings.setValue(_gimbalHasRollAxisKey, gimbalHasRollAxis());
     settings.setValue(_gimbalHasPitchAxisKey, gimbalHasPitchAxis());

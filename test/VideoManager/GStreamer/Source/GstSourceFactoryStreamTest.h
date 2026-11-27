@@ -9,13 +9,14 @@ class GstSourceFactoryStreamTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testSourceFactoryRtspSetsUpOnlyVideoStream();
     void _testSourceFactoryRtspEndsSessionWithoutPause();
     void _testSourceFactoryDropsRtpUntilParameterSets();
     void _testStatsCountPacketsDroppedOnLatency();
     void _testMpegTsStreamObjectCarriesParsedCaps();
+    void _testMpegTsFrameLeavesBeforeTheNextArrives_data();
+    void _testMpegTsFrameLeavesBeforeTheNextArrives();
+    void _testMpegTsPacketWithinFrameEndsAlignment();
     void _testUdpSourceRefusesPortInUse();
     void _testUdpSourceStopsRightAfterPlaying();
-#endif
 };

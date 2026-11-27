@@ -8,7 +8,6 @@ from pathlib import Path
 
 from . import _common as _c
 
-WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_VERSION = "1.4.363.0"
 WINDOWS_VULKAN_URL = (
@@ -163,60 +162,6 @@ def install_windows_msvc(dry_run: bool = False, arm64: bool = False) -> bool:
     return True
 
 
-def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
-    """Install GStreamer on Windows (AMD64 only)."""
-    arch = os.environ.get("PROCESSOR_ARCHITECTURE", "")
-    if arch != "AMD64":
-        _c.log_warn(f"Skipping GStreamer: only supported on AMD64 (detected: {arch or 'unknown'})")
-        return True
-
-    prefix = WINDOWS_GSTREAMER_PREFIX
-    if Path(prefix, "bin", "gst-launch-1.0.exe").exists():
-        print(f"GStreamer already installed at {prefix}; skipping download+install")
-        _c.set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)
-        _c.set_env_var("GSTREAMER_1_0_ROOT_X86_64", prefix)
-        _c.add_to_path(f"{prefix}\\bin")
-        return True
-
-    installer_name = _c.package_filename("windows_msvc_x64", version)
-    expected_sha256 = _c.pinned_checksum(version, "windows_msvc_x64")
-    if not expected_sha256:
-        _c.log_error(f"Missing GStreamer {version} Windows checksum")
-        return False
-
-    print(f"\nInstalling GStreamer {version}...")
-    installer = _c.download_dir("gstreamer") / installer_name
-    # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
-    installer_urls = (
-        _c.package_url("windows_msvc_x64", version),
-        _c.mirror_url("windows_msvc_x64", version),
-    )
-    if not _c.download_first(installer_urls, installer, expected_sha256, dry_run):
-        return False
-    if not _c.run_command(
-        [
-            str(installer),
-            "/VERYSILENT",
-            "/SUPPRESSMSGBOXES",
-            "/SP-",
-            "/NORESTART",
-            "/TYPE=devel",
-            f"/DIR={WINDOWS_GSTREAMER_PREFIX}",
-        ],
-        dry_run,
-    ):
-        return False
-    if not dry_run:
-        installer.unlink(missing_ok=True)
-
-    prefix = WINDOWS_GSTREAMER_PREFIX
-    _c.set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)
-    _c.set_env_var("GSTREAMER_1_0_ROOT_X86_64", prefix)
-    _c.add_to_path(f"{prefix}\\bin")
-    print(f"GStreamer {version} installed to {prefix}")
-    return True
-
-
 def install_windows_vulkan(dry_run: bool = False) -> bool:
     """Install Vulkan SDK on Windows."""
     print(f"\nInstalling Vulkan SDK {WINDOWS_VULKAN_VERSION}...")
@@ -254,13 +199,12 @@ def install_windows_vulkan(dry_run: bool = False) -> bool:
 
 def install_windows(
     dry_run: bool = False,
-    skip_gstreamer: bool = False,
     vulkan: bool = False,
     msvc: bool = False,
     msvc_arm64: bool = False,
     nsis: bool = False,
 ) -> bool:
-    """Install Windows dependencies."""
+    """Install the requested Windows tools. CMake downloads the GStreamer SDK at configure time."""
     _c.log_info("Installing Windows dependencies...")
     arch = os.environ.get("PROCESSOR_ARCHITECTURE", "unknown")
     print(f"Architecture: {arch}")
@@ -271,14 +215,6 @@ def install_windows(
     if nsis and not install_windows_nsis(dry_run):
         return False
 
-    if not skip_gstreamer:
-        version = _c.get_build_config_value("gstreamer.version.windows")
-        if not version:
-            _c.log_error("gstreamer.version.windows not found in build-config.json")
-            return False
-        if not install_windows_gstreamer(version, dry_run):
-            return False
-
     if vulkan and not install_windows_vulkan(dry_run):
         return False
 
@@ -287,12 +223,10 @@ def install_windows(
 
 
 __all__ = [
-    "WINDOWS_GSTREAMER_PREFIX",
     "WINDOWS_VS_BUILDTOOLS_URL",
     "WINDOWS_VULKAN_INSTALL_DIR",
     "WINDOWS_VULKAN_URL",
     "install_windows",
-    "install_windows_gstreamer",
     "install_windows_msvc",
     "install_windows_nsis",
     "install_windows_vulkan",

@@ -33,6 +33,7 @@ private slots:
     void _testNormalizeArgs_UnittestBare();
     void _testNormalizeArgs_UnittestBareFollowedByOption();
     void _testNormalizeArgs_ColonOptionValuePreserved();
+    void _testNormalizeArgs_GStreamerOptionsLeftToGStreamer();
     void _testParseSystemId_data();
     void _testParseSystemId();
     void _testParseUnitTestShard_data();

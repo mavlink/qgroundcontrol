@@ -3,7 +3,6 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMetaEnum>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 #include <QtGui/QImage>
@@ -14,19 +13,14 @@
 #include <QtMultimedia/QVideoFrameInput>
 #include <QtTest/QSignalSpy>
 
+#include "QtMultimediaReceiverTestSupport.h"
 #include "QtVideoRecorder.h"
 
 void QtVideoRecorderTest::_ignoreEncoderFallbacks()
 {
-    ignoreLogMessage("qt.multimedia.ffmpeg.encoder", QtInfoMsg,
-                     QRegularExpression(QStringLiteral("^Recording new media")));
-    ignoreLogMessage(
-        "default", QtWarningMsg,
-        QRegularExpression(QStringLiteral("^(Cannot find software target format|Could not find target format)")));
-    ignoreLogMessage("qt.multimedia.ffmpeg.videoencoder", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^No valid video codecs found")));
-    ignoreLogMessage("Video.QtVideoRecorder", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Recording error: .* \"Could not initialize encoder\"$")));
+    for (const QtMultimediaTest::IgnoredLog& log : QtMultimediaTest::encoderFallbackLogs()) {
+        ignoreLogMessage(log.category, log.type, log.pattern);
+    }
 }
 
 void QtVideoRecorderTest::_testRecordingFormat_data()
@@ -125,13 +119,17 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
     session.setVideoFrameInput(&input);
     QtVideoRecorder recorder;
     session.setRecorder(recorder.mediaRecorder());
+    QSignalSpy recordingSpy(&recorder, &QtVideoRecorder::recordingChanged);
     QSignalSpy startedSpy(&recorder, &QtVideoRecorder::recordingStarted);
     QSignalSpy finishedSpy(&recorder, &QtVideoRecorder::recordingFinished);
 
     recorder.start(tempDir.filePath(QStringLiteral("frames.mkv")), QMediaFormat::Matroska,
                    QMediaFormat::VideoCodec::Unspecified, QtVideoRecorder::recordingQuality(1));
     QVERIFY(recorder.active());
-    QVERIFY(!recorder.recording());
+    // Recording from the request on; its file starts with the first frame encoded.
+    QVERIFY(recorder.recording());
+    QVERIFY(startedSpy.isEmpty());
+    QCOMPARE(recorder.recordedMs(), qint64(-1));
     QCOMPARE(recorder.mediaRecorder()->quality(), QMediaRecorder::LowQuality);
     // A stored value that is no quality records as before there was a choice.
     QCOMPARE(QtVideoRecorder::recordingQuality(7), QMediaRecorder::HighQuality);
@@ -156,7 +154,7 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
             // it accepts frames can keep the encoders waiting until it times out.
             QCoreApplication::processEvents();
             frames++;
-            if (recorder.recording()) {
+            if (!startedSpy.isEmpty()) {
                 framesRecorded++;
             }
         } else {
@@ -166,6 +164,8 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
     }
     QCOMPARE(startedSpy.count(), 1);
     QVERIFY(recorder.recording());
+    QVERIFY(recorder.recordedMs() > 0);
+    QVERIFY(recorder.recordedBytes() >= 0);
     const QString file = startedSpy.first().first().toString();
 
     recorder.stop();
@@ -174,6 +174,10 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
     QVERIFY2(finishedSpy.first().at(1).toString().isEmpty(), qPrintable(finishedSpy.first().at(1).toString()));
     QVERIFY(!recorder.recording());
     QVERIFY(!recorder.active());
+    // One recording throughout, whichever formats failed before one encoded.
+    QCOMPARE(recordingSpy.count(), 2);
+    QCOMPARE(recorder.recordedMs(), qint64(-1));
+    QCOMPARE(recorder.recordedBytes(), qint64(-1));
 
     QMediaPlayer player;
     player.setSource(QUrl::fromLocalFile(file));

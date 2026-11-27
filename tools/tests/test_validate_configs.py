@@ -53,7 +53,7 @@ def test_consumed_fields_are_required(section, key):
     assert validate_build_config(config, schema)
 
 
-@pytest.mark.parametrize("mutation", ["qt_minimum", "sdk_order", "gst_checksum", "gst_platform"])
+@pytest.mark.parametrize("mutation", ["qt_minimum", "sdk_order", "gst_version", "gst_checksum"])
 def test_inconsistent_versions_are_rejected(mutation):
     config, schema = configuration()
     config = copy.deepcopy(config)
@@ -61,30 +61,30 @@ def test_inconsistent_versions_are_rejected(mutation):
         config["qt"]["minimum_version"] = "99.0.0"
     elif mutation == "sdk_order":
         config["android"]["min_sdk"] = "99"
-    elif mutation == "gst_checksum":
-        config["gstreamer"]["version"]["android"] = "1.99.0"
+    elif mutation == "gst_version":
+        config["gstreamer"]["version"]["sdk"] = "1.99.0"
     else:
-        del config["gstreamer"]["version"]["windows"]
+        sdk = config["gstreamer"]["version"]["sdk"]
+        del config["gstreamer"]["checksums"][sdk]["windows_msvc_arm64"]
     assert validate_build_config(config, schema)
 
 
-@pytest.mark.parametrize(
-    "key,version,error",
-    [
-        ("ios", "1.26.0", "gstreamer.version.ios must be at least 1.28.0"),
-        ("bundled_minimum", "1.29.0", "gstreamer.version.ios must be at least 1.29.0"),
-        (
-            "minimum",
-            "1.28.0",
-            "gstreamer.version.minimum must stay below 1.28.0 for system GStreamer",
-        ),
-    ],
-)
-def test_gstreamer_version_floors(key, version, error):
+def test_gstreamer_sdk_version_below_the_minimum_is_rejected():
     config, schema = configuration()
     config = copy.deepcopy(config)
-    config["gstreamer"]["version"][key] = version
-    assert error in validate_build_config(config, schema)
+    config["gstreamer"]["version"]["sdk"] = "1.18.0"
+    assert "gstreamer.version.sdk must meet the minimum" in validate_build_config(config, schema)
+
+
+def test_gstreamer_sdk_version_without_the_ios_xcframework_is_rejected():
+    config, schema = configuration()
+    config = copy.deepcopy(config)
+    checksums = config["gstreamer"]["checksums"]
+    checksums["1.28.7"] = checksums[config["gstreamer"]["version"]["sdk"]]
+    config["gstreamer"]["version"]["sdk"] = "1.28.7"
+    assert validate_build_config(config, schema) == [
+        "gstreamer.version.sdk must be at least 1.28.8, for its iOS package"
+    ]
 
 
 def test_archive_preserves_build_and_license_inputs(git_repo: Path):

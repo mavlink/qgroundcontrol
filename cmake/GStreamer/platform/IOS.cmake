@@ -2,11 +2,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
 # iOS GStreamer SDK discovery — invoked by Orchestrator.cmake.
-# Up to 1.28.7 the iOS package is a .pkg holding a universal GStreamer.framework (cerbero versioned bundle) whose
-# Versions/1.0/GStreamer binary is a single merged static archive containing every library and plugin. From 1.28.8 on
-# it is a tarball holding a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
-# to the same single-merged-archive consumption model
-# (_qgc_gst_create_ios_targets) — discovery just locates the binary + Headers.
+# The iOS package is a tarball holding a GStreamer.xcframework. Each slice has a fat libGStreamer.a, a single merged
+# static archive containing every library and plugin (_qgc_gst_create_ios_targets consumes it), and its Headers;
+# discovery locates the slice.
 #
 # The GStreamer::mobile framework target (_qgc_gst_ios_mobile_framework) is derived from FindGStreamerMobile.cmake in
 # cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake). QGC changes: it is
@@ -18,24 +16,19 @@ include_guard(GLOBAL)
 include("${CMAKE_CURRENT_LIST_DIR}/../../modules/AppleXCFramework.cmake")
 
 # _qgc_gst_ios_bundle_from_root(<root> <out_bundle>)
-# Maps a GStreamer_ROOT_DIR to the SDK bundle, a GStreamer.xcframework or GStreamer.framework. Accepts the bundle
-# itself, a directory containing one (e.g. iPhone.sdk), an xcframework slice or a framework's Versions/<v> directory;
-# the last two are the roots discovery records. <out_bundle> is empty when <root> matches none of these.
+# Maps a GStreamer_ROOT_DIR to the SDK's GStreamer.xcframework. Accepts the xcframework itself, a directory containing
+# one, or one of its slices, which is the root discovery records. <out_bundle> is empty when <root> matches none of
+# these.
 function(_qgc_gst_ios_bundle_from_root root out_bundle)
     string(REGEX REPLACE "/+$" "" _root "${root}")
     cmake_path(GET _root PARENT_PATH _parent)
-    cmake_path(GET _parent PARENT_PATH _grandparent)
     set(_bundle "")
-    if(_root MATCHES "\\.(xc)?framework$")
+    if(_root MATCHES "\\.xcframework$")
         set(_bundle "${_root}")
     elseif(IS_DIRECTORY "${_root}/GStreamer.xcframework")
         set(_bundle "${_root}/GStreamer.xcframework")
-    elseif(IS_DIRECTORY "${_root}/GStreamer.framework")
-        set(_bundle "${_root}/GStreamer.framework")
     elseif(_parent MATCHES "\\.xcframework$")
         set(_bundle "${_parent}")
-    elseif(_parent MATCHES "/Versions$" AND _grandparent MATCHES "\\.framework$")
-        set(_bundle "${_grandparent}")
     endif()
     if(NOT IS_DIRECTORY "${_bundle}")
         set(_bundle "")
@@ -46,50 +39,24 @@ function(_qgc_gst_ios_bundle_from_root root out_bundle)
     )
 endfunction()
 
-# _qgc_gst_ios_layout(<bundle> <prefix>)
-# Locates the merged static archive and Headers of the GStreamer.xcframework (the slice for CMAKE_OSX_SYSROOT and
-# CMAKE_OSX_ARCHITECTURES) or GStreamer.framework <bundle>. Sets <prefix>_ROOT
-# (the slice or the framework's Versions/<v> directory), <prefix>_LIB (the archive) and <prefix>_INCLUDE (its headers)
-# in the caller's scope, failing configure when the archive, or a framework's Headers, is missing.
+# _qgc_gst_ios_layout(<xcframework> <prefix>)
+# Locates the merged static archive and Headers of the GStreamer.xcframework's slice for CMAKE_OSX_SYSROOT and
+# CMAKE_OSX_ARCHITECTURES. Sets <prefix>_ROOT (the slice), <prefix>_LIB (the archive) and <prefix>_INCLUDE (its
+# headers) in the caller's scope, failing configure when the archive is missing.
 # cmake-lint: disable=C0103
-function(_qgc_gst_ios_layout bundle prefix)
-    if(bundle MATCHES "\\.xcframework$")
-        # Same platform test as cmake/platform/Apple.cmake: CMAKE_OSX_SYSROOT is a name or an SDK path.
-        if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
-            set(_platform iphonesimulator)
-        else()
-            set(_platform iphoneos)
-        endif()
-        set(_slice_args XCFRAMEWORK "${bundle}" PLATFORM ${_platform} OUT_VAR _root)
-        if(CMAKE_OSX_ARCHITECTURES)
-            list(APPEND _slice_args ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
-        endif()
-        qgc_find_ios_xcframework_slice(${_slice_args})
-        set(_lib "${_root}/libGStreamer.a")
-        set(_include "${_root}/Headers")
+function(_qgc_gst_ios_layout xcframework prefix)
+    # Same platform test as cmake/platform/Apple.cmake: CMAKE_OSX_SYSROOT is a name or an SDK path.
+    if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
+        set(_platform iphonesimulator)
     else()
-        # cerbero universal .framework: one merged fat binary covers all arches.
-        # Versioned bundle (Versions/1.0/...) is canonical; tolerate a flat bundle.
-        if(EXISTS "${bundle}/Versions/1.0/GStreamer")
-            set(_root "${bundle}/Versions/1.0")
-        elseif(EXISTS "${bundle}/GStreamer")
-            set(_root "${bundle}")
-        else()
-            message(
-                FATAL_ERROR "GStreamer.framework at ${bundle} has no merged binary at "
-                            "Versions/1.0/GStreamer or GStreamer. The SDK layout may have changed."
-            )
-        endif()
-        set(_lib "${_root}/GStreamer")
-        # Headers may live under Versions/1.0/Headers or be a symlink at the root.
-        if(EXISTS "${_root}/Headers")
-            set(_include "${_root}/Headers")
-        elseif(EXISTS "${bundle}/Headers")
-            set(_include "${bundle}/Headers")
-        else()
-            message(FATAL_ERROR "GStreamer.framework at ${bundle} has no Headers/ directory.")
-        endif()
+        set(_platform iphoneos)
     endif()
+    set(_slice_args XCFRAMEWORK "${xcframework}" PLATFORM ${_platform} OUT_VAR _root)
+    if(CMAKE_OSX_ARCHITECTURES)
+        list(APPEND _slice_args ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
+    endif()
+    qgc_find_ios_xcframework_slice(${_slice_args})
+    set(_lib "${_root}/libGStreamer.a")
     if(NOT EXISTS "${_lib}")
         message(FATAL_ERROR "GStreamer iOS merged binary not found at ${_lib}")
     endif()
@@ -102,14 +69,14 @@ function(_qgc_gst_ios_layout bundle prefix)
         PARENT_SCOPE
     )
     set(${prefix}_INCLUDE
-        "${_include}"
+        "${_root}/Headers"
         PARENT_SCOPE
     )
 endfunction()
 
 # _qgc_gst_ios_sdk_version(<include_dir> <out_var>)
-# Sets <out_var> to the version gst/gstversion.h under <include_dir> defines, which works for every SDK layout, and
-# fails configure when it is older than QGC_GST_REQUESTED_VERSION, as the pkg-config platforms' version check does.
+# Sets <out_var> to the version gst/gstversion.h under <include_dir> defines, and fails configure when it is older than
+# QGC_GST_REQUESTED_VERSION, as the pkg-config platforms' version check does.
 # Without the header it warns and falls back to QGC_GST_REQUESTED_VERSION.
 function(_qgc_gst_ios_sdk_version include_dir out_var)
     _qgc_gst_header_version("${include_dir}" _version)
@@ -138,9 +105,9 @@ function(_qgc_gst_ios_sdk_version include_dir out_var)
 endfunction()
 
 # _qgc_gst_discover_ios_sdk()
-# Uses the GStreamer.xcframework or GStreamer.framework at or under GStreamer_ROOT_DIR, else the system iPhone.sdk,
-# else downloads the official iOS package, and selects its single merged static archive; there is no pkg-config. Also
-# sets GSTREAMER_XCFRAMEWORK_LIB and GStreamer_IOS_CA_BUNDLE.
+# Uses the GStreamer.xcframework at or under GStreamer_ROOT_DIR, else downloads the official iOS package, and selects
+# the merged static archive of its slice; there is no pkg-config. Also sets GSTREAMER_XCFRAMEWORK_LIB and
+# GStreamer_IOS_CA_BUNDLE.
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
@@ -148,41 +115,19 @@ function(_qgc_gst_discover_ios_sdk)
     endif()
 
     if(GStreamer_ROOT_DIR)
-        _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle)
-        if(NOT _gst_ios_bundle)
+        _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_xcframework)
+        if(NOT _gst_ios_xcframework)
             message(
                 FATAL_ERROR "GStreamer: GStreamer_ROOT_DIR '${GStreamer_ROOT_DIR}' is not a GStreamer.xcframework or "
-                            "GStreamer.framework, or a directory containing one."
+                            "a directory containing one."
             )
         endif()
     else()
-        _qgc_gst_ios_bundle_from_root("/Library/Developer/GStreamer/iPhone.sdk" _gst_ios_bundle)
-    endif()
-
-    if(NOT _gst_ios_bundle)
-        _qgc_gst_acquire_ios_sdk(_gst_ios_expanded)
-        # The package's bundle: the 1.28.8+ tarball's GStreamer.xcframework, else the older .pkg's GStreamer.framework.
-        file(
-            GLOB_RECURSE _gst_ios_bundles
-            LIST_DIRECTORIES true
-            "${_gst_ios_expanded}/*"
-        )
-        list(FILTER _gst_ios_bundles INCLUDE REGEX "/GStreamer\\.(xc)?framework$")
-        set(_gst_ios_xcframeworks ${_gst_ios_bundles})
-        list(FILTER _gst_ios_xcframeworks INCLUDE REGEX "xcframework$")
-        list(PREPEND _gst_ios_bundles ${_gst_ios_xcframeworks})
-        if(NOT _gst_ios_bundles)
-            message(
-                FATAL_ERROR "GStreamer: no GStreamer.xcframework or GStreamer.framework in the expanded iOS SDK at "
-                            "${_gst_ios_expanded}; the package layout may have changed."
-            )
-        endif()
-        list(GET _gst_ios_bundles 0 _gst_ios_bundle)
+        _qgc_gst_acquire_ios_sdk(_gst_ios_xcframework)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    # Both kinds are consumed as one merged static archive (_qgc_gst_create_ios_targets).
-    _qgc_gst_ios_layout("${_gst_ios_bundle}" _gst_ios)
+    _qgc_gst_ios_layout("${_gst_ios_xcframework}" _gst_ios)
     set(GStreamer_ROOT_DIR "${_gst_ios_ROOT}")
     set(GSTREAMER_XCFRAMEWORK_LIB "${_gst_ios_LIB}")
 
@@ -256,7 +201,7 @@ function(_qgc_gst_ios_usage_targets archive include_dir)
             IMPORTED_LOCATION "${archive}"
     )
     add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
-    # iOS .framework has flat Headers/; macOS-style installs have the gstreamer-1.0 /
+    # The iOS SDK has flat Headers/; macOS-style installs have the gstreamer-1.0 /
     # glib-2.0 subdirs. Add only what exists — INTERFACE_INCLUDE_DIRECTORIES is validated.
     target_include_directories(GStreamer::GStreamer INTERFACE "${include_dir}")
     foreach(_inc_sub IN ITEMS gstreamer-1.0 glib-2.0)

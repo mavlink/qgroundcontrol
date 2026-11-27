@@ -3,7 +3,7 @@
 # that would ship a GPL library or plugin, _qgc_gst_install_gpl_check; verifying the installed plugins) and the
 # dispatcher qgc_gst_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
 # ANDROID/IOS early-return. Each platform's installer is in platform/<platform>.cmake.
-# Depends on: Platform.cmake (qgc_gst_platform), Layout.cmake (the Orchestrator's BUNDLED_PLUGINS, HOMEBREW_PREFIX)
+# Depends on: Platform.cmake (qgc_gst_platform), Layout.cmake (the Orchestrator's BUNDLED_PLUGINS)
 #             and PluginPolicy.cmake (qgc_gst_platform_plugin_attrs, GSTREAMER_BUNDLE_REQUIRED_PLUGINS,
 #             GSTREAMER_GPL_DENYLIST; included again by the install-time checks).
 
@@ -185,7 +185,9 @@ function(_qgc_gst_install_runtime_closure library_dest)
     endif()
     # The system's libraries resolve outside the SDK and are excluded; API sets, the MSVC runtime (installed by
     # InstallRequiredSystemLibraries) and macOS system libraries in the dyld cache may not resolve at all.
-    # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy.
+    # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy. On macOS that directory is
+    # part of the name it is loaded by, @rpath/libproxy/<backend>, so the installer bundles it there itself
+    # (platform/MacOS.cmake) and it is left out here.
     install(
         RUNTIME_DEPENDENCY_SET
         qgc_gstreamer
@@ -199,6 +201,7 @@ function(_qgc_gst_install_runtime_closure library_dest)
         "^(vcruntime|msvcp|concrt|ucrtbase)"
         "^/usr/lib/"
         "^/System/"
+        "^@rpath/libproxy/"
         POST_INCLUDE_REGEXES
         ${_qgc_gst_include_res}
         POST_EXCLUDE_REGEXES
@@ -276,27 +279,6 @@ function(qgc_gst_install_platform_sdk app_name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "REQUIRED_PLUGINS")
     _qgc_gst_check_args(qgc_gst_install_platform_sdk)
     qgc_gst_platform(_gips_platform)
-    # QGC_GST_BUNDLE_PLUGINS=OFF (unset means ON): a Linux distribution package depends on the system's plugins, which
-    # the app then uses as they are (GStreamerEnvironment.cc, QGC_GST_SYSTEM_PLUGINS).
-    if(_gips_platform STREQUAL "linux"
-       AND DEFINED QGC_GST_BUNDLE_PLUGINS
-       AND NOT QGC_GST_BUNDLE_PLUGINS
-    )
-        message(STATUS "GStreamer: QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
-        return()
-    endif()
-    # Homebrew's libraries, plugins and plugin scanner load each other by absolute paths under its prefix (no @rpath),
-    # so copies bundled into the app would not be the ones loaded.
-    qgc_gst_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
-    if(_gips_homebrew_prefix)
-        set(_gips_message "GStreamer: this build uses Homebrew's GStreamer (${_gips_homebrew_prefix}), which cannot be")
-        string(
-            APPEND _gips_message " bundled. Configure with the official SDK (QGC_GST_USE_HOMEBREW=OFF and "
-            "GStreamer_ROOT_DIR unset) to install or package."
-        )
-        install(CODE "message(FATAL_ERROR \"${_gips_message}\")")
-        return()
-    endif()
     if(NOT ARG_REQUIRED_PLUGINS)
         list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     endif()

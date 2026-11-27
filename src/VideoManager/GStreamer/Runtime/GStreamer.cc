@@ -8,10 +8,8 @@
 #include <QtCore/QByteArrayList>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QList>
-#include <QtCore/QPointer>
 #include <QtCore/QStringList>
 #include <QtCore/QVarLengthArray>
-#include <QtMultimedia/QVideoSink>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
@@ -21,57 +19,43 @@
 #include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcRenderTarget.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 G_BEGIN_DECLS
-#ifdef QGC_GST_STATIC_BUILD
 // Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (Mobile.cmake):
 // registers every configured plugin and loads the static GIO modules (gioopenssl + the bundled CA bundle on mobile).
 extern void gst_init_static_plugins(void);
-#endif
-
-GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
+#endif
 
 namespace GStreamer {
 
 namespace {
 
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 void _registerPlugins()
 {
-    // GST_PLUGIN_STATIC_REGISTER / gst_init_static_plugins() are not idempotent: a second pass
-    // re-registers GTypes ("cannot register existing type 'GstBaseQTMux'") and aborts, so run once.
+    // gst_init() may already have run the generated shim, whose registrations are registry-guarded: an unguarded second
+    // pass re-registers GTypes ("cannot register existing type 'GstBaseQTMux'") and aborts (see
+    // cmake/GStreamer/gst_static_plugins.c.in).
     static std::once_flag s_pluginsRegistered;
-    std::call_once(s_pluginsRegistered, [] {
-#ifdef QGC_GST_STATIC_BUILD
-        // The generated shim's registrations are registry-guarded: gst_init() may already have run it
-        // (see cmake/GStreamer/gst_static_plugins.c.in).
-        gst_init_static_plugins();
-#endif
-        GST_PLUGIN_STATIC_REGISTER(qgc);
-    });
+    std::call_once(s_pluginsRegistered, [] { gst_init_static_plugins(); });
 }
+#endif
 
 struct PluginFeature
 {
     const char* name;
     bool required;
-    const char* factories;       // space-separated; "a|b" is satisfied by either factory
-    const char* hint = nullptr;  // the likely cause when the factories are missing, if not a missing plugin
+    const char* factories;  // space-separated; "a|b" is satisfied by either factory
 };
 
 // Checked per element, as Qt's qGstErrorMessageIfElementsNotAvailable does, so a missing optional plugin disables only
 // its feature. Only the display core is required.
 constexpr PluginFeature kPluginFeatures[] = {
-    // The qgc plugin is linked in and registered by completeInit(), so plugin_init succeeded; a missing element means
-    // its GST_ELEMENT_REGISTER side effect was stripped at link time.
-    {"QGC video sink", true, "qgcqvideosink qgcvideosinkbin",
-     "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
-     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgc.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
     {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
     {"RTSP video", false, "rtspsrc"},
@@ -98,10 +82,8 @@ bool _verifyPluginFeatures()
 
     bool displayAvailable = true;
     for (const MissingPluginFeature& feature : missing) {
-        const QString message =
-            QStringLiteral("%1 unavailable, GStreamer elements not found: %2%3")
-                .arg(feature.feature, feature.factories.join(QStringLiteral(", ")),
-                     feature.hint.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(feature.hint));
+        const QString message = QStringLiteral("%1 unavailable, GStreamer elements not found: %2")
+                                    .arg(feature.feature, feature.factories.join(QStringLiteral(", ")));
         if (feature.required) {
             qCCritical(GStreamerLog).noquote() << message;
             displayAvailable = false;
@@ -144,10 +126,8 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
             }
         }
         if (!absent.isEmpty()) {
-            missing.append({.feature = QString::fromLatin1(feature.name),
-                            .factories = absent,
-                            .required = feature.required,
-                            .hint = QString::fromLatin1(feature.hint)});
+            missing.append(
+                {.feature = QString::fromLatin1(feature.name), .factories = absent, .required = feature.required});
         }
     }
     return missing;
@@ -216,7 +196,9 @@ bool completeInit(std::optional<int> debugLevel)
                                 << GST_VERSION_MAJOR << "." << GST_VERSION_MINOR << "QGC was built against";
     }
 
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     _registerPlugins();
+#endif
 
     if (!_verifyPluginFeatures()) {
         return false;
@@ -253,81 +235,10 @@ bool initialize(const VideoBackend::InitParams& params)
     return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
 }
 
-// Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
-// adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
-GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
-                            [[maybe_unused]] bool gpuZeroCopy)
-{
-    const gboolean disablePar = disablePixelAspectRatio ? TRUE : FALSE;
-    const char* const conversion = conversionElement.isEmpty() ? nullptr : conversionElement.constData();
-
-    const GstFactoryPtr factory = adoptFactory(gst_element_factory_find("qgcvideosinkbin"));
-    if (!factory) {
-        // completeInit verified this factory at startup; absence here means the registry changed underfoot.
-        qCCritical(GStreamerLog) << "qgcvideosinkbin factory not found";
-        return nullptr;
-    }
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    GstElement* videoSinkBin =
-        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", gpuZeroCopy ? TRUE : FALSE, "conversion-element",
-                                        conversion, "disable-par", disablePar, NULL);
-#else
-    GstElement* videoSinkBin = gst_element_factory_create_full(factory.get(), "conversion-element", conversion,
-                                                               "disable-par", disablePar, NULL);
-#endif
-    if (!videoSinkBin) {
-        qCCritical(GStreamerLog) << "qgcvideosinkbin element creation failed";
-        return nullptr;
-    }
-    // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
-    return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
-}
-
-QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
-{
-    if (!sinkBin || !videoSink || !controllerParent) {
-        // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
-        qCWarning(GStreamerLog) << "null sinkBin, videoSink, or controllerParent";
-        return nullptr;
-    }
-
-    // Clear the GL/Vulkan bridges' exhausted-retry latches so a restart after Qt's RHI appears can
-    // prime on the next NEED_CONTEXT.
-    HwBuffers::onPipelineRestart();
-
-    // Accessor returns a transfer-full ref; the guard releases it once the controller has taken
-    // its own ref for deferred QObject teardown.
-    const GstObjectPtr element(GST_OBJECT(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin))));
-    if (!element) {
-        qCCritical(GStreamerLog) << "bin has no qgcqvideosink child";
-        return nullptr;
-    }
-    GstElement* const elementRaw = GST_ELEMENT(element.get());
-
-    auto* controller = new QGCQVideoSinkController(elementRaw, controllerParent);
-
-    // Route the initial install through the controller so its destroyed-sink QPointer guard
-    // covers setup, not just later swaps.
-    controller->setVideoSink(QPointer<QVideoSink>(videoSink));
-
-    return controller;
-}
-
 void onMainWindowReady(QQuickWindow* window)
 {
-    // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
-    // render thread publishes it; the ranks are the GUI thread's.
-    HwBuffers::setGraphicsDevicePublishedHandler([] {
-        if (QCoreApplication* const app = QCoreApplication::instance()) {
-            (void) QMetaObject::invokeMethod(
-                app, [] { DecoderRankApplier::instance().reapply(); }, Qt::QueuedConnection);
-        }
-    });
     HwBuffers::connectMainWindow(window);
-    const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
-    qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)
-                         << "→ zero-copy path:" << GstQgc::zeroCopyPathName(backend);
+    qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(GstQgc::currentRenderTarget().backend);
 }
 
 }  // namespace GStreamer

@@ -24,6 +24,9 @@ struct Exif
 /// frame. Convert a stream's frame on the GUI thread: its GPU buffers check the thread that maps them.
 QImage displayedImage(const QVideoFrame& frame, QtVideo::Rotation outputRotation = QtVideo::Rotation::None,
                       bool outputMirrored = false);
+/// @p image stretched to @p aspectRatio, width over height, as an output that forces that ratio shows it: widened or
+/// heightened, so that no pixel is lost. @p image itself for a ratio of 0 or less, and for a null image.
+QImage stretched(const QImage& image, double aspectRatio);
 /// Encodes @p image and writes it to @p file, in the image format its suffix names, with @p exif for a JPEG. Any
 /// thread: encoding a full-resolution picture on the GUI thread would stall the UI. False, with a warning logged, for
 /// a null image or a file that can't be written.

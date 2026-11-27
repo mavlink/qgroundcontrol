@@ -61,7 +61,9 @@ constexpr QLatin1StringView kOptSwrast = QLatin1StringView("swrast");
 
 /// @brief Normalizes command-line arguments
 /// Converts colon-separated syntax (--option:value) to standard format (--option value)
-/// and handles special cases like --unittest without a value.
+/// and handles special cases like --unittest without a value. In a build with GStreamer it
+/// leaves out GStreamer's own options (--gst-...), which gst_init_check() reads from the
+/// application's arguments.
 #ifdef QGC_UNITTEST_BUILD
 QStringList normalizeArgs(const QStringList &args)
 #else
@@ -73,6 +75,12 @@ static QStringList normalizeArgs(const QStringList &args)
 
     for (qsizetype i = 0; i < args.size(); ++i) {
         const QString &arg = args.at(i);
+#ifdef QGC_GST_STREAMING
+        // Ahead of the colon conversion: a value of theirs may hold a colon ("--gst-debug=rtspsrc:5").
+        if (arg.startsWith(QLatin1String("--gst-"))) {
+            continue;
+        }
+#endif
 #ifdef QGC_UNITTEST_BUILD
         if (arg == QLatin1String("--unittest")) {
             const bool valueFollows = ((i + 1) < args.size()) && !args.at(i + 1).startsWith(QLatin1Char('-'));

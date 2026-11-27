@@ -103,7 +103,7 @@ function(_qgc_write_fake_android_sdk root version)
 endfunction()
 
 # _qgc_write_fake_probe_lib(<root> <version>)
-# Adds the optional gstreamer-qgcprobe-1.0 library the fixture probes like HwBuffers probes gst-d3d11 or gst-vulkan.
+# Adds the optional gstreamer-qgcprobe-1.0 library the fixture probes like HwBuffers probes gst-d3d11 or gst-d3d12.
 function(_qgc_write_fake_probe_lib root version)
     file(WRITE "${root}/include/gstreamer-1.0/gst/qgcprobe.h" "extern \"C\" int qgc_probe;\n")
     file(WRITE "${root}/lib/libgstqgcprobe-1.0.so" "")
@@ -118,85 +118,6 @@ function(_qgc_write_fake_probe_lib root version)
         "Libs: -L\${libdir} -lgstqgcprobe-1.0\n"
         "Cflags: -I\${includedir}/gstreamer-1.0\n"
     )
-endfunction()
-
-# _qgc_write_fake_homebrew(<prefix> [LINKED])
-# A Homebrew prefix with brew, its own pkg-config (the host's, logging each call to <prefix>/pkg-config.log, with
-# Homebrew's macOS shims as its default search path), and Cellar/{gstreamer/1.24.0,glib/2.84.0} kegs whose
-# gstreamer-1.0.pc requires GLib, which requires the shims' libffi. Unlinked, opt/ points at both kegs; LINKED, their
-# .pc files are linked into lib/pkgconfig and opt/ only has gstreamer.
-function(_qgc_write_fake_homebrew prefix)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "LINKED" "" "")
-    file(REMOVE_RECURSE "${prefix}")
-    set(_keg "${prefix}/Cellar/gstreamer/1.24.0")
-    set(_glib "${prefix}/Cellar/glib/2.84.0")
-    _qgc_write_fake_sdk("${_keg}" 1.24.0)
-    file(WRITE "${_keg}/lib/gstreamer-1.0/libgstcoreelements.dylib" "")
-    file(APPEND "${_keg}/lib/pkgconfig/gstreamer-1.0.pc" "Requires: glib-2.0, gobject-2.0\n")
-    set(_shims "${prefix}/Library/Homebrew/os/mac/pkgconfig/15")
-    file(MAKE_DIRECTORY "${_glib}/include/glib-2.0" "${prefix}/opt" "${prefix}/lib/pkgconfig")
-    file(WRITE "${_shims}/libffi.pc" "Name: libffi\nDescription: QGC fake shim\nVersion: 3.4\n")
-    foreach(_module IN ITEMS glib-2.0 gobject-2.0)
-        file(WRITE "${_glib}/lib/lib${_module}.so" "")
-        file(WRITE "${_glib}/lib/pkgconfig/${_module}.pc"
-             "prefix=${_glib}\n" "Name: ${_module}\n" "Description: QGC fake GLib\n" "Version: 2.84.0\n"
-             "Libs: -L\${prefix}/lib -l${_module}\n" "Cflags: -I\${prefix}/include/glib-2.0\n"
-        )
-    endforeach()
-    file(APPEND "${_glib}/lib/pkgconfig/gobject-2.0.pc" "Requires.private: libffi\n")
-    file(CREATE_LINK ../Cellar/gstreamer/1.24.0 "${prefix}/opt/gstreamer" SYMBOLIC)
-    if(ARG_LINKED)
-        file(GLOB _pc_files "${_keg}/lib/pkgconfig/*.pc" "${_glib}/lib/pkgconfig/*.pc")
-        foreach(_pc IN LISTS _pc_files)
-            cmake_path(GET _pc FILENAME _name)
-            file(CREATE_LINK "${_pc}" "${prefix}/lib/pkgconfig/${_name}" SYMBOLIC)
-        endforeach()
-    else()
-        file(CREATE_LINK ../Cellar/glib/2.84.0 "${prefix}/opt/glib" SYMBOLIC)
-    endif()
-    set(_scripts "${prefix}-scripts")
-    file(WRITE "${_scripts}/brew" "#!/bin/sh\necho \"${prefix}/opt/$2\"\n")
-    file(
-        WRITE "${_scripts}/pkg-config"
-        "#!/bin/sh\necho \"$*\" >> \"${prefix}/pkg-config.log\"\n"
-        "PKG_CONFIG_LIBDIR=\"\${PKG_CONFIG_LIBDIR-${_shims}}\"\n"
-        "export PKG_CONFIG_LIBDIR\nexec \"${_qgc_pkg_config}\" \"$@\"\n"
-    )
-    file(
-        COPY "${_scripts}/brew" "${_scripts}/pkg-config"
-        DESTINATION "${prefix}/bin"
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    )
-endfunction()
-
-# Fails the check named <label> unless the fixture resolved the gstreamer, and through it the GLib, of the fake Homebrew
-# <prefix> with that prefix's pkg-config.
-function(_qgc_assert_homebrew label prefix)
-    file(READ "${_binary_dir}/gst-state.txt" _state)
-    string(REGEX MATCH "PkgConfig::PC_GStreamer_Core\\.INTERFACE_INCLUDE_DIRECTORIES=[^\n]*" _includes "${_state}")
-    string(REGEX MATCH "PkgConfig::PC_GStreamer_Core\\.INTERFACE_LINK_LIBRARIES=[^\n]*" _libraries "${_state}")
-    set(_glib "${prefix}/Cellar/glib/2.84.0")
-    foreach(
-        _case IN
-        ITEMS
-            "_state|GStreamer_ROOT_DIR=${prefix}/opt/gstreamer\n"
-            "_state|GSTREAMER_PLUGIN_PATH=${prefix}/opt/gstreamer/lib/gstreamer-1.0\n"
-            "_includes|${prefix}/Cellar/gstreamer/1.24.0/include/gstreamer-1.0"
-            "_includes|${_glib}/include/glib-2.0"
-            "_libraries|${_glib}/lib/libglib-2.0.so"
-            "_libraries|${_glib}/lib/libgobject-2.0.so"
-    )
-        qgc_test_split("${_case}" _var _expected)
-        string(FIND "${${_var}}" "${_expected}" _at)
-        if(_at EQUAL -1)
-            message(FATAL_ERROR "ASSERT [${label}]: '${_expected}' not in ${_var}:\n${_state}")
-        endif()
-    endforeach()
-    qgc_test_assert_matches("${label} plugins" "version=1\\.24\\.0 path=shared .* plugins=1/1 " "${_qgc_output}")
-    if(NOT EXISTS "${prefix}/pkg-config.log")
-        message(FATAL_ERROR "ASSERT [${label}]: the Homebrew prefix's pkg-config was not used")
-    endif()
-    file(REMOVE "${prefix}/pkg-config.log")
 endfunction()
 
 # Configures the fixture with the extra <cmake-args>; sets _qgc_result and _qgc_output in the caller.
@@ -324,23 +245,6 @@ if(SCENARIO STREQUAL "reconfigure")
     _qgc_write_fake_sdk("${_sdk_b}" 1.26.0)
     _qgc_expect(_expect "${_sdk_b}" 1.26.0 OFF)
     _qgc_configure_ok("switched to SDK B" "-DGStreamer_ROOT_DIR=${_sdk_b}" ${_expect})
-elseif(SCENARIO STREQUAL "legacy-pkg-config-args")
-    # Older configures FORCE-cached the derived flags; a stale prefix would point pkg-config at the
-    # wrong SDK, so only the user's own flags may survive.
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
-    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
-    file(WRITE "${WORK_DIR}/legacy-cache.cmake"
-         "set(PKG_CONFIG_ARGN \"--short-errors;--static;--define-variable=prefix=${_sdk_b}\" CACHE STRING \"\")\n"
-    )
-    _qgc_configure_ok(
-        "legacy cached flags"
-        --fresh
-        -C
-        "${WORK_DIR}/legacy-cache.cmake"
-        "-DGStreamer_ROOT_DIR=${_sdk_a}"
-        -DEXPECT_CACHED_PKG_CONFIG_ARGN=--short-errors
-        ${_expect}
-    )
 elseif(SCENARIO STREQUAL "reuse-auto-root")
     # Linux never downloads, so stand in for a previous configure that auto-downloaded SDK A.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
@@ -354,19 +258,11 @@ elseif(SCENARIO STREQUAL "reuse-auto-root")
         ${_expect}
         -DEXPECT_AUTO=TRUE
     )
-elseif(SCENARIO STREQUAL "version-override")
-    # QGC_GST_VERSION replaces build-config.json's version (here the fixture's 1.20.0 minimum).
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+elseif(SCENARIO STREQUAL "sdk-too-old")
+    # The SDK must meet build-config.json's version, here the fixture's 1.20.0 minimum.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.18.0)
     _qgc_configure_fails(
-        "SDK older than QGC_GST_VERSION" "gstreamer-1.0>=1.26.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
-        -DQGC_GST_VERSION=1.26.0
-    )
-elseif(SCENARIO STREQUAL "version-format")
-    # A partial version would only fail later, as a missing checksum pin or a 404 on the SDK package.
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
-    _qgc_configure_fails(
-        "QGC_GST_VERSION without a micro version" "QGC_GST_VERSION='1\\.24' is not a GStreamer release" --fresh
-        "-DGStreamer_ROOT_DIR=${_sdk_a}" -DQGC_GST_VERSION=1.24
+        "SDK older than the configured version" "gstreamer-1.0>=1.20.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
     )
 elseif(SCENARIO STREQUAL "missing-mandatory")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-rtsp-1.0)
@@ -383,6 +279,31 @@ elseif(SCENARIO STREQUAL "missing-gl")
     qgc_test_assert_not_matches("quiet optional probes" "Package 'gstreamer-gl-1\\.0'.* not found" "${_qgc_output}")
     qgc_test_assert_matches(
         "optional components summary" "optional components not found: Gl, GlPrototypes( |$)" "${_qgc_output}"
+    )
+elseif(SCENARIO STREQUAL "system-beside-root")
+    # Linux keeps the system's .pc files visible beside GStreamer_ROOT_DIR, for GLib and the like. A GStreamer module
+    # the root lacks must not come from the system's GStreamer, another version: an optional one is left out, a
+    # mandatory one fails configure.
+    set(_system "${WORK_DIR}/system")
+    _qgc_write_fake_sdk("${_system}" 1.24.0)
+    _qgc_write_fake_probe_lib("${_system}" 1.24.0)
+    set(ENV{PKG_CONFIG_PATH} "${_system}/lib/pkgconfig")
+
+    _qgc_write_fake_sdk("${_sdk_a}" 1.28.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.28.0 OFF)
+    _qgc_configure_ok(
+        "root without gst-gl beside a system GStreamer" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect}
+        -DEXPECT_GL=OFF
+        "-DEXPECT_PROBE_REASON=gstreamer-qgcprobe-1.0 is in ${_system}/lib/pkgconfig, outside GStreamer_ROOT_DIR"
+    )
+    qgc_test_assert_matches(
+        "the system's module is named" "gstreamer-gl-1\\.0 is missing from GStreamer_ROOT_DIR" "${_qgc_output}"
+    )
+
+    _qgc_write_fake_sdk("${_sdk_a}" 1.28.0 OMIT gstreamer-rtsp-1.0)
+    _qgc_configure_fails(
+        "root without a mandatory module beside a system GStreamer"
+        "mandatory pkg-config modules not found .*: gstreamer-rtsp-1.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
     )
 elseif(SCENARIO STREQUAL "plugin-allowlist")
     # A misspelled allowlist name warns; a missing hardware-specific decoder only shows in a status line.
@@ -418,11 +339,8 @@ elseif(SCENARIO STREQUAL "android-mobile")
     # source|path staged under the build directory
     set(_ndk_build "${_sdk_a}/share/gst-android/ndk-build")
     set(_java androidmedia/GstAhcCallback.java)
-    set(_staged
-        "${_ndk_build}/${_java}|extra_java_sources/org/freedesktop/gstreamer/${_java}"
-        "${_ndk_build}/fontconfig/fonts.conf|extra_assets/fontconfig/fonts.conf"
-        "${_ndk_build}/fontconfig/fonts/Ubuntu-R.ttf|extra_assets/fontconfig/fonts/truetype/Ubuntu-R.ttf"
-        "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
+    set(_staged "${_ndk_build}/${_java}|extra_java_sources/org/freedesktop/gstreamer/${_java}"
+                "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
     )
     foreach(_entry IN LISTS _staged)
         qgc_test_split("${_entry}" _source)
@@ -441,7 +359,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     file(WRITE "${_sdk_a}/lib/pkgconfig/gstudp.pc" "${_pc}")
     # Copies earlier builds wrote into the package sources would duplicate the staged files; other files stay.
     set(_legacy_copies "${_package}/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java"
-                       "${_package}/assets/fontconfig/fonts.conf"
+                       "${_package}/assets/ssl/certs/ca-certificates.crt"
     )
     foreach(
         _file IN
@@ -453,7 +371,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     _qgc_configure_ok("Android mobile target" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android})
     _qgc_link_line(_link)
 
-    # Configure stages the plugin Java sources and fonts/CA assets into the build directory, never the package sources.
+    # Configure stages the plugin Java sources and the CA bundle into the build directory, never the package sources.
     foreach(_entry IN LISTS _staged)
         qgc_test_split("${_entry}" _source _path)
         execute_process(
@@ -598,50 +516,29 @@ elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
         "-DEXPECT_PROBE_ROOT=${_sdk_a}"
         -DEXPECT_VERSION=1.24.0
     )
-elseif(SCENARIO STREQUAL "homebrew")
-    # macOS discovery of a Homebrew GStreamer, given as the prefix or opted into with QGC_GST_USE_HOMEBREW (brew found
-    # on PATH): Homebrew's pkg-config, not an SDK lock-in, resolves the GLib and libffi gstreamer-1.0.pc requires.
-    set(_brew "${WORK_DIR}/homebrew")
-    set(_macos -DQGC_TEST_MACOS=ON)
-    unset(ENV{PKG_CONFIG_LIBDIR})
-    file(MAKE_DIRECTORY "${WORK_DIR}/path")
-    file(CREATE_LINK "${_brew}/bin/brew" "${WORK_DIR}/path/brew" SYMBOLIC)
-    set(ENV{PATH} "${WORK_DIR}/path:$ENV{PATH}")
-    _qgc_write_fake_homebrew("${_brew}" LINKED)
-    _qgc_configure_ok("Homebrew prefix as the root" --fresh "-DGStreamer_ROOT_DIR=${_brew}" ${_macos})
-    _qgc_assert_homebrew("linked .pc files" "${_brew}")
-    _qgc_write_fake_homebrew("${_brew}")
-    _qgc_configure_ok("QGC_GST_USE_HOMEBREW" --fresh -DQGC_GST_USE_HOMEBREW=ON ${_macos})
-    _qgc_assert_homebrew("unlinked kegs" "${_brew}")
-
-    # An earlier auto-downloaded SDK stays ahead of Homebrew unless QGC_GST_USE_HOMEBREW is ON.
+elseif(SCENARIO STREQUAL "macos-discovery")
+    # macOS discovery (platform/MacOS.cmake) reuses the SDK an earlier configure downloaded, still as auto-downloaded.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgstcoreelements.dylib" "")
-    set(_cached "-DQGC_GST_RESOLVED_ROOT:INTERNAL=${_sdk_a}" -DQGC_GST_RESOLVED_VERSION:INTERNAL=1.22.0
-                -DQGC_GST_RESOLVED_AUTO:INTERNAL=TRUE
-    )
-    _qgc_configure_ok("cached SDK" --fresh ${_cached} ${_macos})
-    qgc_test_assert_matches("cached SDK" "root=${_sdk_a} .*auto_downloaded=TRUE" "${_qgc_output}")
     _qgc_configure_ok(
-        "QGC_GST_USE_HOMEBREW over the cached SDK" --fresh ${_cached} -DQGC_GST_USE_HOMEBREW=ON ${_macos}
-        -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements
+        "cached SDK" --fresh "-DQGC_GST_RESOLVED_ROOT:INTERNAL=${_sdk_a}" -DQGC_GST_RESOLVED_VERSION:INTERNAL=1.22.0
+        -DQGC_GST_RESOLVED_AUTO:INTERNAL=TRUE -DQGC_TEST_MACOS=ON
     )
-    _qgc_assert_homebrew("Homebrew over the cached SDK" "${_brew}")
+    qgc_test_assert_matches("cached SDK" "root=${_sdk_a} .*auto_downloaded=TRUE" "${_qgc_output}")
 
-    # Homebrew's libraries load each other by absolute paths, so an install cannot bundle them.
-    _qgc_install()
-    if(_qgc_result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [Homebrew install]: install succeeded\n${_qgc_output}")
-    endif()
-    qgc_test_assert_matches(
-        "Homebrew install" "Homebrew's GStreamer \\([^)]*\\), which cannot be bundled" "${_qgc_output}"
+    # Homebrew's GStreamer cannot be bundled, so it is refused as the SDK.
+    file(WRITE "${WORK_DIR}/homebrew/bin/brew" "")
+    _qgc_configure_fails(
+        "Homebrew prefix as the root" "is Homebrew's GStreamer" --fresh "-DGStreamer_ROOT_DIR=${WORK_DIR}/homebrew"
+        -DQGC_TEST_MACOS=ON
     )
 elseif(SCENARIO STREQUAL "install-macos")
-    # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at
-    # install time, and nothing under the prefix known at configure time. The flat SDK's binaries are this host's own
-    # shared libraries, named like the SDK's dylibs, so the install's dependency closure can read them: libgstreamer
-    # needs GLib, the plugin, GIO module and scanner need libgstreamer, the libproxy GIO module needs libproxy, whose
-    # backend library lives in lib/libproxy, and the GPL x264 and an unused library are needed by nothing.
+    # The macOS bundle installer runs on any host: everything must land under DESTDIR and the --prefix given at
+    # install time, and nothing under the prefix known at configure time. The SDK's binaries are this host's own
+    # shared libraries, named like the official SDK's dylibs and .so GIO modules, so the install's dependency closure
+    # can read them: libgstreamer needs GLib, the plugin, GIO module and scanner need libgstreamer, the libproxy GIO
+    # module needs libproxy, which loads its backend library in lib/libproxy by its Mach-O install name, and the GPL
+    # x264 and an unused library are needed by nothing.
     find_program(_qgc_cc NAMES cc gcc clang NO_CACHE)
     if(NOT _qgc_cc)
         message(STATUS "QGC_TEST_SKIPPED: no C compiler to build the fake SDK's libraries")
@@ -659,10 +556,10 @@ elseif(SCENARIO STREQUAL "install-macos")
             "lib/libx264.164.dylib|libx264.164.dylib|"
             "lib/libunused.dylib|libunused.dylib|"
             "lib/gstreamer-1.0/libgstcoreelements.dylib|libgstcoreelements.dylib|libgstreamer-1.0.0.dylib"
-            "lib/gio/modules/libgioopenssl.dylib|libgioopenssl.dylib|libglib-2.0.0.dylib"
-            "lib/libproxy/libpxbackend-1.0.dylib|libpxbackend-1.0.dylib|"
+            "lib/gio/modules/libgioopenssl.so|libgioopenssl.so|libglib-2.0.0.dylib"
+            "lib/libproxy/libpxbackend-1.0.dylib|@rpath/libproxy/libpxbackend-1.0.dylib|"
             "lib/libproxy.1.dylib|libproxy.1.dylib|libproxy/libpxbackend-1.0.dylib"
-            "lib/gio/modules/libgiolibproxy.dylib|libgiolibproxy.dylib|libproxy.1.dylib"
+            "lib/gio/modules/libgiolibproxy.so|libgiolibproxy.so|libproxy.1.dylib"
             "libexec/gstreamer-1.0/gst-plugin-scanner|exe|libgstreamer-1.0.0.dylib"
     )
         string(REPLACE "|" ";" _binary "${_binary}")
@@ -683,49 +580,16 @@ elseif(SCENARIO STREQUAL "install-macos")
         execute_process(COMMAND "${_qgc_cc}" ${_args} -o "${_sdk_a}/${_file}" COMMAND_ERROR_IS_FATAL ANY)
     endforeach()
     file(WRITE "${_sdk_a}/etc/ssl/certs/ca-certificates.crt" "")
-    set(_framework "${WORK_DIR}/GStreamer.framework")
-    foreach(
-        _file IN ITEMS GStreamer lib/gstreamer-1.0/libgstcoreelements.dylib lib/libx264.164.dylib Resources/Info.plist
-    )
-        file(WRITE "${_framework}/Versions/1.0/${_file}" "")
-    endforeach()
     set(_configured_prefix "-DCMAKE_INSTALL_PREFIX=${WORK_DIR}/configured-prefix")
     set(_bundle "${WORK_DIR}/stage/opt/qgc/QGCFake.app/Contents")
 
     _qgc_configure_ok(
-        "macOS framework install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
-        "-DQGC_TEST_INSTALL_MACOS_FRAMEWORK=${_framework}"
+        "macOS install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
+        -DQGC_TEST_INSTALL_MACOS=ON
     )
     _qgc_install()
     if(NOT _qgc_result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [framework install]: install failed\n${_qgc_output}")
-    endif()
-    set(_fw "${_bundle}/Frameworks/GStreamer.framework")
-    foreach(_file IN ITEMS Versions/1.0/GStreamer Versions/1.0/lib/gstreamer-1.0/libgstcoreelements.dylib)
-        if(NOT EXISTS "${_fw}/${_file}")
-            message(FATAL_ERROR "ASSERT [framework install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
-        endif()
-    endforeach()
-    # The framework's GPL libraries serve only GPL plugins, which the allowlist leaves out.
-    if(EXISTS "${_fw}/Versions/1.0/lib/libx264.164.dylib")
-        message(FATAL_ERROR "ASSERT [framework install]: the GPL libx264 was installed")
-    endif()
-    foreach(
-        _link IN ITEMS "Versions/Current|1.0" "GStreamer|Versions/Current/GStreamer"
-                       "Resources|Versions/Current/Resources"
-    )
-        qgc_test_split("${_link}" _name _target)
-        file(READ_SYMLINK "${_fw}/${_name}" _actual)
-        qgc_test_assert_streq("framework symlink ${_name}" "${_target}" "${_actual}")
-    endforeach()
-
-    _qgc_configure_ok(
-        "macOS flat install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
-        -DQGC_TEST_INSTALL_MACOS_FLAT=ON
-    )
-    _qgc_install()
-    if(NOT _qgc_result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [flat install]: install failed\n${_qgc_output}")
+        message(FATAL_ERROR "ASSERT [macOS install]: install failed\n${_qgc_output}")
     endif()
     foreach(
         _file IN
@@ -733,31 +597,33 @@ elseif(SCENARIO STREQUAL "install-macos")
             Frameworks/libgstreamer-1.0.0.dylib
             Frameworks/libglib-2.0.0.dylib
             Frameworks/libproxy.1.dylib
-            Frameworks/libpxbackend-1.0.dylib
+            Frameworks/libproxy/libpxbackend-1.0.dylib
             lib/gstreamer-1.0/libgstcoreelements.dylib
-            lib/gio/modules/libgioopenssl.dylib
+            lib/gio/modules/libgioopenssl.so
+            lib/gio/modules/libgiolibproxy.so
             libexec/gstreamer-1.0/gst-plugin-scanner
             Resources/licenses/gstreamer/NOTICE.txt
             Resources/licenses/gstreamer/LGPL-2.1.txt
     )
         if(NOT EXISTS "${_bundle}/${_file}")
-            message(FATAL_ERROR "ASSERT [flat install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
+            message(FATAL_ERROR "ASSERT [macOS install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
         endif()
     endforeach()
     # gioopenssl verifies against the Keychain on macOS, so the SDK's CA bundle would go unused.
     if(EXISTS "${_bundle}/Resources/etc/ssl/certs/ca-certificates.crt")
-        message(FATAL_ERROR "ASSERT [flat install]: the SDK's CA bundle was installed")
+        message(FATAL_ERROR "ASSERT [macOS install]: the SDK's CA bundle was installed")
     endif()
-    # Only the libraries the installed plugin, GIO module and scanner load are bundled.
-    foreach(_file IN ITEMS libx264.164.dylib libunused.dylib)
+    # Only the libraries the installed plugin, GIO module and scanner load are bundled, and libproxy's backend only
+    # under the name libproxy loads.
+    foreach(_file IN ITEMS libx264.164.dylib libunused.dylib libpxbackend-1.0.dylib)
         if(EXISTS "${_bundle}/Frameworks/${_file}")
             message(FATAL_ERROR "ASSERT [dependency closure]: ${_file} was installed\n${_qgc_output}")
         endif()
     endforeach()
     # The rpath fixup visits the installed copies; without otool on this host it warns about each one.
-    qgc_test_assert_matches(
-        "rpath fixup" "otool -l failed for ${_bundle}/lib/gstreamer-1.0/libgstcoreelements.dylib" "${_qgc_output}"
-    )
+    foreach(_file IN ITEMS lib/gstreamer-1.0/libgstcoreelements.dylib lib/gio/modules/libgioopenssl.so)
+        qgc_test_assert_matches("rpath fixup" "otool -l failed for ${_bundle}/${_file}" "${_qgc_output}")
+    endforeach()
     if(EXISTS "${WORK_DIR}/configured-prefix" OR EXISTS "${WORK_DIR}/stage${WORK_DIR}/configured-prefix")
         message(FATAL_ERROR "ASSERT [install prefix]: files were installed under the configure-time prefix")
     endif()
@@ -831,20 +697,6 @@ elseif(SCENARIO STREQUAL "install")
         "GPL plugin" "ships GPL-licensed GStreamer files.* [^ ]*/lib/gstreamer-1\\.0/libgstx264\\.so" "${_qgc_output}"
     )
     file(REMOVE "${_sdk_a}/lib/gstreamer-1.0/libgstx264.so")
-
-    # A distribution package (QGC_GST_BUNDLE_PLUGINS=OFF) installs nothing of GStreamer and verifies nothing.
-    _qgc_configure_ok("install rules without bundled plugins" ${_plugins} -DQGC_GST_BUNDLE_PLUGINS=OFF)
-    qgc_test_assert_matches(
-        "system plugins" "QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins" "${_qgc_output}"
-    )
-    _qgc_install()
-    if(NOT _qgc_result EQUAL 0 OR _qgc_output MATCHES "install verification")
-        message(FATAL_ERROR "ASSERT [system plugins]: install failed or verified plugins\n${_qgc_output}")
-    endif()
-    if(EXISTS "${WORK_DIR}/stage")
-        file(GLOB_RECURSE _staged "${WORK_DIR}/stage/*")
-        qgc_test_assert_streq("nothing installed" "" "${_staged}")
-    endif()
 else()
     message(FATAL_ERROR "Unknown SCENARIO: ${SCENARIO}")
 endif()

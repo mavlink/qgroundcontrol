@@ -8,11 +8,12 @@ class GstVideoReceiverStatsTest : public GstVideoReceiverTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testStatsMeasureStream_data();
     void _testStatsMeasureStream();
-    void _testStatsCountFramesTooLateToDisplay();
+    void _testFramesLateForTheClockAreDisplayed();
     void _testStatsCountFramesTheDisplayQueueLeaks();
-    void _testStatsCountLostPacketsWithoutJitterBuffer();
-#endif
+    void _testStatsCountLostPackets_data();
+    void _testStatsCountLostPackets();
+    void _testStatsCountNoLossWhenTheSenderStartsOver_data();
+    void _testStatsCountNoLossWhenTheSenderStartsOver();
 };

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <chrono>
 #include <optional>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
 #include "GstReceiverRequest.h"
+#include "GstReceiverTimings.h"
 #include "PipelineDotDumper.h"
 #include "PipelineSession.h"
 #include "RecordingPlan.h"
@@ -20,7 +20,8 @@ class QTimer;
 
 /// GstVideoReceiver's worker, on a thread of its own: steers a PipelineSession towards the receiver's latest
 /// GstReceiverRequest (active, config, video sink, restarts, reconnects, recording), reconnecting after a failure as
-/// its StreamSupervisor decides.
+/// its StreamSupervisor decides. A stream that only can't be decoded goes on, for its recording: the worker reports
+/// errorOccurred() for it, once until the stream is decoded or started anew.
 ///
 /// Reports back through its signals only, so it can outlive a receiver that stopped waiting for it.
 class GstReceiverWorker : public QObject, private PipelineSession::Listener
@@ -32,17 +33,13 @@ public:
     using RecordingRequest = GstRecordingRequest;
     using Status = GstReceiverStatus;
 
-    explicit GstReceiverWorker(QObject* parent = nullptr);
+    explicit GstReceiverWorker(const GstReceiverTimings& timings = {}, QObject* parent = nullptr);
     ~GstReceiverWorker() override;
 
     /// Steers the stream towards @p request, acting on what differs from the previous one.
     void apply(const Request& request);
     /// Stops everything and quits the thread.
     void shutdown();
-
-    /// How long a part of the recordings started from now on records, instead of RecordingPlan::kMaxPartDuration. For
-    /// tests, which can't wait that long.
-    void setMaxRecordingPartDuration(std::chrono::milliseconds duration) { _maxRecordingPartDuration = duration; }
 
     GstElement* pipeline() const { return _session ? _session->pipeline() : nullptr; }
 
@@ -93,12 +90,14 @@ private:
     void onSessionGraphicsDeviceLost() override;
     void onDecodingChanged(bool decoding) override;
     void onDecoderNameChanged(const QString& name) override;
-    void onDecoderFailing() override;
+    void onDecoderFailed(const QString& cause) override;
     void onRecordingFileOpened(const QString& file) override;
     void onRecordingFileClosed(const QString& file, const QString& error) override;
     void onRecordingFailed(const QString& file, const QString& error, bool fileOpened) override;
     void onRecordingNeedsNewFile(const QString& file) override;
+    void onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format) override;
 
+    const GstReceiverTimings _timings;
     QTimer* const _watchdogTimer;
     StreamSupervisor* const _supervisor;
     StreamWatchdog _watchdog;
@@ -109,9 +108,11 @@ private:
     /// The recording asked for, until it stops or fails; after a reconnect, and once a part has recorded for long
     /// enough, it continues in the next part.
     std::optional<RecordingPlan> _recording;
-    std::chrono::milliseconds _maxRecordingPartDuration = RecordingPlan::kMaxPartDuration;
 
     PipelineSession* _session = nullptr;
+    /// errorOccurred() told that the stream can't be decoded: not told again by the sessions that follow, until one
+    /// is decoded or the stream is started anew.
+    bool _decoderFailureReported = false;
     int _statsTicks = 0;
     VideoStreamStatsSampler _statsSampler;
 };

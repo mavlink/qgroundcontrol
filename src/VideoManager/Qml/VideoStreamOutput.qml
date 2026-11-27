@@ -3,14 +3,31 @@ import QtMultimedia
 
 import QGroundControl
 
-// Displays a video stream: registers itself with the stream's controller, which hands it to the stream's receiver.
+// Displays a video source, a stream or the USB camera: registers itself with the source's controller, which hands it to
+// the source's receiver. The picture has the video's own ratio, or the one forced for the stream, to which it is
+// stretched.
 VideoOutput {
     id: root
 
-    /// The stream shown. The output follows a change of it: the main picture's stream is another one once a stream
+    /// The source shown. The output follows a change of it: the main picture's source is another one once a source
     /// in a tile takes its place.
     required property VideoStreamController stream
+    /// Crops the picture to the output, instead of fitting it inside. In place of fillMode, which the output sets.
+    property bool crop: false
 
+    /// Width over height the picture is stretched to, and a screenshot of it with it; 0 for the video's own.
+    readonly property real forcedAspectRatio: root.stream.forcedAspectRatio
+    /// Width over height of the picture as shown: the forced ratio, else the video's own, which the first frame
+    /// tells; 0 until then.
+    readonly property real aspectRatio: root.forcedAspectRatio > 0
+                                        ? root.forcedAspectRatio
+                                        : (root.implicitHeight > 0 ? root.implicitWidth / root.implicitHeight : 0)
+
+    // The output's shape over the forced one: above 1 where the output is the wider of the two.
+    readonly property real _shapeRatio: (root.forcedAspectRatio > 0 && root.width > 0 && root.height > 0)
+                                        ? root.width / (root.height * root.forcedAspectRatio) : 1
+    // The forced picture takes the output's width, and its height follows; else the other way round.
+    readonly property bool _widthBound: (root._shapeRatio > 1) === root.crop
     property bool _completed: false
     property VideoStreamController _registeredStream: null
     // Qt defect, seen in Qt 6.12.0: QQuickVideoOutput::itemChange() never calls QQuickItem::itemChange()
@@ -32,12 +49,23 @@ VideoOutput {
         root.stream.registerVideoOutput(root)
     }
 
-    // The rotation the camera reports for the stream (VIDEO_STREAM_INFORMATION.rotation). VideoOutput applies its
-    // orientation on top of each frame's own rotation and mirroring, which qgcqvideosink takes from the stream's
-    // orientation tag: a stream that carries a tag and also reports a rotation is turned by both.
+    // The rotation the camera reports for the stream (VIDEO_STREAM_INFORMATION.rotation), or the rotation and the
+    // mirroring set for the USB camera. VideoOutput applies them on top of each frame's own rotation and mirroring,
+    // which qgcqvideosink takes from the stream's orientation tag: a stream that carries a tag and also reports a
+    // rotation is turned by both.
     orientation: root.stream.rotation
+    mirrored: root.stream.mirrored
     endOfStreamPolicy: VideoOutput.KeepLastFrame
     opacity: root.stream.decoding ? 1 : 0.5
+    // A forced ratio fills the output with the video, then scales it to the picture's size about the centre.
+    fillMode: root.forcedAspectRatio > 0 ? VideoOutput.Stretch
+                                         : (root.crop ? VideoOutput.PreserveAspectCrop : VideoOutput.PreserveAspectFit)
+    transform: Scale {
+        origin.x: root.width / 2
+        origin.y: root.height / 2
+        xScale: root._widthBound ? 1 : 1 / root._shapeRatio
+        yScale: root._widthBound ? root._shapeRatio : 1
+    }
 
     on_KeepsFrameChanged: {
         if (!root._keepsFrame) {

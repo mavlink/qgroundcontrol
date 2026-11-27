@@ -133,6 +133,7 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
     VideoStreamResolver::Settings settings = manualSettings(VideoSettings::videoSourceUDPH264);
     settings.lowLatency = true;
     settings.rtpJitterLatencyMs = 250;
+    settings.softwareDecoderThreads = 3;
     settings.autoReconnect = false;
     const auto streamInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal");
 
@@ -143,6 +144,7 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
         QVERIFY(config.has_value());
         QVERIFY(config->lowLatency);
         QCOMPARE(config->rtpJitterLatencyMs, 250);
+        QCOMPARE(config->softwareDecoderThreads, 3);
         QVERIFY(!config->autoReconnect);
     }
 }
@@ -167,14 +169,45 @@ void VideoStreamResolverTest::_testDisplayConfig()
 
     VideoStreamResolver::Settings settings = manualSettings(VideoSettings::videoSourceRTSP);
     settings.conversionElement = QByteArrayLiteral("videoconvert");
-    settings.disablePixelAspectRatio = true;
     settings.forceCpuVideoPath = forceCpuVideoPath;
     settings.forceVideoDecoder = static_cast<VideoDecoderOption>(forceVideoDecoder);
 
-    const VideoReceiver::DisplayConfig display = VideoStreamResolver::displayConfig(settings);
+    const VideoReceiver::DisplayConfig display = VideoStreamResolver::displayConfig(settings, nullptr, Role::Primary);
     QCOMPARE(display.conversionElement, QByteArrayLiteral("videoconvert"));
-    QVERIFY(display.disablePixelAspectRatio);
+    QVERIFY(!display.disablePixelAspectRatio);
     QCOMPARE(display.gpuZeroCopy, gpuZeroCopy);
+}
+
+void VideoStreamResolverTest::_testForcedAspectRatio_data()
+{
+    QTest::addColumn<int>("role");
+    QTest::addColumn<bool>("advertised");
+    QTest::addColumn<bool>("forced");
+
+    QTest::newRow("configured stream") << int(Role::Primary) << false << true;
+    // A camera says what its streams are, the one it has for the main picture too.
+    QTest::newRow("camera's main stream") << int(Role::Primary) << true << false;
+    QTest::newRow("thermal stream") << int(Role::Thermal) << true << false;
+    QTest::newRow("stream in a tile") << int(Role::Tile) << true << false;
+    QTest::newRow("USB camera") << int(Role::Camera) << false << false;
+}
+
+void VideoStreamResolverTest::_testForcedAspectRatio()
+{
+    QFETCH(int, role);
+    QFETCH(bool, advertised);
+    QFETCH(bool, forced);
+
+    VideoStreamResolver::Settings settings = manualSettings(VideoSettings::videoSourceRTSP);
+    settings.forcedAspectRatio = 4.0 / 3.0;
+    const auto streamInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/main");
+    const QGCVideoStreamInfo* const info = advertised ? streamInfo.get() : nullptr;
+
+    QCOMPARE(VideoStreamResolver::forcedAspectRatio(settings, info, static_cast<Role>(role)),
+             forced ? (4.0 / 3.0) : 0.0);
+    // A picture that is stretched anyway isn't scaled to square pixels first.
+    QCOMPARE(VideoStreamResolver::displayConfig(settings, info, static_cast<Role>(role)).disablePixelAspectRatio,
+             forced);
 }
 
 void VideoStreamResolverTest::_testNetworkSources_data()

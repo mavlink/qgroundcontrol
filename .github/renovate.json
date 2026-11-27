@@ -115,6 +115,18 @@
       "datasourceTemplate": "github-releases"
     },
     {
+      "description": "The Mozilla CA snapshot that iOS builds ship as the trust root for rtsps:// streams. curl.se publishes each snapshot as an immutable cacert-YYYY-MM-DD.pem, and the date is the version",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"ca_bundle_url\": \"https://curl\\.se/ca/cacert-(?<currentValue>\\d{4}-\\d{2}-\\d{2})\\.pem\""
+      ],
+      "depNameTemplate": "curl-ca-bundle",
+      "datasourceTemplate": "custom.curl-ca-bundle"
+    },
+    {
       "description": "C++ libraries that CPMAddPackage fetches from GitHub at a version tag. The patterns cover each field order in use: VERSION before the repository, VERSION after it, a tag alone (v, vulkan-sdk- or expat's R_ form), and a version variable set just above the call. VERSION and GIT_TAG repeat the version, so both are rewritten. A package pinned to a commit, or to a tag that is not a version, does not match: tools/tests/ci/contracts/test_renovate_cpm_pins.py lists every package left untracked. ArduPilot's parameter repository commit has its own manager below, and no package tracks a branch head",
       "customType": "regex",
       "managerFilePatterns": [
@@ -145,6 +157,13 @@
       "datasourceTemplate": "git-refs"
     }
   ],
+  "customDatasources": {
+    "curl-ca-bundle": {
+      "description": "curl.se's CA extract page links every dated snapshot it still serves; the html format reads each link's href as a release",
+      "defaultRegistryUrlTemplate": "https://curl.se/docs/caextract.html",
+      "format": "html"
+    }
+  },
   "packageRules": [
     {
       "description": "Combine every update except Android into one weekly PR, so coupled pins such as the uv required-version floor and the Dockerfile's uv image land together",
@@ -218,17 +237,26 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "The Android OpenSSL and AppImage tool pins also carry SHA-256 digests in build-config.json, which a bump must update by hand, so each opens its own PR only after approval on the Dependency Dashboard",
+      "description": "The Android OpenSSL, AppImage tool and iOS CA bundle pins also carry SHA-256 digests in build-config.json, which a bump must update by hand, so each opens its own PR only after approval on the Dependency Dashboard",
       "matchManagers": [
         "custom.regex"
       ],
       "matchDepNames": [
         "openssl/openssl",
         "linuxdeploy/linuxdeploy",
-        "AppImage/appimagetool"
+        "AppImage/appimagetool",
+        "curl-ca-bundle"
       ],
       "groupName": null,
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "The CA extract page links each snapshot as /ca/cacert-YYYY-MM-DD.pem, next to its .sha256 file and the site's other pages, which are not releases",
+      "matchPackageNames": [
+        "curl-ca-bundle"
+      ],
+      "extractVersion": "^/ca/cacert-(?<version>\\d{4}-\\d{2}-\\d{2})\\.pem$",
+      "versioning": "regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})$"
     },
     {
       "description": "Android builds stay on OpenSSL 3.5, the long-term support series maintained until April 2030; widen this to move to a later series",

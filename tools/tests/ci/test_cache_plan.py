@@ -52,7 +52,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (root / "tools/configs").mkdir(parents=True)
     (root / "tools/configs/ccache.conf").write_text("max_size = 5G\n")
     (root / ".github").mkdir()
-    config = {"qt": {"version": "6.10"}, "gstreamer": {"version": {"windows": "1.28.4"}}}
+    config = {"qt": {"version": "6.10"}, "gstreamer": {"version": {"sdk": "1.28.4"}}}
     (root / ".github/build-config.json").write_text(json.dumps(config))
     (root / "CMakeLists.txt").write_text("CPMAddPackage(NAME dependency)\n")
     monkeypatch.setenv("GITHUB_WORKSPACE", str(root))
@@ -228,6 +228,13 @@ def test_scoped_caches_are_restore_only_for_github_prs_and_merge_queues(
         ({"save_cache": "false", "ref_name": "feature"}, "", "restore", "false"),
         ({"target": "android"}, "save", "save", "false"),
         ({"target": "ios", "build_type": "Debug"}, "restore", "restore", "false"),
+        ({"host": "mac", "target": "clang_64"}, "save", "save", "false"),
+        (
+            {"host": "mac", "target": "clang_64", "build_type": "Debug"},
+            "restore",
+            "restore",
+            "false",
+        ),
         ({"target": "win64_msvc2022_arm64", "event": "pull_request"}, "restore", "restore", "true"),
         (
             {"target": "win64_msvc2022_arm64", "event": "pull_request", "backend": "s3"},

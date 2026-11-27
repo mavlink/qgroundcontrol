@@ -1,6 +1,6 @@
 #include "GstD3DContextBridge.h"
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <glib-object.h>
 
@@ -28,13 +28,12 @@ gint64 GstD3DContextBridge::readAdapterLuid(gpointer device)
     return luid;
 }
 
-// Reads QGCRhiCapture::deviceSnapshot() via atomic loads — safe from the bus-sync thread without touching QRhi
-// cross-thread.
+// Reads QGCRhiCapture::deviceSnapshot() via atomic loads — safe off the render thread without touching QRhi.
 bool GstD3DContextBridge::snapshotBackendMatches()
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
     if (backend < 0) {
-        qCDebug(category()) << "QRhi snapshot not yet populated; will retry on next NEED_CONTEXT";
+        qCDebug(category()) << "QRhi snapshot not yet populated; will retry once it is";
         return false;
     }
     if ((backend != _qrhiBackend) && (backend != _secondQrhiBackend)) {
@@ -101,11 +100,11 @@ void GstD3DContextBridge::logAdapterMatch(gint64 expectedLuid, gpointer gstDevic
     if (actualLuid != expectedLuid) {
         qCWarning(category()).noquote() << apiName() << "bridge: gst device LUID mismatch — QRhi LUID=" << expectedLuid
                                         << "but wrapped device LUID=" << actualLuid
-                                        << "(zero-copy will appear corrupt; check NEED_CONTEXT race)";
+                                        << "(zero-copy will appear corrupt)";
         return;
     }
     qCInfo(category()).noquote() << apiName() << "bridge adapter LUID="
                                  << QString::asprintf("0x%llx", static_cast<long long>(expectedLuid));
 }
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

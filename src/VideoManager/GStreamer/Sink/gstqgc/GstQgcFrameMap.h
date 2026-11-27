@@ -10,24 +10,8 @@
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "HwBuffers/HwBuffers.h"
-#include "HwBuffers/common/CpuVideoFramePool.h"
 
-/// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
-
-QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix);
-QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction transfer);
-QVideoFrameFormat::PixelFormat toQtPixelFormat(GstVideoFormat fmt);
-QVideoFrameFormat::ColorRange toQtColorRange(GstVideoColorRange range);
-
-/// Apply rotation + mirror flags derived from GstVideoOrientationMethod.
-void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod method);
-
-/// The stream's orientation + PTS/duration timing; @p streamOrientation is GstVideoOrientationMethod cast to int.
-void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int streamOrientation);
-
-/// Set color-space/transfer/range from gst-video colorimetry + HDR (MaxCLL preferred);
-/// infers BT.601/709 from height when caps omit it.
-void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCaps* caps);
+/// Sample-to-frame helpers for qgcqvideosink's show_frame, on the streaming thread.
 
 /// The frame a buffer holds and the picture in it, as upstream's sinks read them (glimagesink, waylandsink): the frame
 /// is as large as the buffer's GstVideoMeta, which a decoder pads beyond the caps (1088 rows for 1080) or leaves
@@ -57,9 +41,12 @@ void applyFlips(QVideoFrame& frame, const FrameGeometry& geometry);
 /// @p format for frames of @p geometry: its frame size, with the picture as the viewport.
 QVideoFrameFormat withFrameGeometry(QVideoFrameFormat format, const FrameGeometry& geometry);
 
-/// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
-/// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
-/// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
+/// @p buffer's system memory as a frame of @p format, mapped through gst_video_frame_map() with @p info and not copied,
+/// as Qt's own GStreamer sink maps it: the frame holds a ref on @p buffer, so its decoder doesn't reuse it while Qt
+/// holds the frame. Read-only; invalid when the buffer doesn't map.
+QVideoFrame mapCpuFrame(GstBuffer* buffer, const GstVideoInfo& info, const QVideoFrameFormat& format);
+
+/// mapSampleToFrame()'s result.
 struct MappedFrame
 {
     QVideoFrame frame;
@@ -68,7 +55,9 @@ struct MappedFrame
     bool noCpuLayout = false;  ///< Dropped instead of read as linear rows, which would show it scrambled.
 };
 
+/// @p buffer as a frame, through a GPU path when one takes it, else mapped on the CPU. Does NOT take the caller's refs
+/// on @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
+/// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, const HwVideoBufferContext& hwContext,
-                             const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              HwResolvedPathCache* pathCache = nullptr);

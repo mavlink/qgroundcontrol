@@ -27,4 +27,12 @@ def test_windows_gstreamer_job_selects_the_test_classes_the_readme_lists() -> No
     )
     assert documented
     assert all(pattern.match(name) for name in documented)
+    # What the receivers share is tested outside the GStreamer folder, so the README's table doesn't list it.
+    shared = (
+        "StreamSupervisorTest",
+        "StreamWatchdogTest",
+        "KeyframeIntervalMeterTest",
+        "RecordingPlanTest",
+    )
+    assert all(pattern.match(name) for name in shared)
     assert not pattern.match("ParameterManagerTest")

@@ -1,6 +1,6 @@
 #include "GstD3DVideoBufferCommon.h"
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <algorithm>
 #include <array>
@@ -14,7 +14,6 @@
 #include "GstD3D11ContextBridge.h"
 #include "GstD3D11PictureCopy.h"
 #include "GstHwPathRegistry.h"
-#include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
 
@@ -22,14 +21,10 @@ QGC_LOGGING_CATEGORY(GstD3D11Log, "Video.GStreamer.HwBuffers.GstD3D11Buf")
 
 namespace {
 
-using GstD3DVideoBufferCommon::MapDiagnostics;
 using GstHw::kMaxPlanes;
 
-MapDiagnostics s_diag;
-std::atomic<bool> s_loggedForeignDevice{false};
-
-/// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool(). A texture-array slice is only recorded
-/// here: D3D11VideoBuffer copies it on the render thread.
+/// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes(). A texture-array slice is only recorded here:
+/// D3D11VideoBuffer copies it on the render thread.
 class D3D11PlaneResolver
 {
 public:
@@ -38,7 +33,6 @@ public:
     using Device = GstD3D11Device;
 
     static constexpr const char* kMemoryName = "GstD3D11Memory";
-    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY;
 
     static const QLoggingCategory& log() { return GstD3D11Log(); }
 
@@ -72,8 +66,7 @@ public:
     {
         GstMapInfo info;
         if (!gst_memory_map(GST_MEMORY_CAST(mem), &info, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_D3D11))) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedNullResource,
-                             "resolve: mapping the GstD3D11Memory for D3D11 failed for plane" << plane);
+            QGC_HW_WARN_ONCE(GstD3D11Log, "resolve: mapping the GstD3D11Memory for D3D11 failed for plane" << plane);
             return false;
         }
         gst_memory_unmap(GST_MEMORY_CAST(mem), &info);
@@ -92,31 +85,19 @@ public:
 
     const std::array<bool, kMaxPlanes>& copied() const noexcept { return _copied; }
 
-    static GstBufferPool* newPool(Device* device) { return gst_d3d11_buffer_pool_new(device); }
-
-    // SHADER_RESOURCE matches the importer's sampled texture.
-    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
-    {
-        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
-                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
-            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
-            gst_d3d11_allocation_params_free(params);
-        }
-    }
-
 private:
     std::array<guint, kMaxPlanes> _slices{};
     std::array<bool, kMaxPlanes> _copied{};
 };
 
-/// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. mapTextures() runs on the render
+/// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. importTextures() runs on the render
 /// thread, where QRhi drives the same immediate context: a texture-array slice or a padded texture is copied there,
 /// ordered with QRhi's own reads and writes without a Flush(), and only for frames that are actually shown.
 class D3D11VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D11PlaneResolver>
 {
 public:
     D3D11VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D11, s_diag)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D11)
     {
         D3D11PlaneResolver resolver;
         if (!resolve(resolver)) {
@@ -136,11 +117,11 @@ public:
         }
     }
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
         GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);
         if (!buffer) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+            return {};
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: QRhi can't sample another
         // device's texture.
@@ -148,9 +129,8 @@ public:
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
         if (!device || !context || !GstD3D11PictureCopy::onDevice(_handles[0], device)) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_loggedForeignDevice,
-                             "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+            QGC_HW_WARN_ONCE(GstD3D11Log, "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
+            return {};
         }
 
         std::array<ID3D11Texture2D*, kMaxPlanes> planes = _handles;
@@ -168,12 +148,12 @@ public:
             }
             copies[std::size_t(i)] = copyPicture(rhi, device, context, buffer, i, old);
             if (!copies[std::size_t(i)]) {
-                return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+                return {};
             }
             planes[std::size_t(i)] = copies[std::size_t(i)];
         }
 
-        return finishMap(rhi, old, planes);
+        return importResolved(rhi, planes);
     }
 
 private:
@@ -196,7 +176,7 @@ private:
                                       QRect(QPoint(0, 0), picture), old, plane);
         gst_d3d11_device_unlock(memory->device);
         if (!target) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedTextureCreateFail,
+            QGC_HW_WARN_ONCE(GstD3D11Log,
                              "mapTextures: CreateTexture2D for the slice copy failed (plane=" << plane << ")");
         }
         return target;
@@ -206,10 +186,42 @@ private:
     std::array<bool, kMaxPlanes> _copied{};
 };
 
-void resetCachedState() noexcept
+/// HwPathDescriptor::proposePool: adds a pool on the bridge's device (Qt's) to an ALLOCATION query whose caps carry
+/// D3D11Memory, so the decoder allocates on the device QRhi samples from.
+bool proposePool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
 {
-    s_diag.reset();
-    s_loggedForeignDevice.store(false, std::memory_order_relaxed);
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
+        return false;
+    }
+    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        // SHADER_RESOURCE matches the importer's sampled texture.
+        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
+                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
+            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
+            gst_d3d11_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            // The pool may grow the buffer size to the allocated texture's pitch; re-read it.
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
+    return proposed;
 }
 
 }  // namespace
@@ -218,9 +230,8 @@ constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
     .matches = [](GstMemory* mem) -> bool { return gst_is_d3d11_memory(mem); },
     .construct = &GstHwPaths::construct<D3D11VideoBuffer>,
-    .resetCaches = &resetCachedState,
-    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,
+    .proposePool = &proposePool,
     .bridge = &GstD3D11ContextBridge::instance,
 };
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

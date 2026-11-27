@@ -32,18 +32,18 @@ class TestFingerprint:
         assert before != after
 
 
-def test_gstreamer_fingerprint_follows_only_the_gstreamer_section(tmp_path):
+def test_gstreamer_fingerprint_follows_only_what_decides_an_sdk_tree(tmp_path):
     config = tmp_path / ".github/build-config.json"
     config.parent.mkdir()
 
-    def fingerprint(qt: str, android: str) -> str:
-        sections = {"qt": {"version": qt}, "gstreamer": {"version": {"android": android}}}
-        config.write_text(json.dumps(sections))
+    def fingerprint(qt: str, sdk: str, plugin: str) -> str:
+        gstreamer = {"version": {"sdk": sdk}, "plugins": {"common": [plugin]}}
+        config.write_text(json.dumps({"qt": {"version": qt}, "gstreamer": gstreamer}))
         return compute_gstreamer_fingerprint(tmp_path)
 
-    before = fingerprint("6.10", "1.28.4")
-    assert fingerprint("6.11", "1.28.4") == before
-    assert fingerprint("6.11", "1.28.5") != before
+    before = fingerprint("6.10", "1.28.4", "coreelements")
+    assert fingerprint("6.11", "1.28.4", "playback") == before
+    assert fingerprint("6.11", "1.28.5", "playback") != before
 
 
 class TestPrepareCache:

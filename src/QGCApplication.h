@@ -118,6 +118,9 @@ private slots:
     /// Called when the delay timer fires to show the missing parameters warning
     void _missingParamsDisplay();
     void _showDelayedAppMessages();
+    /// Runs the main window's shutdown sequence past its close checks, whose questions nobody may be there to answer:
+    /// for a process that was told to terminate.
+    void _closeWithoutConfirmation();
 
 private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;

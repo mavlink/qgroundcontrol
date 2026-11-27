@@ -1,29 +1,29 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
-#include <initializer_list>
 #include <memory>
-#include <span>
-#include <vector>
 
+#include <QtCore/qglobal.h>
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "GstHwTypes.h"
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+
+#include <initializer_list>
+#include <span>
+#include <vector>
 
 class GstContextBridgeBase;
 class GstHwVideoBuffer;
 class QRhi;
 
-/// Everything the factory and the HwBuffers facade know about one compiled GPU path. Each backend defines its
-/// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
+/// Everything the HwBuffers facade knows about one compiled GPU path. Each backend defines its descriptor in its own
+/// translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
 struct HwPathDescriptor
 {
-    /// Path the imported buffers report. CUDA reports DmaBuf: it imports through the DMABuf importer.
+    /// Path the imported buffers report.
     HwVideoBufferPath path = HwVideoBufferPath::None;
 
     /// True when this path imports @p mem's kind of memory; plane 0's memory is the dispatch key. Decided by the memory
@@ -39,10 +39,6 @@ struct HwPathDescriptor
                                                    QVideoFrameFormat format,
                                                    const HwVideoBufferContext& context) = nullptr;
 
-    /// Optional. Runs for each GPU-enabled HwVideoBufferContext a sink builds at start: fills this path's fields, or
-    /// only logs once whether the path can import (DMABuf, whose display the sink sets per frame).
-    void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
-
     /// Optional. Runs on the render thread when the scene graph's QRhi is published, before the streaming threads
     /// see its backend: learns what its device imports.
     void (*probeDevice)(QRhi& rhi) = nullptr;
@@ -55,7 +51,7 @@ struct HwPathDescriptor
     bool (*proposePool)(GstQuery* query, GstCaps* caps, const GstVideoInfo* info, gsize size,
                         guint minBuffers) = nullptr;
 
-    /// Optional. Bridge answering this path's GstContext requests.
+    /// Optional. Bridge setting the contexts of Qt's device for this path on the pipelines.
     GstContextBridgeBase& (*bridge)() = nullptr;
 };
 
@@ -70,12 +66,10 @@ std::unique_ptr<GstHwVideoBuffer> construct(GstSample* sample, const GstVideoInf
     return std::make_unique<Buffer>(sample, info, format);
 }
 
-extern const HwPathDescriptor kCuda;
 extern const HwPathDescriptor kDmaBuf;
 extern const HwPathDescriptor kGlMemory;
 extern const HwPathDescriptor kD3D11;
 extern const HwPathDescriptor kD3D12;
-extern const HwPathDescriptor kVulkan;
 extern const HwPathDescriptor kIOSurface;
 extern const HwPathDescriptor kAHardwareBuffer;
 

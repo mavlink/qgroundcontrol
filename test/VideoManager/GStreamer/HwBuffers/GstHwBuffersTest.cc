@@ -1,10 +1,6 @@
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
-#include <cstring>
 #include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
 #include <memory>
 #include <rhi/qrhi.h>
 #include <span>
@@ -18,18 +14,12 @@
 #include <QtMultimedia/private/qvideotexturehelper_p.h>
 #include <QtQuick/QQuickWindow>
 
-#include "CpuVideoFramePool.h"
 #include "GStreamerTestHelpers.h"
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
 #include "HwBuffers/HwBuffers.h"
-#include "gstqgc/GstQgcGpuBin.h"
-#include "gstqgc/GstQgcRenderTarget.h"
-#include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
 #endif
@@ -47,13 +37,12 @@ public:
         : GstContextBridgeBase("Test", contextTypes, &TestContextBridgeLog)
     {}
 
-    /// Unprimed, with zeroed counters and its device known.
+    /// Unprimed, with zeroed counters.
     void restart()
     {
         reset();
         primes = 0;
         clears = 0;
-        deviceKnown = true;
     }
 
     /// As a device that reports its removal has its bridge do, on the thread it notifies on.
@@ -61,15 +50,10 @@ public:
 
     int primes = 0;
     int clears = 0;
-    /// False while Qt's device isn't published yet: the bridge can't prime, and tries again when asked.
-    bool deviceKnown = true;
 
 private:
     bool primeLocked() override
     {
-        if (!deviceKnown) {
-            return retryLater();
-        }
         ++primes;
         _object = GST_OBJECT(gst_object_ref_sink(gst_element_factory_make("identity", nullptr)));
         return _object != nullptr;
@@ -118,17 +102,21 @@ const HwPathDescriptor kTestBridgePathA = {
 };
 
 const HwPathDescriptor kTestBridgePathB = {
-    .path = HwVideoBufferPath::Vulkan,
+    .path = HwVideoBufferPath::AHardwareBuffer,
     .matches = [](GstMemory*) { return false; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
 
-/// True when @p element holds a context of bridge A's type that a TestContextBridge built.
-bool holdsTestBridgeContext(GstElement* element)
+/// True when @p element holds a context of @p contextType that a TestContextBridge built.
+bool holdsTestBridgeContext(GstElement* element, const char* contextType = kTestContextTypeA[0])
 {
-    const GStreamer::GstContextPtr context =
-        GStreamer::adoptContext(gst_element_get_context(element, kTestContextTypeA[0]));
+    const GStreamer::GstContextPtr context = GStreamer::adoptContext(gst_element_get_context(element, contextType));
     return context && gst_structure_has_field(gst_context_get_structure(context.get()), "object");
+}
+
+GStreamer::GstElementPtr newPipeline()
+{
+    return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
 }
 
 /// Takes the next element message off @p pipeline's bus: whether it is the pipeline's own message @p name.
@@ -141,12 +129,6 @@ bool nextElementMessageIs(GstElement* pipeline, const char* name)
            (GST_MESSAGE_SRC(message.get()) == GST_OBJECT(pipeline));
 }
 
-/// Whether a bridge posted on @p pipeline's bus that it served the pipeline after one of its elements had asked.
-bool servedLate(GstElement* pipeline)
-{
-    return nextElementMessageIs(pipeline, HwBuffers::kGraphicsDeviceServedMessage);
-}
-
 /// A new identity element in @p bin, which owns it; null when it couldn't be added.
 GstElement* addIdentityTo(GstElement* bin)
 {
@@ -155,14 +137,9 @@ GstElement* addIdentityTo(GstElement* bin)
 }
 
 }  // namespace
-#endif
 
 void GstHwBuffersTest::_testContextBridgeRegistry()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
-
     testBridgeA().restart();
     testBridgeB().restart();
     const auto bridgeGuard = qScopeGuard([] {
@@ -171,143 +148,52 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    const GStreamer::GstElementPtr owner = GStreamer::makeElement("identity");
-    QVERIFY(owner);
-    GstElement* const element = owner.get();
-
-    // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
-    GstMessage* needA = gst_message_new_need_context(GST_OBJECT(element), kTestContextTypeA[0]);
-    QCOMPARE(HwBuffers::onBusSyncMessage(needA), GST_BUS_DROP);
-    GstContext* deliveredA = gst_element_get_context(element, kTestContextTypeA[0]);
-    QVERIFY2(deliveredA, "Bridge A's context was not set on the requesting element");
-    gst_context_unref(deliveredA);
-    QCOMPARE(testBridgeA().primes, 1);
-    QCOMPARE(testBridgeB().primes, 0);
-
-    GstMessage* unknown = gst_message_new_need_context(GST_OBJECT(element), "qgc.test.context-unknown");
-    QCOMPARE(HwBuffers::onBusSyncMessage(unknown), GST_BUS_PASS);
-    gst_message_unref(unknown);
-
-    // A context query is answered through the same bridges; a primed bridge isn't primed again.
-    GstQuery* queryB = gst_query_new_context(kTestContextTypeB[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryB));
-    GstContext* answeredB = nullptr;
-    gst_query_parse_context(queryB, &answeredB);
-    QVERIFY(answeredB);
-    QCOMPARE(QByteArray(gst_context_get_context_type(answeredB)), QByteArray(kTestContextTypeB[0]));
-    gst_query_unref(queryB);
-
-    GstQuery* queryA = gst_query_new_context(kTestContextTypeA[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryA));
-    gst_query_unref(queryA);
+    // Every bridge sets its contexts on each new pipeline, and primes for the first only.
+    for (int i = 0; i < 2; ++i) {
+        const GStreamer::GstElementPtr pipeline = newPipeline();
+        HwBuffers::provideGraphicsContexts(pipeline.get());
+        QVERIFY(holdsTestBridgeContext(pipeline.get(), kTestContextTypeA[0]));
+        QVERIFY(holdsTestBridgeContext(pipeline.get(), kTestContextTypeB[0]));
+    }
     QCOMPARE(testBridgeA().primes, 1);
     QCOMPARE(testBridgeB().primes, 1);
-
-    GstQuery* unknownQuery = gst_query_new_context("qgc.test.context-unknown");
-    QVERIFY(!HwBuffers::answerSinkBinContextQuery(unknownQuery));
-    gst_query_unref(unknownQuery);
-#endif
 }
 
-void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
+void GstHwBuffersTest::_testPipelineHandsBridgeContextsToItsElements()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    const GStreamer::GstElementPtr pipeline = newPipeline();
+    HwBuffers::provideGraphicsContexts(pipeline.get());
+
+    // A bin built before it joins the pipeline, as the sink bin is, and an element added to it later, as decodebin3
+    // plugs a decoder: each takes the device from the pipeline, without asking the bridge.
     GstElement* const bin = gst_bin_new(nullptr);
+    GstElement* const builtFirst = addIdentityTo(bin);
+    QVERIFY(builtFirst);
     QVERIFY(gst_bin_add(GST_BIN(pipeline.get()), bin));
-    GstElement* const asking = addIdentityTo(bin);
+    GstElement* const pluggedLater = addIdentityTo(bin);
     GstElement* const sibling = addIdentityTo(pipeline.get());
-    QVERIFY(asking && sibling);
-
-    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
-             GST_BUS_DROP);
-    QVERIFY(holdsTestBridgeContext(asking));
+    QVERIFY(pluggedLater && sibling);
+    QVERIFY(holdsTestBridgeContext(builtFirst));
+    QVERIFY(holdsTestBridgeContext(pluggedLater));
     QVERIFY(holdsTestBridgeContext(sibling));
-
-    // An element the pipeline is given later takes its device from the pipeline, without asking the bridge.
-    GstElement* const later = addIdentityTo(pipeline.get());
-    QVERIFY(later);
-    QVERIFY(holdsTestBridgeContext(later));
-
-    // Served when it asked, the pipeline holds nothing on another device: its owner has nothing to replace.
-    QVERIFY(!servedLate(pipeline.get()));
-#endif
-}
-
-void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
-    testBridgeA().restart();
-    testBridgeA().deviceKnown = false;
-    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
-    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
-
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
-    GstElement* const asking = addIdentityTo(pipeline.get());
-    QVERIFY(asking);
-
-    // Left without an answer, an element makes a device of its own and posts it, which its pipeline keeps for the
-    // elements it is given later.
-    GstMessage* const unanswered = gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0]);
-    QCOMPARE(HwBuffers::onBusSyncMessage(unanswered), GST_BUS_PASS);
-    gst_message_unref(unanswered);
-    GstContext* const ownDevice = gst_context_new(kTestContextTypeA[0], TRUE);
-    gst_element_set_context(asking, ownDevice);
-    QVERIFY(gst_element_post_message(asking, gst_message_new_have_context(GST_OBJECT(asking), ownDevice)));
-    const GStreamer::GstContextPtr kept =
-        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), kTestContextTypeA[0]));
-    QVERIFY2(kept && !holdsTestBridgeContext(pipeline.get()), "the pipeline did not keep the element's own device");
-
-    // Qt's device becomes known, as when the scene graph starts.
-    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
-    QVERIFY(rhi);
-    testBridgeA().deviceKnown = true;
-    const auto withdraw = qScopeGuard([] { QGCRhiCapture::publishDeviceSnapshotForTest(nullptr); });
-    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
     QCOMPARE(testBridgeA().primes, 1);
-    // The element that made its own device keeps it, so the pipeline's owner is told to replace it.
-    QVERIFY(servedLate(pipeline.get()));
-
-    GstElement* const later = addIdentityTo(pipeline.get());
-    QVERIFY(later);
-    QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
-#endif
 }
 
 void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    const auto newPipeline = [] {
-        return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
-    };
-    // One pipeline got the device for a NEED_CONTEXT, one through a context query its sink answered, one not at all.
-    const GStreamer::GstElementPtr asked = newPipeline();
-    GstElement* const asking = addIdentityTo(asked.get());
-    QVERIFY(asking);
-    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
-             GST_BUS_DROP);
-    const GStreamer::GstElementPtr queried = newPipeline();
-    GstElement* const sink = addIdentityTo(queried.get());
-    QVERIFY(sink);
-    GstQuery* const query = gst_query_new_context(kTestContextTypeA[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(query, sink));
-    gst_query_unref(query);
+    // Two pipelines got the device when they were built, one did not.
+    const GStreamer::GstElementPtr first = newPipeline();
+    HwBuffers::provideGraphicsContexts(first.get());
+    const GStreamer::GstElementPtr second = newPipeline();
+    HwBuffers::provideGraphicsContexts(second.get());
     const GStreamer::GstElementPtr bystander = newPipeline();
     QVERIFY(!HwBuffers::graphicsDeviceLost());
 
@@ -316,22 +202,18 @@ void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
     QVERIFY(HwBuffers::graphicsDeviceLost());
     // The GUI thread drops the device and tells the pipelines, which hold elements that work on it.
     QTRY_COMPARE_WITH_TIMEOUT(testBridgeA().clears, 1, TestTimeout::mediumMs());
-    QVERIFY(nextElementMessageIs(asked.get(), HwBuffers::kGraphicsDeviceLostMessage));
-    QVERIFY(nextElementMessageIs(queried.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(first.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(second.get(), HwBuffers::kGraphicsDeviceLostMessage));
     QVERIFY(!nextElementMessageIs(bystander.get(), HwBuffers::kGraphicsDeviceLostMessage));
 
     // Lost until the bridge has a device again.
     QVERIFY(HwBuffers::graphicsDeviceLost());
     QVERIFY(testBridgeA().prime());
     QVERIFY(!HwBuffers::graphicsDeviceLost());
-#endif
 }
 
 void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("HwBuffers not compiled in this build (no GPU path enabled)");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     s_testCacheResets = 0;
@@ -341,27 +223,30 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
+}
 
-    // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
-    QVERIFY(testBridgeA().prime());
-    HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-    QVERIFY(testBridgeA().prime());
-    QCOMPARE(testBridgeA().primes, 2);
-#endif
+void GstHwBuffersTest::_testGraphicsDeviceSettledUnderSoftwareSceneGraph()
+{
+    // Without a main window nothing waits for its device.
+    QVERIFY(HwBuffers::graphicsDeviceSettled());
+
+    // The scene graph backend is known once a window exists.
+    QQuickWindow window;
+    if (QQuickWindow::sceneGraphBackend() != QLatin1String("software")) {
+        QSKIP("Qt Quick renders through a QRhi here");
+    }
+    // The software scene graph publishes no device, and its threaded render loop never reports that it is up.
+    HwBuffers::connectMainWindow(&window);
+    QVERIFY(HwBuffers::graphicsDeviceSettled());
 }
 
 void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("QGCRhiCapture not compiled in this build (no GPU path enabled)");
-#else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
-    // Create an offscreen window and connect it. The scene graph is never initialized here, so the Null QRhi's device
-    // stands in for the one its render thread would publish.
+    // The scene graph is never initialized here, so the Null QRhi's device stands in for the one its render thread
+    // would publish.
     auto* window = new QQuickWindow();
     QGCRhiCapture::connectWindow(window);
     QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
@@ -370,239 +255,12 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
     // Destroying the window must withdraw the device (no dangling handles).
     delete window;
     QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), -1);
+}
 #endif
-}
-
-void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
-{
-    QTest::addColumn<QByteArray>("value");
-    QTest::addColumn<int>("expectedMode");
-    QTest::addColumn<bool>("explicitChoice");
-    QTest::addColumn<bool>("warns");
-
-    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
-    const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
-    QTest::newRow("unset") << QByteArray() << glUpload << false << false;
-    QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
-    QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << false << true;
-}
-
-void GstHwBuffersTest::_testGpuBinPreferenceParse()
-{
-#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QSKIP("QGC_GST_GPU_BIN only selects a bin when both GPU bins are compiled");
-#else
-    QFETCH(QByteArray, value);
-    QFETCH(int, expectedMode);
-    QFETCH(bool, explicitChoice);
-    QFETCH(bool, warns);
-
-    if (warns) {
-        expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
-    }
-    const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
-    QCOMPARE(int(preference.mode), expectedMode);
-    QCOMPARE(preference.explicitChoice, explicitChoice);
-    if (warns) {
-        verifyExpectedLogMessage();
-    }
-#endif
-}
-
-void GstHwBuffersTest::_testGpuBinSelection_data()
-{
-    QTest::addColumn<int>("preferred");
-    QTest::addColumn<bool>("explicitChoice");
-    QTest::addColumn<int>("backend");
-    QTest::addColumn<bool>("egl");
-    QTest::addColumn<int>("expected");
-
-    using GstQgc::GpuBinMode;
-    using GstQgc::RenderBackend;
-    const int glUpload = int(GpuBinMode::GlUpload);
-    const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
-    const int passthrough = int(GpuBinMode::Passthrough);
-    const int openGl = int(RenderBackend::OpenGL);
-    const int vulkan = int(RenderBackend::Vulkan);
-    QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
-    QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
-    QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;
-    QTest::newRow("dmabuf-opengl-egl") << directDmaBuf << false << openGl << true << directDmaBuf;
-    QTest::newRow("dmabuf-opengl-not-egl") << directDmaBuf << false << openGl << false << passthrough;
-    QTest::newRow("dmabuf-opengl-not-egl-explicit") << directDmaBuf << true << openGl << false << directDmaBuf;
-    QTest::newRow("passthrough-vulkan") << passthrough << false << vulkan << false << passthrough;
-    const int direct3D12 = int(RenderBackend::Direct3D12);
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    // Direct3D12 has one GPU variant, whatever was asked for.
-    const int d3d12Convert = int(GpuBinMode::D3D12Convert);
-    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << d3d12Convert;
-    QTest::newRow("glupload-d3d12-explicit") << glUpload << true << direct3D12 << false << d3d12Convert;
-#else
-    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << passthrough;
-#endif
-}
-
-void GstHwBuffersTest::_testGpuBinSelection()
-{
-    QFETCH(int, preferred);
-    QFETCH(bool, explicitChoice);
-    QFETCH(int, backend);
-    QFETCH(bool, egl);
-    QFETCH(int, expected);
-
-    const GstQgc::GpuBinPreference preference{.mode = static_cast<GstQgc::GpuBinMode>(preferred),
-                                              .explicitChoice = explicitChoice};
-    const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl};
-    QCOMPARE(int(GstQgc::selectGpuBin(preference, target)), expected);
-}
-
-void GstHwBuffersTest::_testCpuLayoutSizesPlanesByComponent()
-{
-    // AV12's third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
-    // _testCpuCopyOddDimensions covers the formats whose planes and components line up.
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_AV12, 64, 48));
-    const CpuVideoFramePool::PlaneLayout layout = CpuVideoFramePool::computeLayout(info);
-    QCOMPARE(layout.planeCount, 3);
-    QCOMPARE(layout.height[0], 48);
-    QCOMPARE(layout.height[1], 24);
-    QCOMPARE(layout.height[2], 48);
-}
-
-void GstHwBuffersTest::_testCpuCopyOddDimensions_data()
-{
-    QTest::addColumn<int>("gstFormat");
-    QTest::addColumn<int>("qtFormat");
-    QTest::addColumn<QList<int>>("planeRows");
-    QTest::addColumn<QList<int>>("planeRowBytes");
-
-    // 5x3: chroma rounds up to 3x2.
-    QTest::newRow("I420") << int(GST_VIDEO_FORMAT_I420) << int(QVideoFrameFormat::Format_YUV420P) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << int(QVideoFrameFormat::Format_YV12) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << int(QVideoFrameFormat::Format_NV12) << QList<int>{3, 2}
-                          << QList<int>{5, 6};
-    // Packed 4:2:2: the last macropixel's chroma ends past the last luma byte (YUY2 V at byte 11, UYVY V at 10).
-    QTest::newRow("YUY2") << int(GST_VIDEO_FORMAT_YUY2) << int(QVideoFrameFormat::Format_YUYV) << QList<int>{3}
-                          << QList<int>{12};
-    QTest::newRow("UYVY") << int(GST_VIDEO_FORMAT_UYVY) << int(QVideoFrameFormat::Format_UYVY) << QList<int>{3}
-                          << QList<int>{11};
-}
-
-void GstHwBuffersTest::_testCpuCopyOddDimensions()
-{
-    QFETCH(int, gstFormat);
-    QFETCH(int, qtFormat);
-    QFETCH(QList<int>, planeRows);
-    QFETCH(QList<int>, planeRowBytes);
-
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(gstFormat), 5, 3));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>((i * 7) + 1);
-    }
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(
-        buffer, info, QVideoFrameFormat(QSize(5, 3), static_cast<QVideoFrameFormat::PixelFormat>(qtFormat)));
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(frame.planeCount(), planeRows.size());
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        const int stride = frame.bytesPerLine(plane);
-        QVERIFY(frame.mappedBytes(plane) >= ((planeRows[plane] - 1) * stride) + planeRowBytes[plane]);
-        const auto* const src = reinterpret_cast<const char*>(source.data + GST_VIDEO_INFO_PLANE_OFFSET(&info, plane));
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < planeRows[plane]; ++row) {
-            QCOMPARE(QByteArray(dst + (row * stride), planeRowBytes[plane]),
-                     QByteArray(src + (row * GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)), planeRowBytes[plane]));
-        }
-    }
-}
-
-void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer_data()
-{
-    QTest::addColumn<int>("metaWidth");
-    QTest::addColumn<QSize>("frameSize");
-
-    // A v4l2 stateless decoder's 1080p frame: 1080 rows in the caps, 1088 in the buffer's GstVideoMeta.
-    QTest::newRow("taller") << 32 << QSize(32, 1080);
-    // Padded columns as well, so the source's strides and plane offsets differ from the destination's.
-    QTest::newRow("taller-and-wider") << 48 << QSize(32, 1080);
-    // The buffer's whole frame, as the sink asks for it (frameGeometry()).
-    QTest::newRow("whole-frame") << 48 << QSize(48, 1088);
-}
-
-void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer()
-{
-    QFETCH(int, metaWidth);
-    QFETCH(QSize, frameSize);
-    constexpr int kMetaRows = 1088;
-
-    GstVideoInfo capsInfo;
-    GstVideoInfo metaInfo;
-    GstVideoInfo frameInfo;
-    QVERIFY(gst_video_info_set_format(&capsInfo, GST_VIDEO_FORMAT_NV12, 32, 1080));
-    QVERIFY(gst_video_info_set_format(&metaInfo, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows));
-    QVERIFY(gst_video_info_set_format(&frameInfo, GST_VIDEO_FORMAT_NV12, frameSize.width(), frameSize.height()));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&metaInfo), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    gst_buffer_add_video_meta_full(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows,
-                                   GST_VIDEO_INFO_N_PLANES(&metaInfo), metaInfo.offset, metaInfo.stride);
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>(i % 251);
-    }
-
-    // The copy's destination comes from the pool: hand the pool one with guard bytes behind the frame, which a copy of
-    // the meta's rows would overwrite.
-    const QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
-    constexpr char kGuardByte = char(0xA5);
-    constexpr qsizetype guardBytes = 1024;
-    const auto frameBytes = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&frameInfo));
-    QByteArray backing;
-    backing.reserve(frameBytes + 1 + guardBytes);
-    backing.resize(frameBytes);
-    char* const guard = backing.data() + frameBytes + 1;
-    std::memset(guard, kGuardByte, static_cast<std::size_t>(guardBytes));
-    CpuVideoFramePool::instance().releaseBacking(format.frameSize(), format.pixelFormat(), std::move(backing));
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(buffer, capsInfo, format);
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(reinterpret_cast<const char*>(frame.bits(0)), guard - frameBytes - 1);
-    QCOMPARE(frame.planeCount(), 2);
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        // NV12: both planes hold a byte per column in a row, the chroma plane half the rows.
-        const int rows = (plane == 0) ? frameSize.height() : (frameSize.height() / 2);
-        QCOMPARE(frame.mappedBytes(plane), rows * frame.bytesPerLine(plane));
-        const auto* const src = reinterpret_cast<const char*>(source.data + metaInfo.offset[plane]);
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < rows; ++row) {
-            QCOMPARE(QByteArray(dst + (row * frame.bytesPerLine(plane)), frameSize.width()),
-                     QByteArray(src + (row * metaInfo.stride[plane]), frameSize.width()));
-        }
-    }
-    QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
-}
-
-namespace {
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
-// Concrete subclass for unit-testing GstHwVideoBuffer's protected/base behavior.
+namespace {
+
 class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
 public:
@@ -610,8 +268,10 @@ public:
         : GstHwVideoBuffer(sample, info, std::move(fmt))
     {}
 
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::GlMemory; }
+
     /// Always fails, like a GPU import the active QRhi rejects.
-    QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
+    QVideoFrameTexturesUPtr importTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
 };
 
 /// Advertises @p advertised while its memory holds the format it was built with, as the DMABuf eglfs quirk does.
@@ -625,13 +285,6 @@ public:
         _format = std::move(advertised);
     }
 };
-
-#endif
-
-}  // namespace
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-namespace {
 
 /// Behaviour of one test path in _testHwPathRegistrySelection, plus what the factory did with it.
 struct TestPathState
@@ -661,14 +314,13 @@ const HwPathDescriptor kTestSelectPathA = {
 };
 
 const HwPathDescriptor kTestSelectPathB = {
-    .path = HwVideoBufferPath::Vulkan,
+    .path = HwVideoBufferPath::AHardwareBuffer,
     .matches = [](GstMemory*) { return s_testPathB.matches; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathB, sample, info, format); },
 };
 
 }  // namespace
-#endif
 
 void GstHwBuffersTest::_testHwPathRegistrySelection_data()
 {
@@ -679,22 +331,19 @@ void GstHwBuffersTest::_testHwPathRegistrySelection_data()
     QTest::addColumn<int>("expectedPath");
     QTest::addColumn<int>("expectedBConstructed");
 
-    // Path A (GL) is registered before path B (Vulkan); B always matches and imports.
+    // Path A (GL) is registered before path B (AHardwareBuffer); B always matches and imports.
     const int none = int(HwVideoBufferPath::None);
     const int gl = int(HwVideoBufferPath::GlMemory);
-    const int vulkan = int(HwVideoBufferPath::Vulkan);
+    const int ahb = int(HwVideoBufferPath::AHardwareBuffer);
     QTest::newRow("first-registered-match-wins") << true << true << true << none << gl << 0;
-    QTest::newRow("non-matching-path-skipped") << false << true << true << none << vulkan << 1;
+    QTest::newRow("non-matching-path-skipped") << false << true << true << none << ahb << 1;
     QTest::newRow("declining-path-sends-frame-to-cpu") << true << false << true << none << none << 0;
     QTest::newRow("failed-import-sends-frame-to-cpu") << true << true << false << none << none << 0;
-    QTest::newRow("validated-path-tried-first") << true << true << true << vulkan << vulkan << 1;
+    QTest::newRow("validated-path-tried-first") << true << true << true << ahb << ahb << 1;
 }
 
 void GstHwBuffersTest::_testHwPathRegistrySelection()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GPU path registry not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(bool, aMatches);
     QFETCH(bool, aAdmits);
     QFETCH(bool, aConstructs);
@@ -732,14 +381,10 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
     QCOMPARE(bool(buffer), expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(cache.validated, expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(s_testPathB.constructed, expectedBConstructed);
-#endif
 }
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     GstVideoInfo info;
     GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info));
     QVERIFY(sample);
@@ -752,7 +397,7 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
     auto hw = std::make_unique<TestableHwVideoBuffer>(
         sample.get(), info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
     sample.reset();
-    // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
+    // The textures of an earlier successful import take their own sample ref; the CPU view must survive that.
     gst_sample_unref(hw->refSample());
     QVideoFrame frame(std::move(hw));
 
@@ -770,7 +415,6 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
     QCOMPARE(frame.planeCount(), 1);
     QCOMPARE(frame.bytesPerLine(0), GST_VIDEO_INFO_PLANE_STRIDE(&info, 0));
     QCOMPARE(QByteArray(reinterpret_cast<const char*>(frame.bits(0)), frame.mappedBytes(0)), pixels);
-#endif
 }
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
@@ -790,9 +434,6 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(int, memoryFormat);
     QFETCH(int, advertisedFormat);
     QFETCH(bool, expectMapped);
@@ -807,7 +448,34 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
     QCOMPARE(mapped.planeCount > 0, expectMapped);
     hw.unmap();
-#endif
+}
+
+void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
+{
+    // Every property QVideoFrameFormat has a setter for (Qt 6.12), each away from its default.
+    QVideoFrameFormat format(QSize(64, 48), QVideoFrameFormat::Format_YUYV);
+    format.setViewport(QRect(2, 4, 60, 40));
+    format.setScanLineDirection(QVideoFrameFormat::BottomToTop);
+    format.setStreamFrameRate(25.0);
+    format.setColorSpace(QVideoFrameFormat::ColorSpace_BT2020);
+    format.setColorTransfer(QVideoFrameFormat::ColorTransfer_ST2084);
+    format.setColorRange(QVideoFrameFormat::ColorRange_Full);
+    format.setMirrored(true);
+    format.setRotation(QtVideo::Rotation::Clockwise90);
+    format.setMaxLuminance(1000.0f);
+
+    const QVideoFrameFormat rgba = GstHw::withPixelFormat(format, QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.frameSize(), format.frameSize());
+    QCOMPARE(rgba.viewport(), format.viewport());
+    QCOMPARE(rgba.scanLineDirection(), format.scanLineDirection());
+    QCOMPARE(rgba.streamFrameRate(), format.streamFrameRate());
+    QCOMPARE(rgba.colorSpace(), format.colorSpace());
+    QCOMPARE(rgba.colorTransfer(), format.colorTransfer());
+    QCOMPARE(rgba.colorRange(), format.colorRange());
+    QCOMPARE(rgba.isMirrored(), format.isMirrored());
+    QCOMPARE(rgba.rotation(), format.rotation());
+    QCOMPARE(rgba.maxLuminance(), format.maxLuminance());
 }
 
 void GstHwBuffersTest::_testTexturePadsPicture_data()
@@ -831,74 +499,18 @@ void GstHwBuffersTest::_testTexturePadsPicture_data()
 
 void GstHwBuffersTest::_testTexturePadsPicture()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(QSize, textureSize);
     QFETCH(QSize, picture);
     QFETCH(bool, evenSizes);
     QFETCH(bool, pads);
 
     QCOMPARE(GstHw::texturePadsPicture(textureSize, picture, evenSizes), pads);
+}
 #endif
-}
-
-void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas_data()
-{
-    QTest::addColumn<QSize>("metaSize");  // invalid: no GstVideoMeta
-    QTest::addColumn<QRect>("crop");      // null: no GstVideoCropMeta
-    QTest::addColumn<QSize>("frameSize");
-    QTest::addColumn<QRect>("viewport");
-
-    // Under 400x200 caps.
-    const QSize capsSize(400, 200);
-    const QRect capsRect(QPoint(0, 0), capsSize);
-    QTest::newRow("no-metas") << QSize() << QRect() << capsSize << capsRect;
-    QTest::newRow("meta-of-caps-size") << capsSize << QRect() << capsSize << capsRect;
-    // v4l2 stateless decoders: the meta has the coded size, and the picture is its top-left part.
-    QTest::newRow("padded") << QSize(400, 208) << QRect() << QSize(400, 208) << capsRect;
-    // gst-va with a left or top crop: the meta has the uncropped size, and the crop meta the picture in it.
-    QTest::newRow("padded-and-cropped") << QSize(416, 208) << QRect(8, 4, 400, 200) << QSize(416, 208)
-                                        << QRect(8, 4, 400, 200);
-    QTest::newRow("cropped") << QSize() << QRect(100, 50, 200, 100) << capsSize << QRect(100, 50, 200, 100);
-    // No frame gst_video_frame_map() would map.
-    QTest::newRow("meta-smaller-than-caps") << QSize(400, 192) << QRect() << capsSize << capsRect;
-}
-
-void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas()
-{
-    QFETCH(QSize, metaSize);
-    QFETCH(QRect, crop);
-    QFETCH(QSize, frameSize);
-    QFETCH(QRect, viewport);
-
-    // The geometry reaches the frame as QVideoFrameFormat's frame size and viewport, not through
-    // externalTextureMatrix.
-    GstVideoInfo info;
-    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info));
-    QVERIFY(sample);
-    GstBuffer* const buffer = gst_sample_get_buffer(sample.get());
-    if (metaSize.isValid()) {
-        gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12,
-                                  static_cast<guint>(metaSize.width()), static_cast<guint>(metaSize.height()));
-    }
-    if (!crop.isNull()) {
-        GstVideoCropMeta* const cropMeta = gst_buffer_add_video_crop_meta(buffer);
-        cropMeta->x = static_cast<guint>(crop.x());
-        cropMeta->y = static_cast<guint>(crop.y());
-        cropMeta->width = static_cast<guint>(crop.width());
-        cropMeta->height = static_cast<guint>(crop.height());
-    }
-
-    const QVideoFrameFormat format = withFrameGeometry(
-        QVideoFrameFormat(QSize(400, 200), QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info));
-    QCOMPARE(format.frameSize(), frameSize);
-    QCOMPARE(format.viewport(), viewport);
-}
 
 void GstHwBuffersTest::_testTelemetryMapDurationEwma()
 {
-    const HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
+    const HwVideoBufferPath path = HwVideoBufferPath::AHardwareBuffer;
 
     GstHwPathTelemetry::recordMapDuration(path, 80000);
     const quint64 seeded = GstHwPathTelemetry::peekMapDurationUsEwma(path);
@@ -912,49 +524,32 @@ void GstHwBuffersTest::_testTelemetryMapDurationEwma()
     QCOMPARE(GstHwPathTelemetry::peekMapDurationUsEwma(path), expected);
 }
 
-void GstHwBuffersTest::_testTelemetryFallbackReasonMatrix()
+void GstHwBuffersTest::_testTelemetryCountsPerPathAndKind()
 {
+    using GstHwPathTelemetry::Counter;
     using GstHwPathTelemetry::HwFallbackReason;
 
     const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::GpuWaits);
     const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
-    const auto delta = [&](HwVideoBufferPath path, HwFallbackReason reason) {
-        return after.count(path, reason) - before.count(path, reason);
+    const auto delta = [&](HwVideoBufferPath path, auto kind) {
+        return after.count(path, kind) - before.count(path, kind);
     };
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch), quint64(2));
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
     QCOMPARE(delta(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch), quint64(0));
+    QCOMPARE(delta(HwVideoBufferPath::IOSurface, Counter::CpuWaits), quint64(2));
+    QCOMPARE(delta(HwVideoBufferPath::IOSurface, Counter::GpuWaits), quint64(1));
 }
 
-void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
-{
-    const HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
-
-    using GstHwPathTelemetry::Counter;
-    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
-    GstHwPathTelemetry::record(path, Counter::CpuWaits);
-    GstHwPathTelemetry::record(path, Counter::CpuWaits);
-    GstHwPathTelemetry::record(path, Counter::GpuWaits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
-    const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
-
-    const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
-    QCOMPARE(delta(Counter::CpuWaits), quint64(2));
-    QCOMPARE(delta(Counter::GpuWaits), quint64(1));
-    QCOMPARE(delta(Counter::ImageCacheHits), quint64(2));
-    QCOMPARE(delta(Counter::ImageCacheMisses), quint64(1));
-}
-
+#if defined(QGC_HAS_ANY_GPU_PATH)
 void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     // Any compiled path: those are the ones HwBuffers::extraPathStatsSince() reports.
     const HwVideoBufferPath path = GstHwPathRegistry::paths().front()->path;
 
@@ -970,34 +565,30 @@ void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
     }
     const QString sinceLater = HwBuffers::extraPathStatsSince(laterBaseline);
     QVERIFY2(!sinceLater.contains(QStringLiteral("-failures:")), qPrintable(sinceLater));
-#endif
 }
 
-void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
+void GstHwBuffersTest::_testHwBufferFactoryDispatchSystemMemory()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
-    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
+    // A frame in system memory, as a software decoder sends it: no GPU path should match.
+    GstVideoInfo info;
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 64, 64, &info));
+    QVERIFY(sample);
+    GstCaps* caps = gst_sample_get_caps(sample.get());
 
-    const QString first = HwBuffers::extraPathStatsSince(before);
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
+    QVideoFrameFormat fmt(QSize(64, 64), QVideoFrameFormat::Format_BGRA8888);
+    HwVideoBufferPath path = HwVideoBufferPath::None;
 
-    const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
-    QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
-#endif
+    HwVideoBufferContext ctxGpu;
+    ctxGpu.gpuEnabled = true;
+    auto buf = makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), caps, info, fmt, ctxGpu, path);
+    QVERIFY(!buf);
+    QCOMPARE(path, HwVideoBufferPath::None);
+
+    HwVideoBufferContext ctxCpu;
+    ctxCpu.gpuEnabled = false;
+    auto buf2 = makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), caps, info, fmt, ctxCpu, path);
+    QVERIFY(!buf2);
 }
-
 #endif
 
 UT_REGISTER_TEST(GstHwBuffersTest, TestLabel::Unit)

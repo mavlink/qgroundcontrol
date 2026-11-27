@@ -1,6 +1,6 @@
 #include "GstD3D12ContextBridge.h"
 
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <gst/d3d12/gstd3d12.h>
 #include <rhi/qrhi.h>  // QRhi::Implementation enum only; native handles come from the snapshot
@@ -21,13 +21,7 @@ class D3D12ContextBridge final : public GstD3DContextBridge
 {
 public:
     constexpr D3D12ContextBridge() noexcept
-        : GstD3DContextBridge("D3D12", kContextTypes, &GstD3D12BridgeLog, int(QRhi::D3D12),
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-                              int(QRhi::D3D11)
-#else
-                              -1
-#endif
-          )
+        : GstD3DContextBridge("D3D12", kContextTypes, &GstD3D12BridgeLog, int(QRhi::D3D12), int(QRhi::D3D11))
     {}
 
 private:
@@ -39,9 +33,17 @@ constinit D3D12ContextBridge s_bridge;
 
 GstObject* D3D12ContextBridge::createDevice()
 {
+    const QGCRhiCapture::DeviceSnapshot& snapshot = QGCRhiCapture::deviceSnapshot();
+    // Every pipeline that takes a decoder gets the device: under a Direct3D 11 QRhi it is created only where Qt's
+    // device opens its frames.
+    if ((snapshot.backend.load(std::memory_order_acquire) == int(QRhi::D3D11)) &&
+        !snapshot.d3d11OpensD3D12.load(std::memory_order_acquire)) {
+        qCDebug(GstD3D12BridgeLog) << "Qt's D3D11 device opens no D3D12 resources; no D3D12 device shared";
+        return nullptr;
+    }
     // LUID halves were sign-extended into a 64-bit value matching LARGE_INTEGER::QuadPart when the snapshot was
     // composed.
-    const gint64 luid = QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire);
+    const gint64 luid = snapshot.adapterLuid.load(std::memory_order_acquire);
 
     GstD3D12Device* device = gst_d3d12_device_new_for_adapter_luid(luid);
     if (!device) {
@@ -71,4 +73,4 @@ GstD3D12Device* GstD3D12ContextBridge::currentDevice()
     return GST_D3D12_DEVICE_CAST(s_bridge.refDevice());
 }
 
-#endif  // QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

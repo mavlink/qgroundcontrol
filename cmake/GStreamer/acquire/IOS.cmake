@@ -1,17 +1,12 @@
-# iOS GStreamer SDK acquisition: the official xcframework tarball, or the older devel .pkg.
+# iOS GStreamer SDK acquisition: the official xcframework tarball.
 # Included by Acquire.cmake, whose qgc_gst_acquire_sdk does the download, caching and locking.
 
 include_guard(GLOBAL)
 
 # _qgc_gst_ios_extract(<staging> <archive>)
-# qgc_gst_acquire_sdk extractor: unpacks the iOS xcframework tarball (1.28.8+), or expands the older devel .pkg, into
-# <staging>/expanded.
+# qgc_gst_acquire_sdk extractor: unpacks the iOS slices of the xcframework tarball into <staging>/expanded.
 function(_qgc_gst_ios_extract staging archive)
     file(MAKE_DIRECTORY "${staging}")
-    if(NOT archive MATCHES "\\.tar\\.xz$")
-        _qgc_gst_pkgutil_expand_and_validate("${archive}" "${staging}/expanded" "iOS")
-        return()
-    endif()
     message(STATUS "Extracting GStreamer iOS xcframework...")
     # The xcframework also holds tvOS slices, ~2 GB that QGC never links.
     # cmake-lint: disable=E1126
@@ -30,25 +25,20 @@ function(_qgc_gst_ios_extract staging archive)
     endif()
 endfunction()
 
-# _qgc_gst_acquire_ios_sdk(<out_dir>)
-# Downloads and unpacks the official iOS package; sets <out_dir> to the directory holding its contents.
-function(_qgc_gst_acquire_ios_sdk out_dir)
-    qgc_gst_get_package_url(ios ${QGC_GST_REQUESTED_VERSION} _url)
-    set(_archive gstreamer-ios.pkg)
-    if(_url MATCHES "\\.tar\\.xz$")
-        set(_archive gstreamer-ios.tar.xz)
-    endif()
+# _qgc_gst_acquire_ios_sdk(<out_xcframework>)
+# Downloads and unpacks the official iOS package; sets <out_xcframework> to its GStreamer.xcframework.
+function(_qgc_gst_acquire_ios_sdk out_xcframework)
     qgc_gst_acquire_sdk(
         PLATFORM ios
         VERSION ${QGC_GST_REQUESTED_VERSION}
         CACHE_SUBDIR "gstreamer-ios-${QGC_GST_REQUESTED_VERSION}"
-        ARCHIVES ${_archive}
+        ARCHIVES gstreamer-ios.tar.xz
         CONTENT sdk
         EXTRACT_FUNCTION _qgc_gst_ios_extract
         CONTENT_DIR_OUT _sdk
     )
-    set(${out_dir}
-        "${_sdk}/expanded"
+    set(${out_xcframework}
+        "${_sdk}/expanded/GStreamer.xcframework"
         PARENT_SCOPE
     )
 endfunction()

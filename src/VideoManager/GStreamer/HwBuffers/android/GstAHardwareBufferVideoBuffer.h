@@ -21,13 +21,13 @@ public:
     GstAHardwareBufferVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                                   EGLDisplay eglDisplay);
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::AHardwareBuffer; }
+
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
     /// External-OES texcoord transform consumed by qvideotexturehelper for Format_SamplerExternalOES.
     QMatrix4x4 externalTextureMatrix() const override;
-
-    static void resetImageCache();
 
 private:
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;

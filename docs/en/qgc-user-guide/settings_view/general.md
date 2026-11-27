@@ -138,31 +138,7 @@ The steps are:
 
 ## Video {#video}
 
-The _Video_ section is used to define the source and connection settings for video that will be displayed in _Fly View_.
-
-The settings are:
-
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
-
-  ::: info
-  If no video source is specified then no other video or _video recording_ settings will be displayed.
-  :::
-
-- **URL/Port**: Connection type-specific stream address (may be port or URL).
-- **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
-- **Disabled When Disarmed**: Stop the video stream, and any recording, when the vehicle disarms. The stream starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is started again.
-- **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
-
-## Video Recording
-
-The _Video Recording_ section is used to specify the file format and maximum allocated file storage for storing video.
-Videos are saved to a sub-directory ("Video") of the [Application Load/Save Path](#load_save_path).
-
-The settings are:
-
-- **Auto-Delete Files**: If checked, files are auto deleted when the specified amount of storage is used.
-- **Max Storage Usage**: Maximum video file storage before video files are auto deleted.
-- **Video File Format**: File format for the saved video recording: mkv, mov, mp4.
+The video source, connection, display and recording settings have a page of their own: [Video](video.md).
 
 ## Brand Image
 

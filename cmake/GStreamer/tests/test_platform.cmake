@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
-# The Orchestrator and the install dispatcher call each platform's helpers by name, and build-config.json must have the
-# platform's version and plugin keys: check every platform, including the ones this host cannot build.
+# The paths a platform's SDK is used from have no spaces.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Platform)
-include(Install)
-foreach(_file IN ITEMS Windows Linux Android MacOS IOS)
-    include("${CMAKE_CURRENT_LIST_DIR}/../platform/${_file}.cmake")
-endforeach()
-include("${CMAKE_CURRENT_LIST_DIR}/../../modules/BuildConfigReader.cmake")
 
 qgc_test_sandbox(_sandbox "platform${TEST_CASE}")
 
@@ -52,18 +46,9 @@ elseif(TEST_CASE MATCHES "^download-spaces-(unix|no-short-name)$")
     set(CPM_SOURCE_CACHE "${_sandbox}/Jane Doe/.cache/CPM")
     _qgc_gst_space_free_download_cache()
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
-elseif(TEST_CASE STREQUAL "below-bundled-floor")
-    _qgc_gst_require_bundled_version(windows 1.27.0 1.28.0)
-    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 elseif(DEFINED TEST_CASE)
     message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
 endif()
-
-# Linux's system GStreamer has its own, older floor; the official SDKs meet the bundled one.
-_qgc_gst_require_bundled_version(linux 1.20.0 1.28.0)
-_qgc_gst_require_bundled_version(ios 1.28.0 1.28.0)
-_qgc_gst_require_bundled_version(windows 1.28.4 1.28.0)
-qgc_test_pass("bundled SDK floor")
 
 # host is Windows|CPM_SOURCE_CACHE under the sandbox|expected CPM_SOURCE_CACHE under the sandbox
 foreach(_case IN ITEMS "FALSE|cache|cache" "TRUE|cache|cache" "TRUE|Jane Doe/.cache/CPM|JANEDO~1")
@@ -73,56 +58,3 @@ foreach(_case IN ITEMS "FALSE|cache|cache" "TRUE|cache|cache" "TRUE|Jane Doe/.ca
     qgc_test_assert_streq("download cache for ${_case}" "${_sandbox}/${_expected}" "${CPM_SOURCE_CACHE}")
 endforeach()
 qgc_test_pass("SDK paths with spaces")
-
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
-
-# platform variable|platform|installs an SDK|static plugins|linkage|pkg-config|plugin archives|path label
-foreach(
-    _case IN
-    ITEMS "ANDROID|android|FALSE|TRUE|static|TRUE|TRUE|mobile-shared"
-          "IOS|ios|FALSE|TRUE|shared|FALSE|FALSE|merged-static" "WIN32|windows|TRUE|FALSE|shared|TRUE|FALSE|shared"
-          "MACOS|macos|TRUE|FALSE|shared|TRUE|FALSE|shared" "LINUX|linux|TRUE|FALSE|shared|TRUE|FALSE|shared"
-)
-    qgc_test_split(
-        "${_case}"
-        _variable
-        _expected
-        _installs
-        _static
-        _linkage
-        _pkg_config
-        _archives
-        _label
-    )
-    foreach(_platform_variable IN ITEMS ANDROID IOS WIN32 MACOS LINUX)
-        set(${_platform_variable} FALSE)
-    endforeach()
-    set(${_variable} TRUE)
-
-    qgc_gst_platform(_platform)
-    qgc_test_assert_streq("${_variable} platform" "${_expected}" "${_platform}")
-    qgc_test_assert_streq("${_platform} static plugins" "${_static}" "${_platform_STATIC_PLUGINS}")
-    qgc_test_assert_streq("${_platform} linkage" "${_linkage}" "${_platform_LINKAGE}")
-    qgc_test_assert_streq("${_platform} pkg-config" "${_pkg_config}" "${_platform_PKG_CONFIG}")
-    qgc_test_assert_streq("${_platform} plugin archives" "${_archives}" "${_platform_PLUGIN_ARCHIVES}")
-    qgc_test_assert_streq("${_platform} path label" "${_label}" "${_platform_PATH_LABEL}")
-    # Defined by Targets.cmake and platform/IOS.cmake, which the Orchestrator includes before it calls it.
-    if(NOT _platform_TARGETS MATCHES "^_qgc_gst_create_(sdk|ios)_targets$")
-        message(FATAL_ERROR "ASSERT [${_platform} targets]: unexpected '${_platform_TARGETS}'")
-    endif()
-    if(NOT COMMAND _qgc_gst_discover_${_platform}_sdk)
-        message(FATAL_ERROR "ASSERT [${_platform} discovery]: _qgc_gst_discover_${_platform}_sdk is not defined")
-    endif()
-    if(_installs AND NOT COMMAND qgc_gst_install_${_platform}_sdk)
-        message(FATAL_ERROR "ASSERT [${_platform} install]: qgc_gst_install_${_platform}_sdk is not defined")
-    endif()
-    qgc_config_read(_version OPTIONAL gstreamer version ${_platform_VERSION_KEY})
-    if(NOT _version)
-        message(FATAL_ERROR "ASSERT [${_platform} version]: no gstreamer.version.${_platform_VERSION_KEY}")
-    endif()
-    qgc_config_read(_plugins LIST OPTIONAL gstreamer plugins ${_platform_PLUGIN_KEY})
-    if(NOT _plugins)
-        message(FATAL_ERROR "ASSERT [${_platform} plugins]: no gstreamer.plugins.${_platform_PLUGIN_KEY}")
-    endif()
-endforeach()
-qgc_test_pass("every platform's helpers, version and plugin keys exist")

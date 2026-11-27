@@ -1,7 +1,6 @@
 #include "GstVideoReceiverComponentsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
 #include <QtCore/QDeadlineTimer>
@@ -9,30 +8,28 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "BranchContext.h"
 #include "GStreamerTestHelpers.h"
 #include "GstBusPump.h"
 #include "GstRtpPacketProbe.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "PipelineStatsProbe.h"
-#include "RtpPacketCounter.h"
-#include "StreamWatchdog.h"
+#include "RecordingBranch.h"
+#include "RecordingSink.h"
 #include "VideoStreamStats.h"
 
 namespace {
 
-// Any monotonic time well clear of 0, which the watchdog reads as "no frame yet".
-constexpr qint64 kNowMs = 100000;
-constexpr qint64 kNoFrame = -1;
-
 constexpr int kVideoClockRate = 90000;
 constexpr quint32 kSsrc = 0x1234ABCD;
-// Added to a sequence number of _testRtpPacketCounter: the packet is of another SSRC.
-constexpr int kOtherSender = 0x10000;
+// In place of a VideoReceiver::FileFormat in _testRecordingContainerHoldsCodec: no container holds the codec.
+constexpr int kNoContainer = -1;
 
 /// An RTP packet with a one-byte payload, stamped as arrived at @p arrivalMs.
 GstBuffer* makeRtpPacket(quint16 sequence, quint32 timestamp, qint64 arrivalMs, quint8 firstByte = 0x80)
@@ -57,111 +54,6 @@ GstBuffer* makeRtcpSenderReport(qint64 arrivalMs)
 }
 
 }  // namespace
-
-void GstVideoReceiverComponentsTest::_testStallDetection_data()
-{
-    QTest::addColumn<uint>("timeoutSec");
-    QTest::addColumn<qint64>("sourceFrameAgeMs");
-    QTest::addColumn<qint64>("sinkFrameAgeMs");
-    QTest::addColumn<qint64>("withheldFrameAgeMs");
-    QTest::addColumn<bool>("decoding");
-    QTest::addColumn<int>("expected");
-
-    const int none = int(StreamWatchdog::Stall::None);
-    const int source = int(StreamWatchdog::Stall::Source);
-    const int decoder = int(StreamWatchdog::Stall::Decoder);
-
-    QTest::newRow("source within timeout") << 2u << qint64(2000) << qint64(0) << kNoFrame << true << none;
-    QTest::newRow("source past timeout") << 2u << qint64(2001) << qint64(0) << kNoFrame << true << source;
-    QTest::newRow("zero timeout floors at 1 s, within") << 0u << qint64(1000) << kNoFrame << kNoFrame << false << none;
-    QTest::newRow("zero timeout floors at 1 s, past") << 0u << qint64(1001) << kNoFrame << kNoFrame << false << source;
-    QTest::newRow("sink within twice timeout") << 2u << qint64(0) << qint64(4000) << kNoFrame << true << none;
-    QTest::newRow("sink past twice timeout") << 2u << qint64(0) << qint64(4001) << kNoFrame << true << decoder;
-    QTest::newRow("sink silence ignored when not decoding")
-        << 2u << qint64(0) << qint64(60000) << kNoFrame << false << none;
-    QTest::newRow("source stall reported first") << 2u << qint64(3000) << qint64(60000) << kNoFrame << true << source;
-    // The keyframe gate may keep the stream from the decoder for as long as the shortest timeout gives the decoder.
-    QTest::newRow("frames kept from the decoder are not its silence")
-        << 1u << qint64(0) << qint64(2500) << qint64(500) << true << none;
-    QTest::newRow("sink past twice timeout since the last frame kept from the decoder")
-        << 1u << qint64(0) << qint64(4500) << qint64(2001) << true << decoder;
-}
-
-void GstVideoReceiverComponentsTest::_testStallDetection()
-{
-    QFETCH(uint, timeoutSec);
-    QFETCH(qint64, sourceFrameAgeMs);
-    QFETCH(qint64, sinkFrameAgeMs);
-    QFETCH(qint64, withheldFrameAgeMs);
-    QFETCH(bool, decoding);
-    QFETCH(int, expected);
-
-    StreamWatchdog watchdog;
-    watchdog.start(std::chrono::seconds(timeoutSec));
-    (void) watchdog.noteSourceFrame(kNowMs - sourceFrameAgeMs);
-    if (sinkFrameAgeMs != kNoFrame) {
-        (void) watchdog.noteSinkFrame(kNowMs - sinkFrameAgeMs);
-    }
-    if (withheldFrameAgeMs != kNoFrame) {
-        watchdog.noteFrameWithheld(kNowMs - withheldFrameAgeMs);
-    }
-
-    QCOMPARE(int(watchdog.check(kNowMs, decoding).stall), expected);
-}
-
-void GstVideoReceiverComponentsTest::_testFirstFrameGrace_data()
-{
-    QTest::addColumn<qint64>("graceMs");        // kNoFrame: none, the first frame may take any time
-    QTest::addColumn<qint64>("silentStallMs");  // kNoFrame: never
-
-    // RTSP's UDP to TCP fallback must not be cut short before the first frame.
-    QTest::newRow("rtsp fallback") << qint64(5000) << qint64(6001);
-    // A UDP port nobody sends to yet hasn't stalled.
-    QTest::newRow("listening") << kNoFrame << kNoFrame;
-    // A source that never delivers a frame must still time out, counted from the first check.
-    QTest::newRow("no grace") << qint64(0) << qint64(1001);
-}
-
-void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
-{
-    QFETCH(qint64, graceMs);
-    QFETCH(qint64, silentStallMs);
-
-    constexpr qint64 kHourMs = 3'600'000;
-    StreamWatchdog watchdog;
-    watchdog.start(std::chrono::seconds(1),
-                   (graceMs == kNoFrame) ? std::nullopt : std::optional(std::chrono::milliseconds(graceMs)));
-    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
-    if (silentStallMs == kNoFrame) {
-        QCOMPARE(watchdog.check(kNowMs + kHourMs, false).stall, StreamWatchdog::Stall::None);
-    } else {
-        QCOMPARE(watchdog.check(kNowMs + silentStallMs - 1, false).stall, StreamWatchdog::Stall::None);
-        const StreamWatchdog::Result result = watchdog.check(kNowMs + silentStallMs, false);
-        QCOMPARE(result.stall, StreamWatchdog::Stall::Source);
-        QCOMPARE(result.silentMs, silentStallMs);
-    }
-
-    // Once frames flow, the timeout applies.
-    (void) watchdog.noteSourceFrame(kNowMs + kHourMs);
-    QCOMPARE(watchdog.check(kNowMs + kHourMs + 1000, false).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + kHourMs + 1001, false).stall, StreamWatchdog::Stall::Source);
-}
-
-void GstVideoReceiverComponentsTest::_testDecoderSilenceCountsFromInsertion()
-{
-    // A decoder that never delivers a frame stalls too, counted from its insertion.
-    StreamWatchdog watchdog;
-    watchdog.start(std::chrono::seconds(1));
-    watchdog.startSinkClock(kNowMs);
-    (void) watchdog.noteSourceFrame(kNowMs + 2000);
-    QCOMPARE(watchdog.check(kNowMs + 2000, true).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + 2001, true).stall, StreamWatchdog::Stall::Decoder);
-
-    QVERIFY(watchdog.noteSinkFrame(kNowMs + 2001));
-    QVERIFY(!watchdog.noteSinkFrame(kNowMs + 2002));
-    watchdog.startSinkClock(kNowMs + 2002);
-    QVERIFY2(watchdog.noteSinkFrame(kNowMs + 2003), "A new decoder's first frame must be reported again");
-}
 
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
 {
@@ -209,6 +101,26 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
     QCOMPARE(file.absolutePath(), QDir(directory).absolutePath());
     QVERIFY2(file.fileName().startsWith(fileStem + u'-'), qPrintable(file.fileName()));
     QVERIFY(file.exists());
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineDotOmitsElementProperties()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    constexpr auto kSecretLocation = "/tmp/qgc-dot-secret-token";
+    GstTest::TestPipeline pipeline;
+    const QString description = QStringLiteral("filesrc name=source location=%1 ! fakesink name=sink");
+    QVERIFY2(pipeline.launch(description.arg(QLatin1String(kSecretLocation))), qPrintable(pipeline.error()));
+
+    const GStreamer::GCharPtr dotData =
+        GStreamer::adoptGChar(gst_debug_bin_to_dot_data(pipeline.bin(), PipelineDotDumper::kDiagnosticDotGraphDetails));
+    QVERIFY(dotData);
+    const QByteArray dot(dotData.get());
+
+    QVERIFY(dot.contains("source"));
+    QVERIFY(dot.contains("sink"));
+    QVERIFY(!dot.contains(kSecretLocation));
+    QVERIFY(!dot.contains("qgc-dot-secret-token"));
 }
 
 void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver_data()
@@ -307,7 +219,7 @@ void GstVideoReceiverComponentsTest::_testBusPump()
     QStringList synced;
     QStringList handled;
     GstBusPump pump;
-    QVERIFY(pump.attach(
+    pump.attach(
         pipeline.get(),
         [&synced](GstMessage* message) {
             const QString name = messageName(message);
@@ -318,7 +230,7 @@ void GstVideoReceiverComponentsTest::_testBusPump()
             }
             return GST_BUS_PASS;
         },
-        [&handled](GstMessage* message) { handled.append(messageName(message)); }));
+        [&handled](GstMessage* message) { handled.append(messageName(message)); });
 
     // The sync handler sees every message as it is posted; one it takes is never queued.
     postApplication(pipeline.get(), "taken");
@@ -382,168 +294,13 @@ void GstVideoReceiverComponentsTest::_testStatsProbe()
     QCOMPARE(stats.latencyMs, -1.0);
     QVERIFY(stats.codec.isEmpty());
 
-    // A 500 ms GOP whose keyframes arrive bunched up, read from arrival times: the average evens it out. Parameter sets
-    // in a buffer of their own share their keyframe's timestamp and don't count.
-    note(0, true);
+    // Every buffer's bytes count, and the keyframes' timestamps alone make the interval (KeyframeIntervalMeter).
     note(0, true);
     note(250, false);
     note(500, true);
-    note(1080, true);
-    note(1420, true);
-    note(2000, true);
     std::tie(counters, stats) = sample();
-    QCOMPARE(counters.bytesReceived, std::optional<quint64>(700));
+    QCOMPARE(counters.bytesReceived, std::optional<quint64>(300));
     QCOMPARE(stats.keyframeIntervalMs, 500.0);
-    // The window moves on: the average of the last five keyframes.
-    note(2700, true);
-    std::tie(counters, stats) = sample();
-    QCOMPARE(stats.keyframeIntervalMs, 550.0);
-
-    // Timestamps that go back start over.
-    note(100, true);
-    note(400, true);
-    std::tie(counters, stats) = sample();
-    QCOMPARE(stats.keyframeIntervalMs, 300.0);
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounter_data()
-{
-    QTest::addColumn<QList<int>>("sequences");  // Plus kOtherSender for a packet of another SSRC.
-    QTest::addColumn<quint64>("received");
-    QTest::addColumn<quint64>("lost");
-
-    const auto row = [](const char* name, const QList<int>& sequences, quint64 received, quint64 lost) {
-        QTest::newRow(name) << sequences << received << lost;
-    };
-    const int other = kOtherSender;
-    row("first packet", {1000}, 1, 0);
-    row("in order", {10, 11, 12, 13}, 4, 0);
-    row("loss", {10, 11, 14, 15}, 4, 2);
-    row("late packet still missing", {10, 12}, 2, 1);
-    row("late packet", {10, 12, 11, 13}, 4, 0);
-    row("duplicate", {10, 11, 11, 12}, 3, 0);
-    row("duplicate does not hide a loss", {10, 12, 12, 13}, 3, 1);
-    row("duplicate of a late packet", {10, 12, 11, 11}, 3, 0);
-    row("wraparound", {65534, 65535, 0, 1}, 4, 0);
-    row("loss across the wraparound", {65534, 1}, 2, 2);
-    row("late packet across the wraparound", {65535, 1, 0}, 3, 0);
-    row("before the first packet", {100, 99, 101}, 2, 0);
-    const int window = RtpPacketCounter::kReorderWindow;
-    row("late at the end of the reorder window", {200, 200 + window, 201}, 3, quint64(window - 2));
-    row("too late for the reorder window", {200, 201 + window, 201}, 2, quint64(window));
-    row("longest loss", {0, 2999}, 2, 2998);
-    // Too far ahead to be loss: counted once a second packet shows the sender went on from there.
-    row("jump, unconfirmed", {0, 3000}, 1, 0);
-    row("sender restarted", {0, 1, 5000, 5001}, 4, 0);
-    row("sender restarted to lower numbers", {30000, 30001, 100, 101}, 4, 0);
-    row("sender restarted, next packet lost", {0, 1, 40000, 40002}, 4, 1);
-    row("stray packet", {10, 11, 40000, 12, 13}, 4, 0);
-    row("stray packets apart", {10, 40000, 11, 40001, 12}, 3, 0);
-    row("stray packet twice", {10, 40000, 40000, 11}, 2, 0);
-    row("losses add up across a restart", {10, 12, 40000, 40001, 40003}, 5, 2);
-    // Another sender's numbers continue nothing, however close they are.
-    row("new SSRC", {10, 11, other + 500, other + 501}, 4, 0);
-    row("new SSRC, numbers go on after a gap", {10, 12, other + 15, other + 16}, 4, 1);
-    row("new SSRC, next packet lost", {10, 11, other + 500, other + 502}, 4, 1);
-    // It takes two packets in a row to be the stream: one that strays in leaves the sequence, and its loss, alone.
-    row("stray packet of another SSRC", {10, other + 500, 12, 13}, 3, 1);
-    row("stray packets of another SSRC apart", {10, other + 500, 11, other + 501, 12}, 3, 0);
-    row("another SSRC, unconfirmed", {10, 11, other + 500}, 2, 0);
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounter()
-{
-    QFETCH(QList<int>, sequences);
-    QFETCH(quint64, received);
-    QFETCH(quint64, lost);
-
-    RtpPacketCounter counter(kVideoClockRate);
-    QCOMPARE(counter.packetsReceived(), quint64(0));
-    QCOMPARE(counter.packetsLost(), quint64(0));
-    for (const int sequence : sequences) {
-        counter.add(static_cast<quint16>(sequence), 0, (sequence >= kOtherSender) ? (kSsrc + 1) : kSsrc, std::nullopt);
-    }
-    QCOMPARE(counter.packetsReceived(), received);
-    QCOMPARE(counter.packetsLost(), lost);
-    QVERIFY(!counter.jitterNs());
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounterDropoutFollowsPacketRate_data()
-{
-    QTest::addColumn<int>("packetsPerSecond");
-    QTest::addColumn<int>("packetsMissing");
-    QTest::addColumn<bool>("countedAsLost");
-
-    // Up to ten seconds of packets may be lost; a longer jump is a sender that started over.
-    QTest::newRow("3 s of a 1500 packets/s stream") << 1500 << 4500 << true;
-    QTest::newRow("12 s of a 1500 packets/s stream") << 1500 << 18000 << false;
-    QTest::newRow("5 s of a 100 packets/s stream") << 100 << 500 << true;
-    QTest::newRow("20 s of a 100 packets/s stream") << 100 << 2000 << false;
-    // Not less than RtpPacketCounter::kMinDropout, however few packets a stream has.
-    QTest::newRow("20 s of a 1 packet/s stream") << 1 << 20 << true;
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounterDropoutFollowsPacketRate()
-{
-    QFETCH(int, packetsPerSecond);
-    QFETCH(int, packetsMissing);
-    QFETCH(bool, countedAsLost);
-
-    // Three seconds of the stream measure its packet rate.
-    const int streamed = 3 * packetsPerSecond;
-    const auto timestamp = [packetsPerSecond](int packet) {
-        return static_cast<quint32>(qint64(packet) * kVideoClockRate / packetsPerSecond);
-    };
-    RtpPacketCounter counter(kVideoClockRate);
-    for (int packet = 0; packet <= streamed; ++packet) {
-        counter.add(static_cast<quint16>(packet), timestamp(packet), kSsrc, std::nullopt);
-    }
-    QCOMPARE(counter.packetsLost(), quint64(0));
-
-    // The stream goes on after the missing packets; a second packet confirms a sender that started over.
-    const int resumed = streamed + packetsMissing + 1;
-    counter.add(static_cast<quint16>(resumed), timestamp(resumed), kSsrc, std::nullopt);
-    counter.add(static_cast<quint16>(resumed + 1), timestamp(resumed + 1), kSsrc, std::nullopt);
-    QCOMPARE(counter.packetsReceived(), quint64(streamed + 3));
-    QCOMPARE(counter.packetsLost(), quint64(countedAsLost ? packetsMissing : 0));
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounterJitter_data()
-{
-    QTest::addColumn<QList<quint32>>("timestamps");
-    QTest::addColumn<QList<qint64>>("arrivalsMs");  // -1: unknown
-    QTest::addColumn<qint64>("jitterNs");           // -1: not measured
-
-    // 9000 ticks of the 90 kHz clock are 100 ms.
-    QTest::newRow("one packet") << QList<quint32>{0} << QList<qint64>{0} << qint64(-1);
-    QTest::newRow("steady") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, 100, 200} << qint64(0);
-    // RFC 3550: a sixteenth of each deviation goes into the estimate.
-    QTest::newRow("late by 16 ms") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, 100, 216} << qint64(1'000'000);
-    QTest::newRow("decays") << QList<quint32>{0, 9000, 18000, 27000, 36000} << QList<qint64>{0, 100, 216, 316, 416}
-                            << qint64(878'906);
-    QTest::newRow("packets of one frame")
-        << QList<quint32>{0, 0, 9000} << QList<qint64>{0, 16, 100} << qint64(1'937'500);
-    QTest::newRow("timestamp wraparound")
-        << QList<quint32>{0xFFFFFF00, 0x00002228} << QList<qint64>{0, 100} << qint64(0);
-    QTest::newRow("sent before the previous packet")
-        << QList<quint32>{9000, 0} << QList<qint64>{100, 100} << qint64(6'250'000);
-    QTest::newRow("no arrival times") << QList<quint32>{0, 9000, 18000} << QList<qint64>{-1, -1, -1} << qint64(-1);
-    QTest::newRow("arrival time missing") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, -1, 200} << qint64(0);
-}
-
-void GstVideoReceiverComponentsTest::_testRtpPacketCounterJitter()
-{
-    QFETCH(QList<quint32>, timestamps);
-    QFETCH(QList<qint64>, arrivalsMs);
-    QFETCH(qint64, jitterNs);
-
-    RtpPacketCounter counter(kVideoClockRate);
-    for (qsizetype i = 0; i < timestamps.size(); ++i) {
-        const qint64 arrivalMs = arrivalsMs.at(i);
-        counter.add(static_cast<quint16>(i), timestamps.at(i), kSsrc,
-                    (arrivalMs >= 0) ? std::optional(arrivalMs * 1'000'000) : std::nullopt);
-    }
-    QCOMPARE(counter.jitterNs().value_or(-1), jitterNs);
 }
 
 void GstVideoReceiverComponentsTest::_testStatsProbeCountsRtpPackets()
@@ -605,13 +362,140 @@ void GstVideoReceiverComponentsTest::_testStatsProbeCountsRtpPackets()
     QCOMPARE(sample(), Counted(7, 2));
 }
 
-#else
-
-void GstVideoReceiverComponentsTest::_testGStreamerDisabled()
+void GstVideoReceiverComponentsTest::_testRecordingContainerHoldsCodec_data()
 {
-    QSKIP("GStreamer not enabled");
+    QTest::addColumn<QString>("caps");
+    QTest::addColumn<int>("format");
+    QTest::addColumn<int>("container");
+
+    const int mkv = int(VideoReceiver::FileFormat::Mkv);
+    const int mov = int(VideoReceiver::FileFormat::Mov);
+    const int mp4 = int(VideoReceiver::FileFormat::Mp4);
+
+    struct Codec
+    {
+        const char* name;
+        const char* caps;
+        int inMov;
+        int inMp4;
+    };
+
+    // The codecs a stream can bring, as the source bins hand them on: H.264 and H.265 in the byte-stream layout,
+    // which no muxer takes as it is, the others as their parsers give them.
+    const Codec codecs[] = {
+        {"H.264", "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au", mov, mp4},
+        {"H.265", "video/x-h265, stream-format=(string)byte-stream, alignment=(string)au", mov, mp4},
+        {"AV1", "video/x-av1, stream-format=(string)obu-stream, alignment=(string)tu", mov, mp4},
+        {"VP9", "video/x-vp9, profile=(string)0, chroma-format=(string)4:2:0", mov, mp4},
+        {"MPEG-4", "video/mpeg, mpegversion=(int)4, systemstream=(boolean)false, parsed=(boolean)true", mov, mp4},
+        {"VP8", "video/x-vp8, width=(int)320, height=(int)240", mov, mkv},
+        {"MJPEG", "image/jpeg, parsed=(boolean)true, width=(int)320, height=(int)240", mov, mkv},
+        {"MPEG-2", "video/mpeg, mpegversion=(int)2, systemstream=(boolean)false, parsed=(boolean)true", mkv, mkv},
+        {"a codec no container holds", "video/x-qgc-test", kNoContainer, kNoContainer},
+    };
+    for (const Codec& codec : codecs) {
+        const QString caps = QString::fromLatin1(codec.caps);
+        const int inMkv = (codec.inMp4 == kNoContainer) ? kNoContainer : mkv;
+        QTest::addRow("%s asked for in MKV", codec.name) << caps << mkv << inMkv;
+        QTest::addRow("%s asked for in MOV", codec.name) << caps << mov << codec.inMov;
+        QTest::addRow("%s asked for in MP4", codec.name) << caps << mp4 << codec.inMp4;
+    }
+    // Nothing known of the stream yet: as asked for.
+    QTest::newRow("any caps") << QStringLiteral("ANY") << mp4 << mp4;
 }
 
-#endif
+void GstVideoReceiverComponentsTest::_testRecordingContainerHoldsCodec()
+{
+    QFETCH(QString, caps);
+    QFETCH(int, format);
+    QFETCH(int, container);
+
+    GSTTEST_REQUIRE_GSTREAMER();
+    GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux", "qtmux", "mp4mux");
+
+    const GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_caps_from_string(caps.toLatin1().constData()));
+    QVERIFY(inputCaps);
+    const std::optional<VideoReceiver::FileFormat> chosen =
+        GStreamer::RecordingSink::containerFor(static_cast<VideoReceiver::FileFormat>(format), inputCaps.get());
+    QCOMPARE(chosen ? int(*chosen) : kNoContainer, container);
+
+    // The file sink of the container chosen links to a stream of these caps, as the recording will.
+    if (!chosen || gst_caps_is_any(inputCaps.get())) {
+        return;
+    }
+    const GStreamer::GstElementPtr source = GStreamer::makeElement("capsfilter");
+    QVERIFY(source);
+    g_object_set(source.get(), "caps", inputCaps.get(), nullptr);
+    const GStreamer::GstElementPtr sink =
+        GStreamer::RecordingSink::create(QStringLiteral("recording-test"), *chosen, inputCaps.get()).bin;
+    QVERIFY(sink);
+    QVERIFY(gst_element_link(source.get(), sink.get()));
+}
+
+void GstVideoReceiverComponentsTest::_testRecordingNamesCodecNoContainerHolds()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "matroskamux", "mp4mux");
+
+    struct Listener final : RecordingBranch::Listener
+    {
+        void onRecordingFileOpened(const QString& /*file*/) override {}
+
+        void onRecordingFileClosed(const QString& /*file*/, const QString& /*error*/) override {}
+
+        void onRecordingFailed(const QString& /*file*/, const QString& error, bool /*fileOpened*/) override
+        {
+            failures.append(error);
+        }
+
+        void onRecordingNeedsNewFile(const QString& /*file*/) override {}
+
+        void onRecordingNeedsFormat(const QString& /*file*/, VideoReceiver::FileFormat /*format*/) override
+        {
+            ++formatsAsked;
+        }
+
+        QStringList failures;
+        int formatsAsked = 0;
+    } listener;
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src caps=video/x-qgc-test ! tee name=tee")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr tee = pipeline.element("tee");
+    const PipelineDotDumper dotDumper;
+    const BranchContext context{
+        .pipeline = pipeline.get(),
+        .tee = tee.get(),
+        .redactedUri = QStringLiteral("test"),
+        .dotDumper = &dotDumper,
+        .watchdog = nullptr,
+        .post = [](std::function<void()> task) { task(); },
+    };
+    RecordingBranch branch(context, listener);
+    // Before the branch goes, which takes its pipeline to be stopped.
+    const auto stopPipeline =
+        qScopeGuard([&pipeline] { (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL); });
+    QVERIFY(branch.build());
+    QVERIFY(pipeline.play());
+    // The stream's first frame brings its caps to the branch's closed valve.
+    QCOMPARE(gst_app_src_push_buffer(GST_APP_SRC(pipeline.element("src").get()),
+                                     gst_buffer_new_allocate(nullptr, 16, nullptr)),
+             GST_FLOW_OK);
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(branch.valve(), "src"));
+    QVERIFY_TRUE_WAIT(gst_pad_has_current_caps(valveSrc.get()), TestTimeout::mediumMs());
+    branch.onSourceStreaming();
+
+    // Told as it is, where the muxer would only refuse the stream: no other container is worth asking for.
+    const QString file = dir.filePath(QStringLiteral("unknown.mp4"));
+    branch.setRequest(RecordingBranch::Request{.file = file, .format = VideoReceiver::FileFormat::Mp4});
+    QCOMPARE(listener.failures.size(), 1);
+    QVERIFY2(listener.failures.constFirst().contains(QLatin1String("video/x-qgc-test")),
+             qPrintable(listener.failures.constFirst()));
+    QCOMPARE(listener.formatsAsked, 0);
+    QVERIFY(!QFile::exists(file));
+}
 
 UT_REGISTER_TEST(GstVideoReceiverComponentsTest, TestLabel::Unit)
