@@ -299,8 +299,8 @@ private:
     /// Reads or parses the camera definition on a worker thread. Deleting it drops its result.
     QPointer<QObject> _definitionJob;
     QPointer<VehicleFileFetch> _definitionFetch;
-    /// Where the definition is downloaded when the save directory is unavailable; nothing is cached then
-    std::unique_ptr<QTemporaryDir> _downloadDirectory;
+    /// Where the definition is downloaded, made on the first download. A read of a download on a worker shares it
+    std::shared_ptr<QTemporaryDir> _downloadDirectory;
 
 protected:
     int                                 _compID             = 0;

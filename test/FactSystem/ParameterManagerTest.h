@@ -44,6 +44,8 @@ private slots:
     void _FTPRequestsHeartbeatComponentParams_data();
     void _FTPRequestsHeartbeatComponentParams();
     void _FTPWaitInQueueKeepsRetry();
+    void _FTPDownloadsOfTwoVehiclesStayApart();
+    void _FTPWithoutDownloadDirectoryLoadsOverStream();
     void _bulkRefreshExactNamesAllSucceed();
     void _bulkRefreshPrefixExpansion();
     void _bulkRefreshUnknownNameSkipped();

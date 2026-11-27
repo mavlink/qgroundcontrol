@@ -2,12 +2,12 @@
 
 #include <algorithm>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSaveFile>
 #include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 #include <QtXml/QDomDocument>
@@ -1071,7 +1071,7 @@ bool VehicleCameraControl::_loadCameraDefinitionFile(const ParsedDefinition& par
         return false;
     }
     //-- If this is new, cache it. Whole or not at all: another camera of the model may read it at any time.
-    if (!_cached && !_cacheFile.isEmpty() && !_downloadDirectory) {
+    if (!_cached && !_cacheFile.isEmpty()) {
         qCDebug(VehicleCameraControlLog) << "Saving camera definition file" << _cacheFile;
         QSaveFile file(_cacheFile);
         if (!file.open(QIODevice::WriteOnly) || (file.write(parsed.original) != parsed.original.size()) ||
@@ -2409,29 +2409,24 @@ void VehicleCameraControl::_fetchDefinition(const QString& url)
 {
     qCDebug(VehicleCameraControlLog) << "Request camera definition:" << url;
 
-    // Beside the cache file. When the save directory is unavailable, such as a removed SD card, in a directory of
-    // the camera's own: the definition loads, and is not cached.
-    QString directory = SettingsManager::instance()->appSettings()->parameterSavePath();
-    if (!_downloadDirectory && (directory.isEmpty() || !QFileInfo(directory).isWritable())) {
-        _downloadDirectory = std::make_unique<QTemporaryDir>();
-        qCDebug(VehicleCameraControlLog) << "Save directory unavailable, downloading the camera definition into"
-                                         << _downloadDirectory->path();
-    }
-    if (_downloadDirectory) {
-        directory = _downloadDirectory->path();
+    // In a directory of the camera's own, which the system cleans: the save directory is the user's, and a transfer
+    // that a crash cuts off would stay there. The definition is cached, from memory, only once it has loaded.
+    if (!_downloadDirectory) {
+        const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        _downloadDirectory = std::make_shared<QTemporaryDir>(tempDir.filePath(QStringLiteral("qgc_camera_XXXXXX")));
+        if (!_downloadDirectory->isValid()) {
+            qCWarning(VehicleCameraControlLog) << "Cannot create a directory to download the camera definition into:"
+                                               << _downloadDirectory->errorString();
+        }
     }
 
     // Built from the sanitised token, not from the raw vendor/model strings, so the vehicle cannot steer the file out
-    // of the cache folder. Not the cache file: a transfer that is cut off leaves a part of the file, and a definition
-    // is cached only once it has loaded. The download is read, compressed or not, and removed. Its name is that of
-    // this download only: cameras of the same model, of one vehicle or of several, download at the same time.
+    // of the directory. The download is read, compressed or not, and removed. Its name is that of this download only:
+    // a download that is given up may still be read on a worker when the next one arrives.
     static quint32 downloadCount = 0;
     const VehicleFileFetch::Options options{
-        .directory = directory,
-        .fileName = QStringLiteral("%1_%2_%3.xml.download")
-                        .arg(_cacheFileToken)
-                        .arg(QCoreApplication::applicationPid())
-                        .arg(++downloadCount),
+        .directory = _downloadDirectory->isValid() ? _downloadDirectory->path() : QString(),
+        .fileName = QStringLiteral("%1_%2.xml.download").arg(_cacheFileToken, QString::number(++downloadCount)),
         .maxBytes = _maxDefinitionBytes,
         .ftpComponentId = static_cast<uint8_t>(_compID),
         // Cameras that serve their definition over HTTPS often do so with a self-signed certificate, which cannot be
@@ -2460,8 +2455,9 @@ void VehicleCameraControl::_definitionDownloaded(const QString& fileName, const 
         return;
     }
 
-    // The definition is written to the cache file, decompressed, once it has loaded
-    const auto read = [fileName, maxBytes = _maxDefinitionBytes]() {
+    // The definition is written to the cache file, decompressed, once it has loaded. The read holds the directory: the
+    // worker may still read the file once the camera is gone, and Windows cannot remove a directory with an open file
+    const auto read = [fileName, maxBytes = _maxDefinitionBytes, directory = _downloadDirectory]() {
         DefinitionFile file = _readDefinitionFile(fileName, maxBytes, false);
         (void) QFile::remove(fileName);
         return file;

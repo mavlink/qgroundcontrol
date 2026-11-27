@@ -1,11 +1,14 @@
 #include "VehicleCameraControlTest.h"
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 
 #include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QThreadPool>
 #include <QtNetwork/QNetworkReply>
@@ -313,8 +316,8 @@ void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory_data()
     QTest::newRow("save directory not writable, HTTP") << true << true;
 }
 
-// Without a save directory that it can write to, such as on a removed SD card, the definition is downloaded into a
-// directory of the camera's own: the camera loads it, and caches nothing
+// Without a save directory that it can write to, such as on a removed SD card, the camera loads the definition, and
+// caches nothing
 void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory()
 {
     QFETCH(bool, http);
@@ -341,6 +344,8 @@ void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory()
         if (QFileInfo(cacheDir).isWritable()) {
             QSKIP("The user of the test writes to any directory");
         }
+        expectLogMessage("Camera.VehicleCameraControl", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Could not save cache file")));
     } else {
         QVERIFY(saveRoot.remove());
         QVERIFY(SettingsManager::instance()->appSettings()->parameterSavePath().isEmpty());
@@ -371,10 +376,10 @@ void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory()
     auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
     QTRY_VERIFY_WITH_TIMEOUT(!camera->isBasic(), TestTimeout::longMs());
     QCOMPARE(camera->activeSettings(), QStringList{QStringLiteral("CAM_TEMP")});
+    verifyExpectedLogMessage();
     if (readOnly) {
         QCOMPARE(QDir(cacheDir).entryList(QDir::Files), QStringList());
     } else {
-        verifyExpectedLogMessage();
         QVERIFY(camera->cacheFile().isEmpty());
     }
 }
@@ -382,16 +387,21 @@ void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory()
 void VehicleCameraControlTest::_testCamerasOfOneModelDownloadTogether_data()
 {
     QTest::addColumn<bool>("http");
+    QTest::addColumn<bool>("firstRemovedBeforeRead");
 
-    QTest::newRow("MAVLink FTP") << false;
-    QTest::newRow("HTTP") << true;
+    QTest::newRow("MAVLink FTP") << false << false;
+    QTest::newRow("HTTP") << true << false;
+    QTest::newRow("MAVLink FTP, first camera removed before its read") << false << true;
 }
 
 // Cameras of one model, of one vehicle or of several, download their definition at the same time. Each download is a
-// file of its own: the first camera reads and removes its download, and the second still finds its own.
+// file of its own: the first camera reads and removes its download, and the second still finds its own. Each is in a
+// temporary directory of its camera, which goes once the camera and the read of its download are done: none is in the
+// user's save directory.
 void VehicleCameraControlTest::_testCamerasOfOneModelDownloadTogether()
 {
     QFETCH(bool, http);
+    QFETCH(bool, firstRemovedBeforeRead);
 
     _connectVehicle(newMockConfiguration(QStringLiteral("CameraSameModelTest")));
     if (QTest::currentTestFailed()) {
@@ -434,11 +444,44 @@ void VehicleCameraControlTest::_testCamerasOfOneModelDownloadTogether()
     QTRY_VERIFY_WITH_TIMEOUT(
         first->findChildren<VehicleFileFetch*>().isEmpty() && second->findChildren<VehicleFileFetch*>().isEmpty(),
         TestTimeout::longMs());
+    const QString cacheDir = SettingsManager::instance()->appSettings()->parameterSavePath();
+    QCOMPARE(QDir(cacheDir).entryList(QDir::Files), QStringList());
+    const QString downloadPattern =
+        VehicleCameraControl::cacheFileToken(QStringLiteral("Acme"), QStringLiteral("Cam"), 0) +
+        QStringLiteral("_*.xml.download");
+    QStringList downloadDirectories;
+    QDirIterator downloads(QStandardPaths::writableLocation(QStandardPaths::TempLocation), {downloadPattern},
+                           QDir::Files, QDirIterator::Subdirectories);
+    while (downloads.hasNext()) {
+        downloadDirectories.append(downloads.nextFileInfo().absolutePath());
+    }
+    QCOMPARE(downloadDirectories.count(), 2);
+    QCOMPARE_NE(downloadDirectories.at(0), downloadDirectories.at(1));
+    const auto directoriesLeft = [&downloadDirectories]() {
+        return std::count_if(downloadDirectories.cbegin(), downloadDirectories.cend(),
+                             [](const QString& directory) { return QFileInfo::exists(directory); });
+    };
+
+    // The read of the first camera's download waits on the worker: the directory stays until the read is done,
+    // since on Windows it cannot be removed while the read has its file open
+    if (firstRemovedBeforeRead) {
+        first.reset();
+        QCOMPARE(directoriesLeft(), 2);
+    }
     blocker.release();
 
-    QTRY_VERIFY_WITH_TIMEOUT(!first->isBasic() && !second->isBasic(), TestTimeout::longMs());
-    QCOMPARE(first->activeSettings(), QStringList{QStringLiteral("CAM_TWO")});
+    QTRY_VERIFY_WITH_TIMEOUT(!second->isBasic(), TestTimeout::longMs());
     QCOMPARE(second->activeSettings(), QStringList{QStringLiteral("CAM_TWO")});
+    if (firstRemovedBeforeRead) {
+        QTRY_COMPARE_WITH_TIMEOUT(directoriesLeft(), 1, TestTimeout::mediumMs());
+    } else {
+        QTRY_VERIFY_WITH_TIMEOUT(!first->isBasic(), TestTimeout::longMs());
+        QCOMPARE(first->activeSettings(), QStringList{QStringLiteral("CAM_TWO")});
+        first.reset();
+    }
+
+    second.reset();
+    QCOMPARE(directoriesLeft(), 0);
 }
 
 void VehicleCameraControlTest::_testFtpDefinitionDownloadFailureFallsBack_data()
@@ -524,8 +567,8 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadIsSavedAsCacheFile_data
 
 void VehicleCameraControlTest::_testFtpDefinitionDownloadIsSavedAsCacheFile()
 {
-    // The file is downloaded beside _cacheFile, compressed or not, and removed once it is read. A definition that
-    // loads is written to _cacheFile, decompressed, so that the next connect finds it; one that does not leaves
+    // The file is downloaded into a temporary directory, compressed or not, and removed once it is read. A definition
+    // that loads is written to _cacheFile, decompressed, so that the next connect finds it; one that does not leaves
     // nothing.
     QFETCH(QString, vehiclePath);
     QFETCH(bool, gzip);

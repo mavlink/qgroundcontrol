@@ -354,14 +354,19 @@ void FirmwarePlugin::checkIfIsLatestStable(Vehicle *vehicle) const
     const QString versionFile = _getLatestVersionFileUrl(vehicle);
     qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
     QGCFileDownload *const downloader = new QGCFileDownload(vehicle);
-    (void) connect(downloader, &QGCFileDownload::finished, this, [vehicle, this, versionFile](bool success, const QString &localFile, const QString &errorMsg) {
-        if (success) {
-            _versionFileDownloadFinished(versionFile, localFile, vehicle);
-        } else if (!errorMsg.isEmpty()) {
-            qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error:" << errorMsg;
-        }
-        sender()->deleteLater();
-    });
+    // A name of its own: vehicles of one firmware, and the firmware upgrade page, download the same URL at once
+    downloader->setOutputPath(QGCFileHelper::uniqueTempPath(QStringLiteral("qgc_latest_version_XXXXXX")));
+    (void) connect(
+        downloader, &QGCFileDownload::finished, this,
+        [vehicle, this, versionFile, downloader](bool success, const QString& localFile, const QString& errorMsg) {
+            if (success) {
+                _versionFileDownloadFinished(versionFile, localFile, vehicle);
+            } else if (!errorMsg.isEmpty()) {
+                qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error:" << errorMsg;
+            }
+            (void) QFile::remove(downloader->localPath());
+            downloader->deleteLater();
+        });
 
     if (!downloader->start(versionFile)) {
         downloader->deleteLater();

@@ -44,7 +44,7 @@ public:
     /// Empty if the name is unknown.
     QByteArray logFileContents(const QString &name) const;
 
-    /// Serves the local file @p localFileName to OpenFileRO of @p path
+    /// Serves the local file @p localFileName to OpenFileRO of @p path, also in place of a file the mock makes itself
     void setServedFile(const QString& path, const QString& localFileName) { _servedFiles.insert(path, localFileName); }
 
     /// Announces @p length as the size of the next file opened with OpenFileRO, whatever its size is
