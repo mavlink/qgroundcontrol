@@ -1,23 +1,25 @@
 #include "Viewer3DTileQuery.h"
 
-#include "QGCLoggingCategory.h"
-#include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
-#include "Viewer3DTileReply.h"
+#include <cmath>
+#include <memory>
+#include <utility>
 
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
-#include <QtNetwork/QNetworkAccessManager>
 
-#include <cmath>
+#include "MapProvider.h"
+#include "MapProviderRegistry.h"
+#include "QGCLoggingCategory.h"
+#include "TileReply.h"
 
 QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3d.Viewer3DTileQuery")
 
 static constexpr int kMaxTileCounts = 200;
 static constexpr int kMaxZoomLevel  = 23;
 
-Viewer3DTileQuery::Viewer3DTileQuery(QObject *parent)
+Viewer3DTileQuery::Viewer3DTileQuery(QObject* parent, RuntimeScheduler* scheduler)
     : QObject{parent}
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
 {
 }
 
@@ -59,19 +61,18 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
     _mapToBeLoaded.tileMaxIndex = tileMaxIndex;
     _mapToBeLoaded.init();
 
-    if (!_networkManager) {
-        _networkManager = new QNetworkAccessManager(this);
-        _networkManager->setTransferTimeout(9000);
-    }
-
+    // The tiles of an earlier load are not shown: they are not asked for any more
+    _abortTileReplies();
     for (int x = tileMinIndex.x(); x <= tileMaxIndex.x(); x++) {
         for (int y = tileMinIndex.y(); y <= tileMaxIndex.y(); y++) {
             _mapToBeLoaded.tileList.append(_tileKey(_mapId, x, y, zoomLevel));
 
-            auto *reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, _mapType, _networkManager, this);
-            connect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
-            connect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
-            connect(reply, &Viewer3DTileReply::tileEmpty, this, &Viewer3DTileQuery::_tileEmpty);
+            Viewer3DTileInfo tile;
+            tile.x = x;
+            tile.y = y;
+            tile.zoomLevel = zoomLevel;
+            tile.mapId = _mapId;
+            _requestTile(tile, 0);
         }
     }
 
@@ -83,7 +84,7 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
 
 Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    const SharedMapProvider provider = MapProviderRegistry::getMapProviderFromMapId(_mapId);
     if (!provider) {
         return {};
     }
@@ -120,10 +121,10 @@ Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int 
     return output;
 }
 
-void Viewer3DTileQuery::adaptiveMapTilesLoader(const QString &mapType, int mapId, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
+void Viewer3DTileQuery::adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& coordinateMin,
+                                               const QGeoCoordinate& coordinateMax)
 {
     _mapId = mapId;
-    _mapType = mapType;
 
     for (_zoomLevel = kMaxZoomLevel; _zoomLevel > 0; _zoomLevel--) {
         if (maxTileCount(_zoomLevel, coordinateMin, coordinateMax) < kMaxTileCounts) {
@@ -138,7 +139,7 @@ void Viewer3DTileQuery::adaptiveMapTilesLoader(const QString &mapType, int mapId
 
 int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    const SharedMapProvider provider = MapProviderRegistry::getMapProviderFromMapId(_mapId);
     if (!provider) {
         return 0;
     }
@@ -156,18 +157,86 @@ int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordin
     return (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
 }
 
-void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply *reply)
+void Viewer3DTileQuery::_requestTile(const Viewer3DTileInfo& tile, int retries)
 {
-    disconnect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
-    disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
-    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &Viewer3DTileQuery::_tileEmpty);
+    auto* const reply = new TileReply(tile.mapId, tile.x, tile.y, tile.zoomLevel, this);
+    (void) connect(reply, &TileReply::finished, this,
+                   [this, reply, tile, retries] { _tileReplyFinished(reply, tile, retries); });
+    _tileReplies.append(reply);
+    reply->start();
+}
+
+void Viewer3DTileQuery::_tileReplyFinished(TileReply* reply, Viewer3DTileInfo tileData, int retries)
+{
+    (void) _tileReplies.removeOne(reply);
     reply->deleteLater();
+
+    switch (reply->error()) {
+        case TileReply::Error::NoError:
+            tileData.data = reply->data();
+            _tileDone(tileData);
+            break;
+        case TileReply::Error::NoTileError:
+            _tileEmpty(tileData);
+            break;
+        default:
+            if (!_retryLater(*reply, tileData, retries)) {
+                qCWarning(Viewer3DTileQueryLog) << "Request error for tile x:" << tileData.x << "y:" << tileData.y
+                                                << "zoom:" << tileData.zoomLevel << reply->errorString();
+                _tileGiveUp(tileData);
+            }
+            break;
+    }
+}
+
+bool Viewer3DTileQuery::_retryLater(const TileReply& reply, const Viewer3DTileInfo& tile, int retries)
+{
+    const TileReply::NetworkFailure failure = reply.networkFailure();
+    const bool canClearUp = (failure == TileReply::NetworkFailure::Unreachable) ||
+                            (failure == TileReply::NetworkFailure::Unavailable) ||
+                            (failure == TileReply::NetworkFailure::RateLimited);
+    if (!canClearUp || (retries >= static_cast<int>(kRetryDelays.size()))) {
+        return false;
+    }
+
+    if (failure == TileReply::NetworkFailure::RateLimited) {
+        // The answer paused the server: the request waits for the pause to end
+        qCDebug(Viewer3DTileQueryLog) << reply.errorString() << "- asking again once the pause of the server ends";
+        _requestTile(tile, retries + 1);
+        return true;
+    }
+
+    const std::chrono::milliseconds delay = kRetryDelays[static_cast<size_t>(retries)];
+    // The task tells its own id, by which a load that follows cancels it
+    const auto task = std::make_shared<RuntimeScheduler::TaskId>(0);
+    *task = _scheduler->schedule(this, delay, [this, tile, retries, task] {
+        (void) _retryTasks.remove(*task);
+        _requestTile(tile, retries + 1);
+    });
+    if (*task == 0) {
+        return false;
+    }
+    (void) _retryTasks.insert(*task);
+    qCDebug(Viewer3DTileQueryLog) << reply.errorString() << "- asking again in" << delay;
+    return true;
+}
+
+void Viewer3DTileQuery::_abortTileReplies()
+{
+    for (const RuntimeScheduler::TaskId task : std::as_const(_retryTasks)) {
+        _scheduler->cancel(task);
+    }
+    _retryTasks.clear();
+
+    for (TileReply* const reply : std::as_const(_tileReplies)) {
+        reply->abort();
+        reply->deleteLater();
+    }
+    _tileReplies.clear();
 }
 
 void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
-
     const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
     const qsizetype itemRemoved = _mapToBeLoaded.tileList.removeAll(key);
 
@@ -181,15 +250,10 @@ void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
             emit loadingMapCompleted();
         }
     }
-
-    _cleanupReply(reply);
 }
 
 void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
-    _cleanupReply(reply);
-
     const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
     _mapToBeLoaded.tileList.removeAll(key);
 
@@ -200,8 +264,11 @@ void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 
 void Viewer3DTileQuery::_tileEmpty(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
-    _cleanupReply(reply);
+    if ((tileData.zoomLevel == 0) && (_zoomLevel == 0)) {
+        // No coarser zoom is left to load: the map is done without the tile
+        _tileGiveUp(tileData);
+        return;
+    }
 
     if (tileData.zoomLevel > 0 && tileData.zoomLevel == _zoomLevel) {
         _zoomLevel -= 1;

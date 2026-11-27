@@ -1,14 +1,20 @@
 #include "SurfacePatchImageryTest.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtGui/QColor>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
-#include "QGCMapUrlEngine.h"
+#include "MapProviderRegistry.h"
+#include "SettingsManager.h"
 #include "SurfacePatchModel.h"
+#include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
 namespace {
@@ -19,8 +25,8 @@ constexpr QSizeF kViewport(800, 600);
 // The unit-test tile generator serves a placeholder image on every cache miss
 QString mapType()
 {
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
+    const QStringList elevationTypes = MapProviderRegistry::elevationProviderTypes();
+    for (const QString& type : MapProviderRegistry::providerTypes()) {
         if (!elevationTypes.contains(type)) {
             return type;
         }
@@ -42,6 +48,18 @@ int rowsWithImage(const SurfacePatchModel& model)
     int count = 0;
     for (int row = 0; row < model.rowCount(); row++) {
         if (!model.data(model.index(row), SurfacePatchModel::TileImageRole).value<QImage>().isNull()) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int rowsWithImageOfColor(const SurfacePatchModel& model, const QColor& color)
+{
+    int count = 0;
+    for (int row = 0; row < model.rowCount(); row++) {
+        const QImage image = model.data(model.index(row), SurfacePatchModel::TileImageRole).value<QImage>();
+        if (!image.isNull() && (image.pixelColor(0, 0) == color)) {
             count++;
         }
     }
@@ -142,9 +160,9 @@ void SurfacePatchImageryTest::_emptyMapTypeDisablesImagery()
 
 void SurfacePatchImageryTest::_mapTypeSwitchRefetches()
 {
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    const QStringList elevationTypes = MapProviderRegistry::elevationProviderTypes();
     QStringList types;
-    for (const QString& type : UrlFactory::getProviderTypes()) {
+    for (const QString& type : MapProviderRegistry::providerTypes()) {
         if (!elevationTypes.contains(type)) {
             types.append(type);
         }
@@ -165,6 +183,32 @@ void SurfacePatchImageryTest::_mapTypeSwitchRefetches()
     model.setMapType(types.last());
     QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
     QCOMPARE(model.mapType(), types.last());
+}
+
+void SurfacePatchImageryTest::_sourceChangeRefetches()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
+
+    // Every tile comes from the network, which answers in the colour of the source
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody(Qt::red);
+    const TileReplyNetworkScope networkScope(&nam);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    attach(model, scene, camera);
+    model.setMapType(QStringLiteral("CustomURL Custom"));
+    QCOMPARE_GT(model.rowCount(), 0);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImageOfColor(model, Qt::red), model.rowCount(), TestTimeout::mediumMs());
+
+    // The user sets another URL while the map is open: the images it shows are those of the previous source
+    nam.body = tileReplyPngBody(Qt::blue);
+    customUrl->setRawValue(QStringLiteral("https://b.example/{z}/{x}/{y}.png"));
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImageOfColor(model, Qt::blue), model.rowCount(), TestTimeout::mediumMs());
 }
 
 void SurfacePatchImageryTest::_fallbackCoversLodChanges()
@@ -267,9 +311,9 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
 
     GeoMapCamera camera;
     GeoScene scene;
-    FailingNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    FailingNam nam;
+    const TileReplyNetworkScope networkScope(&nam);
     SurfacePatchModel model;
-    model.setTileImageNetworkManager(&nam);
     attach(model, scene, camera);
     model.setMapType(type);
     QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);

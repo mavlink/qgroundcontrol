@@ -372,6 +372,8 @@ Item {
                 id: qtLocationMap
                 objectName: "planView_map"
                 mapName: "MissionEditor"
+                // The status of the mission is along the bottom edge of the map
+                creditsBottomMargin: missionStatus.visible ? (missionStatus.parent.height - missionStatus.y) : 0
                 allowGCSLocationCenter: true
                 allowVehicleLocationCenter: true
                 planView: true
@@ -773,6 +775,7 @@ Item {
 
         RowLayout {
             id: missionStatus
+            objectName: "planView_missionStatus"
             anchors.margins: _toolsMargin
             anchors.left: _calcLeftAnchor()
             anchors.right: rightPanel.left

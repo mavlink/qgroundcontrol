@@ -26,6 +26,7 @@ target_sources(
         TileImageSource.h
         TileMath.cc
         TileMath.h
+        WarningThrottle.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

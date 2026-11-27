@@ -17,7 +17,9 @@ class MissionCommandTree;
 class MultiVehicleManager;
 class PositionManager;
 class QGCCorePlugin;
-class QGCMapEngineManager;
+class MapCatalog;
+class MapCredits;
+class MapEngineManager;
 class QGCPalette;
 class SettingsManager;
 class VideoManager;
@@ -31,7 +33,9 @@ Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
-Q_MOC_INCLUDE("QGCMapEngineManager.h")
+Q_MOC_INCLUDE("MapCatalog.h")
+Q_MOC_INCLUDE("MapCredits.h")
+Q_MOC_INCLUDE("MapEngineManager.h")
 Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
@@ -62,7 +66,9 @@ public:
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
     Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
-    Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
+    Q_PROPERTY(MapEngineManager* mapEngineManager READ mapEngineManager CONSTANT)
+    Q_PROPERTY(MapCatalog* mapCatalog READ mapCatalog CONSTANT)
+    Q_PROPERTY(MapCredits* mapCredits READ mapCredits CONSTANT)
     Q_PROPERTY(PositionManager* positionManager READ positionManager CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
@@ -153,7 +159,11 @@ public:
 
     MultiVehicleManager* multiVehicleManager() { return _multiVehicleManager; }
 
-    QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
+    MapEngineManager* mapEngineManager() { return _mapEngineManager; }
+
+    MapCatalog* mapCatalog() { return _mapCatalog; }
+
+    MapCredits* mapCredits() { return _mapCredits; }
 
     PositionManager* positionManager() const;
 
@@ -225,7 +235,9 @@ signals:
     void showMessageDialogRequested     (QObject* owner, QString title, QString text, int buttons, QJSValue acceptFunction, QJSValue closeFunction);
 
 private:
-    QGCMapEngineManager*    _mapEngineManager       = nullptr;
+    MapEngineManager* _mapEngineManager = nullptr;
+    MapCatalog* _mapCatalog = nullptr;
+    MapCredits* _mapCredits = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;

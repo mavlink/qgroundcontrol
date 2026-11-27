@@ -10,12 +10,14 @@
 #include "LoggingCategoryModel.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
+#include "MapCatalog.h"
+#include "MapCredits.h"
+#include "MapEngineManager.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "PositionManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCFormat.h"
-#include "QGCMapEngineManager.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
@@ -40,9 +42,11 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsContr
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
-    , _mapEngineManager(QGCMapEngineManager::instance())
+    , _mapEngineManager(MapEngineManager::instance())
+    , _mapCatalog(MapCatalog::instance())
+    , _mapCredits(MapCredits::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())

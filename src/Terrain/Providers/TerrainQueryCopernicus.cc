@@ -1,5 +1,5 @@
 #include "TerrainQueryCopernicus.h"
-#include "TerrainTileCopernicus.h"
+#include "CopernicusTileFormat.h"
 #include "ElevationMapProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
@@ -125,7 +125,7 @@ void TerrainQueryCopernicus::_requestFinished()
     const QByteArray responseBytes = reply->readAll();
     reply->deleteLater();
 
-    const QJsonValue &jsonData = TerrainTileCopernicus::getJsonFromData(responseBytes);
+    const QJsonValue &jsonData = CopernicusTileFormat::responseData(responseBytes);
     if (jsonData.isNull()) {
         _requestFailed();
         return;

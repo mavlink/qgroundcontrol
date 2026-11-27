@@ -12,4 +12,5 @@ private slots:
     void _testVehicleUnderWidgetRecenters_data();
     void _testVehicleUnderWidgetRecenters();
     void _testCollapsedPipOccludesRestoreButtonOnly();
+    void _testMapCreditsAbovePip();
 };

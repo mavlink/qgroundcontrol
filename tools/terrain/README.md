@@ -33,7 +33,7 @@ URL; see [Required QGC Client Changes](#required-qgc-client-changes).
 ## Required QGC Client Changes
 
 None of these exist yet: QGC still reads Tilezen (`TerrariumElevationProvider::kProviderURL` in
-`src/QtLocationPlugin/Providers/ElevationMapProvider.h`). They must ship together with the URL
+`src/QtLocationPlugin/MapTiles/Providers/ElevationMapProvider.h`). They must ship together with the URL
 switch, otherwise fixes published here never reach users.
 
 1. **URL and zoom.** Point the provider at
@@ -41,7 +41,7 @@ switch, otherwise fixes published here never reach users.
    `TerrariumTileFetcher::kMaxTileZoom` from 15 to 13. The fetcher already derives deeper
    zooms from their z13 ancestor.
 2. **A cache identity of its own.** QGC's tile cache keys tiles by provider type and x/y/z
-   (`UrlFactory::getTileHash`), ignores HTTP cache headers, and never expires a tile; only the
+   (`MapProvider::getTileHash`), ignores HTTP cache headers, and never expires a tile; only the
    cache size limit evicts them. Reusing the `Terrarium` provider key would mix users' cached
    Tilezen tiles with these. Give the new source its own provider key, or clear the old one's
    tiles on upgrade.

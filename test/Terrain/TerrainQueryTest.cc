@@ -4,9 +4,9 @@
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include "CopernicusTileFormat.h"
 #include "TerrainQuery.h"
 #include "TerrainQueryInterface.h"
-#include "TerrainTileCopernicus.h"
 
 // These tests run the full production terrain pipeline: query classes route through
 // TerrainTileManager, whose elevation tile cache misses are served synthetic tiles
@@ -115,8 +115,8 @@ void TerrainQueryTest::_testRequestPathHeightsSpacing()
     const auto pathHeightInfo = qvariant_cast<TerrainPathQuery::PathHeightInfo_t>(arguments.at(1));
     QVERIFY(pathHeightInfo.distanceBetween > 0.0);
     QVERIFY(pathHeightInfo.finalDistanceBetween > 0.0);
-    QVERIFY(qAbs(pathHeightInfo.distanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
-    QVERIFY(qAbs(pathHeightInfo.finalDistanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
+    QVERIFY(qAbs(pathHeightInfo.distanceBetween - CopernicusTileFormat::kValueSpacingMeters) < 2.0);
+    QVERIFY(qAbs(pathHeightInfo.finalDistanceBetween - CopernicusTileFormat::kValueSpacingMeters) < 2.0);
 }
 
 void TerrainQueryTest::_testRequestCarpetHeights()
