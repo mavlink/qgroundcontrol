@@ -494,6 +494,21 @@ def test_gap_between_cells_on_different_lattices_is_filled_not_sea(tmp_path: Pat
     assert np.abs(heights - expected_job_ramp(ALPS_JOB)).max() < 0.5
 
 
+def test_corner_where_one_coarser_cell_meets_three_finer_ones_is_not_sea(tmp_path: Path) -> None:
+    # Regression: Armenia's GLO-90 cells beside GLO-30. The finer lattice has nodes inside the
+    # coarser cell, below its last row, that nothing resampled; the two pixels of the cell
+    # diagonally across the corner that interpolate from them were written as sea level.
+    cells = {
+        (45, 7): write_cell(tmp_path, 45, 7, 0.01, 0.01),
+        (45, 8): write_cell(tmp_path, 45, 8, 0.01, 0.01),
+        (46, 7): write_cell(tmp_path, 46, 7, 0.01, 0.01),
+        (46, 8): write_cell(tmp_path, 46, 8, 0.04, 0.04),
+    }
+    heights, _ = generate.warp_job(ALPS_JOB, generate.job_cells(ALPS_JOB, cells))
+    assert heights.min() > 1000.0
+    assert np.abs(heights - expected_job_ramp(ALPS_JOB)).max() < 0.5
+
+
 def test_void_across_a_job_edge_fills_the_same_in_both_jobs(tmp_path: Path) -> None:
     # Lon 8.4375 is the edge between ALPS_JOB and its east neighbor; the void spans it.
     void = (slice(18, 21), slice(42, 47))
@@ -578,6 +593,70 @@ def test_source_sampler_leaves_out_neighbors_before_the_west_or_north_edge(
 
 # Crosses no whole-degree line, so it has no cell borders to sample.
 NO_BORDER_JOB = TileKey(generate.JOB_ZOOM, 10, 200)
+
+
+def test_source_pixel_height_is_the_sample_at_max_zoom_and_its_mean_above(tmp_path: Path) -> None:
+    sampler = validate.SourceSampler(alps_cells(tmp_path))
+    try:
+        z13 = tilemath.MAX_ZOOM
+        px, py = ALPS_JOB.x * 16 * TILE_SIZE + 700, ALPS_JOB.y * 16 * TILE_SIZE + 900
+        lons, lats = validate.pixel_center_lonlats(ALPS_JOB)
+        fine = validate.source_pixel_height(sampler, z13, px, py)
+        assert fine == pytest.approx(ramp(lons[700], lats[900]), abs=1e-3)
+        children = [
+            validate.source_pixel_height(sampler, z13, px + dx, py + dy)
+            for dy in (0, 1)
+            for dx in (0, 1)
+        ]
+        coarse = validate.source_pixel_height(sampler, z13 - 1, px // 2, py // 2)
+        heights = [height for height in children if height is not None]
+        assert len(heights) == 4
+        assert coarse == pytest.approx(sum(heights) / 4, abs=1e-6)
+    finally:
+        sampler.close()
+
+
+def _cliff(lon, lat):
+    """A 6 km step along a meridian: over 1,000 m between neighboring z9 pixels, less below."""
+    return np.where(lon < 8.2, 1000.0, 7000.0) + 0 * lat
+
+
+@pytest.fixture(scope="module")
+def cliff_build(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> tuple[Path, dict[tuple[int, int], str]]:
+    out = tmp_path_factory.mktemp("cliff")
+    cells = {
+        (lat, lon): write_cell(out, lat, lon, 0.01, 0.01, field=_cliff)
+        for lat in (45, 46)
+        for lon in (7, 8)
+    }
+    generate.run_job(out, ALPS_JOB, generate.job_cells(ALPS_JOB, cells), force=False)
+    return out, cells
+
+
+def test_a_finding_the_source_has_is_told_from_one_the_generator_made(
+    cliff_build: tuple[Path, dict[tuple[int, int], str]], tmp_path: Path
+) -> None:
+    built, cells = cliff_build
+    out = tmp_path / "build"
+    shutil.copytree(built, out)
+    # The cliff is in the source: the z9 tile's jump is what averaging the source gives.
+    (cliff,) = validate.check_findings(out, [ALPS_JOB], cells, 1, ThreadPoolExecutor)
+    assert " m jump between neighboring pixels, " in cliff.text
+    # Every pair along the cliff is compared, not only the steepest.
+    assert cliff.pixels >= 2 * TILE_SIZE
+    assert cliff.in_source
+
+    # Two pixels of the 1,000 m plateau written as sea level, as at Armenia's corners.
+    key = TileKey(tilemath.MAX_ZOOM, ALPS_JOB.x * 16 + 1, ALPS_JOB.y * 16 + 1)
+    heights = terrarium.read_heights(jobs.tile_path(out, key))
+    heights[79:81, 124] = 0.0
+    _plant(out, key, heights)
+    (hole,) = validate.check_findings(out, [key], cells, 1, ThreadPoolExecutor)
+    assert hole.text == "2 sea-level pixel(s) enclosed by land"
+    assert not hole.in_source
+    assert hole.max_abs == pytest.approx(1000.0, abs=0.5)
 
 
 @pytest.mark.parametrize(
@@ -941,21 +1020,21 @@ def test_decode_tile_reports_structural_problems(data: bytes, problem: str) -> N
 
 
 @pytest.mark.parametrize(
-    ("offset", "broken"),
-    [(0.0, False), (0.25, False), (60.0, True), (-60.0, True)],
+    ("offset", "step"),
+    [(0.0, None), (0.25, None), (60.0, 60.5), (-60.0, 59.5)],
 )
 def test_seam_is_broken_only_when_the_jump_dwarfs_the_neighboring_steps(
-    offset: float, broken: bool
+    offset: float, step: float | None
 ) -> None:
     left = ramp_tile()
     right = ramp_tile(base=100.0 + 0.5 * TILE_SIZE + offset)
-    assert check.seam_is_broken(left[:, -2], left[:, -1], right[:, 0], right[:, 1]) == broken
+    assert check.seam_step_m(left[:, -2], left[:, -1], right[:, 0], right[:, 1]) == step
 
 
 def test_seam_on_a_steep_slope_is_not_broken() -> None:
     left = ramp_tile(slope=40.0)
     right = ramp_tile(base=100.0 + 40.0 * TILE_SIZE, slope=40.0)
-    assert not check.seam_is_broken(left[:, -2], left[:, -1], right[:, 0], right[:, 1])
+    assert check.seam_step_m(left[:, -2], left[:, -1], right[:, 0], right[:, 1]) is None
 
 
 @pytest.mark.parametrize(("boundary_height", "flagged"), [(2500.0, True), (3000.0, False)])
@@ -1007,7 +1086,7 @@ def test_check_build_finds_a_seam_across_the_antimeridian(tmp_path: Path) -> Non
     )
     problems = check.check_build(tmp_path, workers=2, executor_factory=ThreadPoolExecutor)
     last_tile_x = (1 << tilemath.MAX_ZOOM) - 1
-    assert f"13/{last_tile_x}/0: seam with its east neighbor" in problems, problems
+    assert f"13/{last_tile_x}/0: 500.0 m seam with its east neighbor" in problems, problems
 
 
 def test_check_build_passes_a_clean_build_and_marks_it(ocean_build: Path) -> None:
@@ -1029,8 +1108,8 @@ def _plant(out: Path, key: TileKey, heights) -> None:
     ("fault", "expected"),
     [
         ("missing", "missing"),
-        ("seam-inside-job", "13/4/5: seam with its east neighbor"),
-        ("seam-between-jobs", "13/15/3: seam with its east neighbor"),
+        ("seam-inside-job", "13/4/5: 500.0 m seam with its east neighbor"),
+        ("seam-between-jobs", "13/15/3: 500.0 m seam with its east neighbor"),
         ("steep", "jump"),
         ("missing-parent", "parent"),
     ],
@@ -1053,6 +1132,183 @@ def test_check_build_finds_planted_faults(ocean_build: Path, fault: str, expecte
     problems = check.check_build(ocean_build, workers=2, executor_factory=ThreadPoolExecutor)
     assert any(expected in problem for problem in problems), problems
     assert not jobs.check_passed_marker(ocean_build).exists()
+
+
+def _plateau(*sea: tuple[slice, slice], height: float = 500.0):
+    heights = np.full((TILE_SIZE, TILE_SIZE), height, np.float32)
+    for area in sea:
+        heights[area] = 0.0
+    return heights
+
+
+@pytest.mark.parametrize(
+    ("heights", "holes"),
+    [
+        # The fault at Armenia's GLO-90 corners: two pixels of a plateau written as sea level.
+        (_plateau((slice(79, 81), slice(124, 125))), 2),
+        (_plateau((slice(79, 81), slice(124, 125)), height=24.75), 0),
+        # A coast, a bay and a channel one pixel wide are sea.
+        (_plateau((slice(None), slice(128, None))), 0),
+        (_plateau((slice(100, 103), slice(100, 103))), 0),
+        (_plateau((slice(100, 101), slice(None))), 0),
+        # Too close to the edge to see the whole neighborhood.
+        (_plateau((slice(1, 2), slice(100, 101))), 0),
+        (_plateau(), 0),
+    ],
+    ids=["hole", "low-land", "coast", "bay", "channel", "tile-edge", "no-sea"],
+)
+def test_sea_holes_are_a_few_sea_level_pixels_enclosed_by_land(heights, holes: int) -> None:
+    assert check.sea_holes(heights) == holes
+
+
+def _hole_build(out: Path) -> str:
+    """Plant the corner fault in a plateau inside an ocean tile; returns the finding."""
+    heights = np.zeros((TILE_SIZE, TILE_SIZE), np.float32)
+    heights[50:200, 50:200] = _plateau((slice(79, 81), slice(124, 125)))[50:200, 50:200]
+    _plant(out, TileKey(tilemath.MAX_ZOOM, 5, 5), heights)
+    return "13/5/5: 2 sea-level pixel(s) enclosed by land"
+
+
+def test_check_build_finds_land_written_as_sea_below_the_jump_limit(ocean_build: Path) -> None:
+    finding = _hole_build(ocean_build)
+    problems = check.check_build(ocean_build, workers=2, executor_factory=ThreadPoolExecutor)
+    assert problems == [finding]
+    assert not jobs.check_passed_marker(ocean_build).exists()
+
+
+@pytest.mark.parametrize(("accepted_pixels", "passes"), [(2, True), (1, False)])
+def test_check_build_passes_with_findings_accepted_at_their_size(
+    ocean_build: Path, capsys: pytest.CaptureFixture[str], accepted_pixels: int, passes: bool
+) -> None:
+    finding = _hole_build(ocean_build)
+    problems = check.check_build(
+        ocean_build,
+        workers=2,
+        executor_factory=ThreadPoolExecutor,
+        accepted={("13/5/5", "hole"): check.Limit(accepted_pixels)},
+    )
+    assert problems == ([] if passes else [finding])
+    assert jobs.check_passed_marker(ocean_build).exists() == passes
+    assert (f"accepted: {finding}\n" in capsys.readouterr().out) == passes
+
+
+@pytest.mark.parametrize(
+    ("whole_build", "accepted_pixels", "reported"),
+    [
+        (True, 2, True),
+        # A partial build never checked most accepted tiles.
+        (False, 2, False),
+        # The hole is over its accepted size: a problem, not a finding that went away.
+        (True, 1, False),
+    ],
+)
+def test_check_build_names_accepted_findings_a_whole_passing_build_no_longer_has(
+    ocean_build: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    whole_build: bool,
+    accepted_pixels: int,
+    reported: bool,
+) -> None:
+    finding = _hole_build(ocean_build)
+    # The ocean build is two jobs.
+    monkeypatch.setattr(check, "ALL_JOBS", 2 if whole_build else 3)
+    problems = check.check_build(
+        ocean_build,
+        workers=2,
+        executor_factory=ThreadPoolExecutor,
+        accepted={
+            ("13/5/5", "hole"): check.Limit(accepted_pixels),
+            ("13/6/6", "jump"): check.Limit(1500, 1),
+        },
+    )
+    assert problems == ([] if accepted_pixels == 2 else [finding])
+    printed = capsys.readouterr().out
+    assert ("accepted finding no longer occurs: 13/6/6 jump\n" in printed) == reported
+    assert "no longer occurs: 13/5/5" not in printed
+
+
+def test_accepted_findings_cover_one_finding_of_a_tile_up_to_its_size(tmp_path: Path) -> None:
+    path = tmp_path / "accepted.txt"
+    path.write_text(
+        "# Himalaya: a pit in the source\n"
+        "13/6033/3419 jump 1016 2\n"
+        "13/6033/3419 jump south 1200 1\n"
+        "\n"
+        "12/1380/2278\tseam   east 2.2  # a field edge\n"
+        "  13/5/5  hole\t2\n",
+        encoding="utf-8",
+    )
+    accepted = check.load_accepted(path)
+    for problem, expected in [
+        ("13/6033/3419: 1016 m jump between neighboring pixels, 2 pair(s) over the limit", True),
+        ("13/6033/3419: 1017 m jump between neighboring pixels, 2 pair(s) over the limit", False),
+        # A new jump beside the reviewed ones, however small.
+        ("13/6033/3419: 1016 m jump between neighboring pixels, 3 pair(s) over the limit", False),
+        # A jump inside the tile says nothing about one to a neighbor.
+        ("13/6033/3419: 1005 m jump to its east neighbor, 1 pair(s) over the limit", False),
+        ("13/6033/3419: 1200 m jump to its south neighbor, 1 pair(s) over the limit", True),
+        ("13/6033/3419: 1200 m jump to its south neighbor, 2 pair(s) over the limit", False),
+        ("13/6033/3419: 2.2 m seam with its east neighbor", False),
+        ("13/6033/3419: missing", False),
+        ("13/6033/3420: 1016 m jump between neighboring pixels, 2 pair(s) over the limit", False),
+        ("12/1380/2278: 2.2 m seam with its east neighbor", True),
+        # A field edge that became a step of hundreds of meters is a tile out of place.
+        ("12/1380/2278: 2.3 m seam with its east neighbor", False),
+        ("12/1380/2278: 310.0 m seam with its east neighbor", False),
+        ("12/1380/2278: 2.2 m seam with its south neighbor", False),
+        ("13/5/5: 2 sea-level pixel(s) enclosed by land", True),
+        ("13/5/5: 3 sea-level pixel(s) enclosed by land", False),
+    ]:
+        assert check.is_accepted(problem, accepted) == expected, problem
+
+
+def test_accepted_findings_reject_a_line_they_cannot_read(tmp_path: Path) -> None:
+    path = tmp_path / "accepted.txt"
+    path.write_text("13/6033/3419 jump 1016 1\n13/5/5 pit 2\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"accepted.txt:2: .*13/5/5 pit 2"):
+        check.load_accepted(path)
+    # A jump without the number of pairs it was reviewed with would cover any number of them.
+    path.write_text("13/6033/3419 jump 1016\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"accepted.txt:1: "):
+        check.load_accepted(path)
+
+
+def test_every_jump_over_the_limit_is_in_the_finding_not_only_the_largest() -> None:
+    key = TileKey(tilemath.MAX_ZOOM, 5, 5)
+    heights = np.full((TILE_SIZE, TILE_SIZE), 3000.0, np.float32)
+    heights[10, 10] = 1000.0
+    heights[200, 200:202] = 1500.0
+    (inside,) = check.own_findings(key, heights)
+    # Four neighbors of the first pixel, six of the two beside each other.
+    assert inside.text == "2000 m jump between neighboring pixels, 10 pair(s) over the limit"
+    assert len(inside.pixels) == 5 + 8
+    assert {(10, 10), (9, 10), (200, 201), (200, 202)} <= set(inside.pixels)
+
+    heights = np.full((TILE_SIZE, TILE_SIZE), 3000.0, np.float32)
+    south = heights.copy()
+    south[0, [7, 90]] = 1500.0, 1900.0
+    (across,) = check.edge_findings(key, heights, None, south)
+    assert across.text == "1500 m jump to its south neighbor, 2 pair(s) over the limit"
+    assert across.pixels == [(255, 7), (256, 7), (255, 90), (256, 90)]
+
+
+def test_a_seam_or_hole_finding_holds_every_pixel_it_was_decided_from(tmp_path: Path) -> None:
+    # A seam made by flattening the lines beside the edge leaves the edge lines as the source
+    # has them, and a hole can be made by raising the land around a pixel that is right.
+    key = TileKey(tilemath.MAX_ZOOM, 5, 5)
+    west, east = ramp_tile(100.0, 10.0), ramp_tile(100.0 + 10.0 * TILE_SIZE, 10.0)
+    west[:, -2], east[:, 1] = west[:, -1], east[:, 0]
+    west[100, 10] = 0.0
+    _plant(tmp_path, key, west)
+    _plant(tmp_path, check.east_of(key), east)
+    hole, seam = validate.tile_findings(tmp_path, key)
+    assert hole[0] == "1 sea-level pixel(s) enclosed by land"
+    assert len(hole[1]) == 25
+    assert seam[0] == "10.0 m seam with its east neighbor"
+    columns = {px - key.x * TILE_SIZE: height for px, py, height in seam[1] if py % TILE_SIZE == 7}
+    assert columns == {254: west[7, -2], 255: west[7, -1], 256: east[7, 0], 257: east[7, 1]}
+    assert len(seam[1]) == 4 * TILE_SIZE
 
 
 def _plant_below(out: Path, key: TileKey, children: int, deep: bool) -> None:
@@ -1403,3 +1659,7 @@ def test_validate_jobs_reports_every_job_a_broken_pool_left(tmp_path: Path) -> N
     )
     assert sorted(result.job for result in results) == job_list
     assert all("worker pool broke" in problem for result in results for problem in result.problems)
+
+
+def test_the_accepted_findings_shipped_with_the_tool_can_be_read() -> None:
+    assert check.load_accepted(jobs.ACCEPTED_FINDINGS)

@@ -699,6 +699,18 @@ def test_generate_retries_may_be_zero_but_not_negative() -> None:
         parse([*argv, "--retries", "-1"])
 
 
+def test_validate_takes_tiles_of_any_zoom_instead_of_jobs() -> None:
+    parse = cli.build_parser().parse_args
+    argv = ["validate", "--out", "out", "--tile"]
+    assert parse([*argv, "6/18/10", "--tile", "13/6033/3419"]).tile == [
+        TileKey(6, 18, 10),
+        TileKey(13, 6033, 3419),
+    ]
+    for rejected in (["14/0/0"], ["9/512/0"], ["9/1"], ["9/1/2", "--job", "9/1/2"]):
+        with pytest.raises(SystemExit):
+            parse([*argv, *rejected])
+
+
 def test_validate_defaults_to_one_worker() -> None:
     assert cli.build_parser().parse_args(["validate", "--out", "out"]).workers == 1
 
