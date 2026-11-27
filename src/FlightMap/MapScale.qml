@@ -103,6 +103,10 @@ Item {
             var scaleLinePixelLength = 100
             var leftCoord  = mapControl.toCoordinate(Qt.point(0, control.y), false /* clipToViewPort */)
             var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, control.y), false /* clipToViewPort */)
+            // A map that is not laid out yet has no coordinates
+            if (!leftCoord.isValid || !rightCoord.isValid) {
+                return
+            }
             var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
             if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsFeet) {
                 calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
@@ -128,6 +132,14 @@ Item {
         function onWidthChanged() { triggerRecalc() }
         function onHeightChanged() { triggerRecalc() }
         function onZoomLevelChanged() { triggerRecalc() }
+    }
+
+    // A QtLocation Map tells its size before it is laid out for it, and that it is ready once it is: a map that
+    // gets its first size, as one in a tab, has coordinates only then
+    Connections {
+        target: mapControl
+        ignoreUnknownSignals: true // The map control of another engine has no mapReady
+        function onMapReadyChanged() { triggerRecalc() }
     }
 
     Connections {

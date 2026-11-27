@@ -26,6 +26,24 @@ MapScale {
 }
 )";
 
+/// A map as a QtLocation Map is before it is laid out: it has no coordinates until it is ready
+constexpr const char* kMapScaleOfMapNotReadyQml = R"(
+import QtQuick
+import QtPositioning
+import QGroundControl.FlightMap
+
+MapScale {
+    mapControl: Item {
+        property real zoomLevel: 15
+        property bool isSatelliteMap: false
+        property bool mapReady: false
+        function toCoordinate(point, clipToViewPort) {
+            return mapReady ? QtPositioning.coordinate(0, point.x * 0.0001) : QtPositioning.coordinate()
+        }
+    }
+}
+)";
+
 constexpr const char* kViewer3DScaleBarQml = R"(
 import QtQuick
 import QGroundControl.Viewer3D
@@ -79,6 +97,35 @@ void ScaleBarUnitsTest::_scaleTextFollowsUnitsChange()
 
     const QString feetText = scaleText->property("text").toString();
     QVERIFY2(feetText.endsWith(QStringLiteral(" ft")), qPrintable(feetText));
+}
+
+// The map of a tab that is shown for the first time gets its size, which the scale follows, before it has coordinates
+void ScaleBarUnitsTest::_scaleCalculatedOnceMapIsReady()
+{
+    Fact* const horizontalUnitsFact = SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits();
+    const QVariant savedUnits = horizontalUnitsFact->rawValue();
+    const auto restoreUnits =
+        qScopeGuard([horizontalUnitsFact, savedUnits] { horizontalUnitsFact->setRawValue(savedUnits); });
+    horizontalUnitsFact->setRawValue(UnitsSettings::HorizontalDistanceUnitsMeters);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(QByteArray(kMapScaleOfMapNotReadyQml), QUrl());
+    const std::unique_ptr<QObject> item(component.create());
+    QVERIFY2(item, qPrintable(component.errorString()));
+
+    // No distance between coordinates that the map does not have
+    const QObject* const scaleText = item->findChild<QObject*>(QStringLiteral("scaleText"));
+    QVERIFY(scaleText);
+    QCOMPARE(scaleText->property("text").toString(), QStringLiteral("0 m"));
+
+    QObject* const mapControl = item->property("mapControl").value<QObject*>();
+    QVERIFY(mapControl);
+    QVERIFY(mapControl->setProperty("mapReady", true));
+    const QString text = scaleText->property("text").toString();
+    QVERIFY2(text != QStringLiteral("0 m") && text.endsWith(QStringLiteral(" m")), qPrintable(text));
+    QCOMPARE_GT(item->property("width").toReal(), 50.0);
 }
 
 UT_REGISTER_TEST(ScaleBarUnitsTest, TestLabel::Unit)
