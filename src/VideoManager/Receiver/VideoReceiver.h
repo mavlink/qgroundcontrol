@@ -33,13 +33,6 @@ class VideoReceiver : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(QString name READ name CONSTANT FINAL)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged FINAL)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
-    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
-    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
 
 public:
     enum class State : uint8_t
@@ -68,8 +61,19 @@ public:
         std::chrono::seconds timeout{3};
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
+        /// Frames a software decoder decodes at once, each on a thread of its own; above 1, each delays the picture
+        /// by a frame at most. For the software decoders of the GStreamer receiver (libav) and of the FFmpeg receiver.
+        int softwareDecoderThreads = 1;
         /// Reconnect with backoff after a failure. Applies at once; changing any other field restarts the stream.
         bool autoReconnect = true;
+
+        /// @p other describes the stream this one does: they differ in autoReconnect at most.
+        bool sameStreamAs(const Config& other) const
+        {
+            Config same = other;
+            same.autoReconnect = autoReconnect;
+            return same == *this;
+        }
 
         friend bool operator==(const Config&, const Config&) = default;
     };
@@ -78,13 +82,15 @@ public:
     struct DisplayConfig
     {
         QByteArray conversionElement;  ///< Converter element factory; empty for the backend's default.
+        /// Frames keep non-square pixels instead of being scaled to square ones: for a picture its output stretches
+        /// to a forced ratio.
         bool disablePixelAspectRatio = false;
         bool gpuZeroCopy = true;       ///< Off when the CPU video path or a software decoder is forced.
 
         friend bool operator==(const DisplayConfig&, const DisplayConfig&) = default;
     };
 
-    /// How a receiver that encodes its recordings anew (encodesRecordings()) encodes them, as QtVideoRecorder::start()
+    /// How a receiver that encodes its recordings anew (encodesRecordings()) encodes one, as QtVideoRecorder::start()
     /// takes it: from VideoSettings' uvcRecordingCodec and uvcRecordingQuality.
     struct RecordingEncoding
     {
@@ -100,7 +106,7 @@ public:
 
     /// "mkv", "mov" or "mp4".
     static QString fileExtension(FileFormat format);
-    /// The comment recordings carry, of GStreamer and of a USB camera alike: the application and its version.
+    /// The comment every receiver's recordings carry: the application and its version.
     static QString recordingComment();
     static bool isValidFileFormat(int format);
     /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the
@@ -127,6 +133,8 @@ public:
 
     bool decoding() const { return _decoding; }
 
+    /// A recording was asked for and taken on, and hasn't ended: also before its file opens, which recordingStarted()
+    /// tells, as while the stream has no picture yet or reconnects.
     bool recording() const { return _recording; }
 
     /// The size of the frames as they are presented, before the orientation the VideoOutput adds.
@@ -142,14 +150,9 @@ public:
     /// Stores @p config for the display sink restart() builds next.
     void setDisplayConfig(const DisplayConfig& config) { _displayConfig = config; }
 
-    /// True for a receiver that encodes its recordings anew, as recordingEncoding() says: a USB camera, or Qt
+    /// True for a receiver that encodes its recordings anew, as startRecording() is told: a USB camera, or Qt
     /// Multimedia's player. False for one that records the stream as it arrives.
     virtual bool encodesRecordings() const { return false; }
-
-    const RecordingEncoding& recordingEncoding() const { return _recordingEncoding; }
-
-    /// Stores @p encoding for the recordings that start from now on; one in progress keeps its own.
-    void setRecordingEncoding(const RecordingEncoding& encoding) { _recordingEncoding = encoding; }
 
     /// Streams while true and the URI is set. False stops the stream, any pending reconnect and any recording.
     void setActive(bool active);
@@ -167,34 +170,42 @@ public:
     /// output's destruction is tracked: it detaches as if nullptr had been set.
     void setVideoOutput(QQuickItem* videoOutput);
 
-    /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
+    /// Records to @p file until stopRecording(), setActive(false), or a failure the stream doesn't reconnect after.
+    /// Accepted only while active, and not once the stream has stopped after such a failure (otherwise
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
     /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
-    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as recordingEncoding() says, keeps
-    /// to the same file.
-    void startRecording(const QString& file, FileFormat format);
+    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as @p encoding says, keeps to the
+    /// same file. Where @p format's container can't hold the video, the recording goes into another one, in a file
+    /// named for it ("<base>.mkv"): recordingStarted() tells the file recorded. Each of these files replaces one of
+    /// its name: the caller picks a base name that no file has, under any extension, as VideoRecordingService does.
+    void startRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding);
+
+    /// With the default encoding.
+    void startRecording(const QString& file, FileFormat format) { startRecording(file, format, {}); }
     void stopRecording();
 
     /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored as the
-    /// frame and then the VideoOutput (its orientation and mirrored properties) say, with @p exif for a JPEG. The frame
-    /// is converted here; it is encoded and written on the thread pool. Returns false, with a warning logged, when
+    /// frame and then the VideoOutput (its orientation and mirrored properties) say, and stretched to the ratio the
+    /// output forces (its forcedAspectRatio property), with @p exif for a JPEG. The frame is converted here; it is
+    /// stretched, encoded and written on the thread pool. Returns false, with a warning logged, when
     /// there is no output or no frame. A file that can't be written is reported later, through errorOccurred().
     /// A receiver that takes photos saves one instead: see onTakeScreenshot().
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});
 
 signals:
     void stateChanged(VideoReceiver::State state);
-    void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
-    /// A recording file opened: the first one after startRecording(), or the recording's next part.
+    /// A recording file opened: the first one after startRecording(), or the recording's next part. @p file is the
+    /// file recorded, whose extension is that of the container used.
     void recordingStarted(const QString& file);
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
-    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, a stream that is received but
+    /// can't be decoded, recording error, a screenshot that couldn't be saved). Not emitted for failures the receiver
+    /// recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:
@@ -204,7 +215,7 @@ protected:
     virtual void onReconnectRequested() = 0;
     /// Also called when the current output is set again.
     virtual void onVideoOutputChanged() = 0;
-    virtual void onStartRecording(const QString& file, FileFormat format) = 0;
+    virtual void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) = 0;
     virtual void onStopRecording() = 0;
     /// takeScreenshot() with an output set: saves the frame on display, unless overridden.
     virtual bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif);
@@ -212,7 +223,7 @@ protected:
     /// The VideoOutput's QVideoSink, or nullptr.
     QVideoSink* videoSink() const;
 
-    // Each emits its NOTIFY signal (and streamingChanged for setState()) when the value changes.
+    // Each emits its NOTIFY signal when the value changes.
     void setState(State state);
     void setDecoding(bool decoding);
     void setRecording(bool recording);
@@ -226,7 +237,6 @@ private:
     QString _name;
     Config _config;
     DisplayConfig _displayConfig;
-    RecordingEncoding _recordingEncoding;
     bool _active = false;
     QPointer<QQuickItem> _videoOutput;
     QMetaObject::Connection _videoOutputDestroyed;

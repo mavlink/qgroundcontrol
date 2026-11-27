@@ -197,6 +197,21 @@ def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
         assert len({outputs[f"{family}_key"] for outputs in planned}) == len(legs)
 
 
+def test_macos_legs_share_the_gstreamer_sdk_cache_the_release_leg_saves(plan) -> None:
+    # macos.yml installs no GStreamer: configure downloads the SDK into the CPM cache. Planned
+    # without its cache, every leg of every run would download and extract the packages again.
+    job = load_workflow("macos.yml")["jobs"]["build"]
+    (setup,) = (step for step in job["steps"] if local_action(step) == "build-setup")
+    inputs = SetupInputs(qt_host=setup["with"]["qt-host"], qt_arch=setup["with"]["qt-arch"])
+    outputs = plan_setup(inputs, load_build_config()).outputs
+    planned = [
+        plan(host=outputs["qt_host"], target=outputs["cache_target"], build_type=build_type).outputs
+        for build_type in job["strategy"]["matrix"]["build_type"]
+    ]
+    assert sorted(outputs["gst_mode"] for outputs in planned) == ["restore", "save"]
+    assert len({outputs["gst_key"] for outputs in planned}) == 1
+
+
 def test_runs_on_cache_setup_runs_for_every_event_and_fork() -> None:
     # runs-on/action skips itself off RunsOn, so a condition could only keep a fork pull
     # request or another event from the cache setup.

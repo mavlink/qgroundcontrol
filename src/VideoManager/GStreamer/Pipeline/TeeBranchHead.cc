@@ -96,7 +96,14 @@ void TeeBranchHead::open()
     if (!_valve) {
         return;
     }
+    // A push that began before close() may still be on its way back from what followed the valve then, with the
+    // flushing or not-linked of a part that is gone. The valve turns that into success only while it is closed:
+    // opened sooner, it hands it to the queue, whose streaming thread then stops for good. The pad's stream lock is
+    // held for as long as a push takes.
+    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "sink"));
+    GST_PAD_STREAM_LOCK(valveSink.get());
     g_object_set(_valve, "drop", FALSE, nullptr);
+    GST_PAD_STREAM_UNLOCK(valveSink.get());
     requestKeyframe();
 }
 

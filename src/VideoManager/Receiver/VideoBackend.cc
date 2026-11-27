@@ -7,9 +7,15 @@
 #include "AppSettings.h"
 #include "QGCApplication.h"
 #include "QtMultimediaVideoReceiver.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamerVideoBackend.h"
+#endif
+
+#ifdef QGC_FFMPEG_VIDEO
+#include "FFmpegVideoReceiver.h"
 #endif
 
 namespace {
@@ -18,9 +24,15 @@ namespace {
 class QtMultimediaVideoBackend final : public VideoBackend
 {
 public:
-    Capabilities capabilities() const override { return {.streaming = true}; }
-
-    VideoReceiver* createReceiver(QObject* parent) override { return new QtMultimediaVideoReceiver(parent); }
+    Capabilities capabilities() const override
+    {
+#ifdef QGC_FFMPEG_VIDEO
+        // The FFmpeg receiver, which such a build offers too, decodes in hardware unless the CPU video path is forced.
+        return {.gpuVideoPath = true};
+#else
+        return {};
+#endif
+    }
 };
 
 }  // namespace
@@ -35,9 +47,25 @@ VideoBackend& VideoBackend::instance()
     return backend;
 }
 
+VideoReceiver* VideoBackend::createReceiver(QObject* parent)
+{
+    const Fact* const chosen = SettingsManager::instance()->videoSettings()->videoBackend();
+#ifdef QGC_FFMPEG_VIDEO
+    if (chosen->rawValue().toInt() == VideoSettings::VideoBackendFFmpeg) {
+        return new FFmpegVideoReceiver(parent);
+    }
+#endif
+    if (chosen->rawValue().toInt() != VideoSettings::VideoBackendQtMultimedia) {
+        if (VideoReceiver* const receiver = createOwnReceiver(parent)) {
+            return receiver;
+        }
+    }
+    return new QtMultimediaVideoReceiver(parent);
+}
+
 bool VideoBackend::disabledForUnitTests()
 {
-    return qgcApp() && QGC::runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
+    return qgcApp() && QGC::runningUnitTests();
 }
 
 QString VideoBackend::initFailureMessage() const

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 import _bootstrap as _bootstrap
 from common.build_config import get_build_config_value
 from common.file_traversal import find_repo_root
-from common.gstreamer import PLATFORM_PACKAGES, release_index_url
+from common.gstreamer import platform_packages, release_index_url
 from common.logging import log_info, log_ok, log_warn
 from common.net import read_url_text
 from common.proc import run_captured
@@ -25,9 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
-GSTREAMER_PACKAGE_INDEX_URLS = {
-    platform: release_index_url(platform) for platform in PLATFORM_PACKAGES
-}
 GSTREAMER_VERSION_PATTERN = re.compile(r'href=["\'](\d+)\.(\d+)\.(\d+)/["\']')
 # Three components so `qmake --version` skips its "QMake version 3.1" line
 FULL_VERSION_PATTERN = re.compile(r"(\d+)\.(\d+)\.(\d+)")
@@ -102,7 +99,7 @@ def latest_common_gstreamer_patch(
 ) -> str | None:
     """Return the latest patch in the configured minor line available on every platform."""
     match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", configured_version)
-    required_platforms = set(GSTREAMER_PACKAGE_INDEX_URLS)
+    required_platforms = set(platform_packages())
     if not match or not required_platforms.issubset(platform_versions):
         return None
 
@@ -125,8 +122,8 @@ def latest_common_gstreamer_patch(
 def fetch_latest_common_gstreamer_patch(configured_version: str) -> str | None:
     """Query official SDK indexes for the latest common patch release."""
     platform_versions: dict[str, set[tuple[int, int, int]]] = {}
-    for platform, url in GSTREAMER_PACKAGE_INDEX_URLS.items():
-        index_html = fetch_text(url)
+    for platform in platform_packages():
+        index_html = fetch_text(release_index_url(platform))
         if index_html is None:
             log_warn(f"Could not fetch the official GStreamer {platform} SDK index")
             return None
@@ -138,10 +135,8 @@ def fetch_latest_common_gstreamer_patch(configured_version: str) -> str | None:
 def check_gstreamer_version() -> None:
     """Check configured and installed GStreamer versions."""
     log_info("Checking GStreamer version...")
-    current_version = get_build_config_value(
-        "gstreamer.version.default",
-        "unknown",
-        start=Path(__file__).resolve(),
+    current_version = (
+        get_build_config_value("gstreamer.version.sdk", start=Path(__file__).resolve()) or "unknown"
     )
     print(f"  Configured: GStreamer {current_version}")
 
@@ -150,7 +145,10 @@ def check_gstreamer_version() -> None:
         print(f"  Latest common patch: GStreamer {latest_patch}")
         current, latest = Version(str(current_version)), Version(latest_patch)
         if current < latest:
-            log_warn(f"Newer GStreamer patch available in the same minor line: {latest_patch}")
+            log_warn(
+                f"Newer GStreamer patch available in the same minor line: {latest_patch} "
+                f"(pin it with `just update-gstreamer {latest_patch}`)"
+            )
         elif current == latest:
             log_ok("Using latest GStreamer patch available on every SDK platform")
         else:

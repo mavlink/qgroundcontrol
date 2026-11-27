@@ -17,6 +17,9 @@ from setup.install_uv import required_version
 if TYPE_CHECKING:
     from pathlib import Path
 
+# The first SDK whose iOS package is the xcframework tarball the build downloads (cmake/GStreamer/platform/IOS.cmake);
+# earlier ones were a .pkg.
+GSTREAMER_IOS_XCFRAMEWORK_SINCE = Version("1.28.8")
 UV_IMAGE_RE = re.compile(r"^COPY --from=ghcr\.io/astral-sh/uv:(\S+) ", re.MULTILINE)
 UV_IMAGE_DOCKERFILES = ("deploy/docker/Dockerfile", ".clusterfuzzlite/Dockerfile")
 
@@ -34,29 +37,16 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     if int(config["android"]["min_sdk"]) > int(config["android"]["platform"]):
         errors.append("android.min_sdk must not exceed android.platform")
     gst = config["gstreamer"]
-    for platform, version in gst["version"].items():
-        if Version(version) < Version(gst["version"]["minimum"]):
-            errors.append(f"gstreamer.version.{platform} must meet the minimum")
-    # The official SDKs meet bundled_minimum (cmake/GStreamer/Orchestrator.cmake and GStreamerTest check it too);
-    # the Linux system floor stays older.
-    bundled_minimum = Version(gst["version"]["bundled_minimum"])
-    for platform in ("android", "ios", "macos", "windows"):
-        if Version(gst["version"][platform]) < bundled_minimum:
-            errors.append(f"gstreamer.version.{platform} must be at least {bundled_minimum}")
-    if Version(gst["version"]["minimum"]) >= bundled_minimum:
+    if Version(gst["version"]["sdk"]) < Version(gst["version"]["minimum"]):
+        errors.append("gstreamer.version.sdk must meet the minimum")
+    if Version(gst["version"]["sdk"]) < GSTREAMER_IOS_XCFRAMEWORK_SINCE:
         errors.append(
-            f"gstreamer.version.minimum must stay below {bundled_minimum} for system GStreamer"
+            f"gstreamer.version.sdk must be at least {GSTREAMER_IOS_XCFRAMEWORK_SINCE}, for its iOS package"
         )
-    for platform, artifacts in {
-        "android": ("android",),
-        "windows": ("windows_msvc_x64", "windows_msvc_arm64"),
-        "macos": ("macos", "macos_devel"),
-        "ios": ("ios",),
-    }.items():
-        checksums = gst["checksums"].get(gst["version"][platform], {})
-        for artifact in artifacts:
-            if not checksums.get(artifact):
-                errors.append(f"Missing GStreamer checksum for {platform}: {artifact}")
+    pinned = gst["checksums"].get(gst["version"]["sdk"], {})
+    for package in gst["packages"]:
+        if not pinned.get(package):
+            errors.append(f"Missing GStreamer checksum: {package}")
     return errors
 
 

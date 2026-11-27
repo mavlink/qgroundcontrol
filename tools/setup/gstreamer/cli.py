@@ -3,7 +3,9 @@ Unified GStreamer build script for QGroundControl.
 
 Builds GStreamer with plugins needed for QGC video streaming across all platforms:
 - Linux, macOS, Windows: Meson-based builds
-- Android, iOS: Cerbero-based builds
+- Android, iOS: Cerbero-based builds of the SDK the official packages hold, unpacked into the prefix
+
+The prefix is what QGC's configure takes as GStreamer_ROOT_DIR.
 
 Usage:
     ./build_gstreamer.py --platform linux [OPTIONS]
@@ -12,16 +14,17 @@ Usage:
 
 Options:
     --platform PLATFORM   Target platform (linux, macos, windows, android, ios)
-    --arch ARCH           Target architecture (platform-specific, default: native;
-                          Windows names x86_64 'x64')
-    --version VERSION     GStreamer version (default: the platform's in build-config.json)
+    --arch ARCH           Target architecture (platform-specific, default: native, and universal
+                          on macOS, Android and iOS; Windows names x86_64 'x64'). Universal is
+                          every ABI on Android, and the device with the simulator on iOS
+    --version VERSION     GStreamer version (default: gstreamer.version.sdk in build-config.json)
     --type TYPE           Build type: release or debug (default: release)
-    --prefix DIR          Install prefix (default: <work-dir>/gst-<platform>-<arch>)
+    --prefix DIR          Install prefix (default: <work-dir>/gst-<platform>-<arch>). An Android or
+                          iOS build replaces it, so it must be empty or hold an earlier build's SDK
     --work-dir DIR        Working directory for source (default: system temp)
-    --qt-prefix DIR       Qt installation path (added to PKG_CONFIG_PATH)
     --jobs N              Parallel jobs (default: auto)
     --clean               Clean build directory before building
-    --simulator           iOS simulator build (iOS only; arm64, x86_64 or universal)
+    --simulator           The simulator alone (iOS only; arm64, x86_64 or universal)
     -h, --help            Show this help message
 """
 
@@ -32,7 +35,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from common.build_config import get_gstreamer_version
+from common.build_config import get_build_config_value
 from common.logging import log_error, log_warn
 from common.proc import MissingToolError
 
@@ -66,7 +69,7 @@ def parse_args() -> argparse.Namespace:
         "--version",
         "-v",
         default="",
-        help="GStreamer version (default: the platform's in build-config.json)",
+        help="GStreamer version (default: gstreamer.version.sdk in build-config.json)",
     )
     parser.add_argument(
         "--type",
@@ -87,10 +90,11 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Working directory (default: system temp)",
     )
-    parser.add_argument("--qt-prefix", "-q", default="", help="Qt installation path")
     parser.add_argument("--jobs", "-j", type=int, default=0, help="Parallel jobs (default: auto)")
     parser.add_argument("--clean", "-c", action="store_true", help="Clean build directory")
-    parser.add_argument("--simulator", action="store_true", help="iOS simulator build")
+    parser.add_argument(
+        "--simulator", action="store_true", help="Build for the iOS simulator alone"
+    )
 
     return parser.parse_args()
 
@@ -112,14 +116,15 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_gstreamer_version(args.platform, start=Path(__file__).resolve())
+    version = args.version or get_build_config_value(
+        "gstreamer.version.sdk", start=Path(__file__).resolve()
+    )
     if not version:
         log_error("GStreamer version is required; pass --version or provide build-config.json")
         return 1
     arch = resolve_arch(args.platform, args.arch)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir) if args.work_dir else Path(tempfile.gettempdir())
-    qt_prefix = Path(args.qt_prefix) if args.qt_prefix else None
     jobs = args.jobs if args.jobs > 0 else None
 
     config = BuildConfig(
@@ -129,7 +134,6 @@ def main() -> int:
         build_type=args.build_type,
         prefix=prefix,
         work_dir=work_dir,
-        qt_prefix=qt_prefix,
         jobs=jobs,
         clean=args.clean,
         simulator=args.simulator,

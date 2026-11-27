@@ -138,11 +138,13 @@ everything that decides a downloaded SDK tree, because CI keys its SDK cache on 
 [README](../src/VideoManager/GStreamer/README.md#build-configuration) describes its modules and configure
 options.
 
-Each HwBuffers zero-copy GPU path is switched by `QGC_GST_ENABLE_<PATH>`: DMABUF, DMABUF_VULKAN (the DMABuf path
-under a Vulkan Qt Quick), GLMEMORY, IOSURFACE, D3D11 and D3D12 are ON by default; CUDA, AHARDWAREBUFFER and VULKAN
-are OFF unless asked for: no sink bin can reach them at runtime, and none of them imports a frame without a copy today
-("Opt-in paths" in the GStreamer README says what each lacks). Configure prints which compiled paths the sink can't
-reach.
+`QGC_GST_ENABLE_GPU_PATHS` (ON by default) switches the HwBuffers zero-copy GPU paths: DMABuf, its import under a
+Vulkan Qt Quick and GLMemory on Linux, GLMemory on Android, IOSurface on Apple platforms, and Direct3D 11 and 12
+together on Windows. `QGC_GST_ENABLE_AHARDWAREBUFFER` (Android, OFF by default) adds the AHardwareBuffer path: no
+sink bin can reach it at runtime, and no GStreamer SDK has the header it is written against ("Opt-in AHardwareBuffer
+path" in the [GStreamer README](../src/VideoManager/GStreamer/README.md#hwbuffers--gpu-paths)). A path whose
+GStreamer pieces configure doesn't find is left out, and a build with none shows video through the CPU only. CI
+compiles the GStreamer module once more with the paths off.
 
 ## Presets
 

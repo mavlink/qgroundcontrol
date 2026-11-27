@@ -9,8 +9,6 @@ class GstSelfTestPipelineTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testSystemRuntimePasses();
     void _testFailingHardwareDecoderFallsBackToSoftware();
-#endif
 };

@@ -1,17 +1,13 @@
 #include "GstQgcVideoFormatsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GstQgcFrameMap.h"
 #include "GstScoped.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcGpuBin.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 
 void GstQgcVideoFormatsTest::_testColorimetryPixelFormatMapping()
@@ -82,7 +78,7 @@ void GstQgcVideoFormatsTest::_testD3D12ConvertCapsAreSinglePlane()
 
 void GstQgcVideoFormatsTest::_testColorimetryColorSpaceMapping()
 {
-    // Mirrors Qt 6.10.3 qgst.cpp: SMPTE240M maps to AdobeRgb, FCC remains Undefined.
+    // As Qt's own GStreamer backend maps them (qgst.cpp, Qt 6.12).
     QCOMPARE(toQtColorSpace(GST_VIDEO_COLOR_MATRIX_SMPTE240M), QVideoFrameFormat::ColorSpace_AdobeRgb);
     QCOMPARE(toQtColorSpace(GST_VIDEO_COLOR_MATRIX_FCC), QVideoFrameFormat::ColorSpace_Undefined);
 }
@@ -194,7 +190,5 @@ void GstQgcVideoFormatsTest::_testApplyOrientationToFrameMapping()
         QCOMPARE(frame.mirrored(), c.expectedMirrored);
     }
 }
-
-#endif
 
 UT_REGISTER_TEST(GstQgcVideoFormatsTest, TestLabel::Unit)

@@ -23,6 +23,15 @@ QString RecordingPlan::partFile(const QString& file, int part)
     return (part <= 1) ? file : insertBeforeExtension(file, QStringLiteral("_part%1").arg(part));
 }
 
+void RecordingPlan::setFormat(VideoReceiver::FileFormat format)
+{
+    nextPart();
+    _format = format;
+    const qsizetype dot = _file.lastIndexOf(u'.');
+    const qsizetype separator = std::max(_file.lastIndexOf(u'/'), _file.lastIndexOf(u'\\'));
+    _file = ((dot > separator) ? _file.left(dot) : _file) + u'.' + VideoReceiver::fileExtension(format);
+}
+
 bool RecordingPlan::onFileOpened(const QString& file, Clock::time_point now)
 {
     if (file != currentFile()) {

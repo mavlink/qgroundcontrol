@@ -18,12 +18,4 @@ bool hasCpuLayout(GstCaps* caps);
 /// components.
 int planeHeight(const GstVideoInfo& info, int plane);
 
-/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding: up to the last byte of
-/// any component stored in the plane.
-int planeRowBytes(const GstVideoInfo& info, int plane);
-
-/// Gives @p info the size @p width x @p height, with gst-video's default plane layout for it; format, colorimetry and
-/// frame rate stay. False, with @p info unchanged, when the format has no layout of that size.
-bool setFrameSize(GstVideoInfo& info, int width, int height);
-
 }  // namespace GstHw

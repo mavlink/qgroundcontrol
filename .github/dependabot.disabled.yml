@@ -17,9 +17,10 @@
 #     deploy/docker/variants.json (copied to docker-compose.yml and
 #     tools/tests/ci/test_plan_docker_builds.py), the uv required-version floor in
 #     tools/pyproject.toml, the pins in .github/build-config.json (CMake, Ninja, the tools
-#     releases, the Android OpenSSL release, linuxdeploy and appimagetool), the C++ libraries
-#     that CPMAddPackage fetches from GitHub (CMakeLists.txt and *.cmake files), and the
-#     ArduPilot parameter repository commit in src/FirmwarePlugin/APM/CMakeLists.txt.
+#     releases, the Android OpenSSL release, linuxdeploy, appimagetool and the iOS CA bundle),
+#     the C++ libraries that CPMAddPackage fetches from GitHub (CMakeLists.txt and *.cmake
+#     files), and the ArduPilot parameter repository commit in
+#     src/FirmwarePlugin/APM/CMakeLists.txt.
 #   - deploy/docker/Dockerfile's base image, the uv image in it and in .clusterfuzzlite/Dockerfile
 #     (Dependabot reads only literal FROM lines), and docs/.nvmrc.
 #   - Weekly lock file maintenance; here transitive dependencies move only for security fixes.

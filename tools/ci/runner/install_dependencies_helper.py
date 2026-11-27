@@ -3,11 +3,12 @@
 
 - plan: the Linux apt download-cache key and restore keys, as step outputs
 - install: the Linux apt packages and validated extra packages, through apt_install_retry.py
-- macos: the Homebrew packages and the GStreamer framework, through install_dependencies
+- macos: the Homebrew packages, through install_dependencies
 - windows: MSVC and NSIS for windows.yml, through install_dependencies
 
-macos and windows make up to three attempts; one that outlasts its timeout is killed with every
-process it started (the Visual Studio installer runs its own workers) before the next attempt.
+macos and windows install no GStreamer: CMake downloads its SDK at configure time. They make up to
+three attempts; one that outlasts its timeout is killed with every process it started (the Visual
+Studio installer runs its own workers) before the next attempt.
 CI skips install_dependencies' Python build tools and the distro copies of CI_PROVIDED_TOOLS.
 """
 
@@ -140,7 +141,7 @@ def install_with_retries(command: list[str], timeout: int) -> int:
 
 
 def install_homebrew() -> int:
-    """Install the Homebrew packages CI doesn't provide elsewhere, then the GStreamer framework."""
+    """Install the Homebrew packages CI doesn't provide elsewhere."""
     packages = [package for package in get_packages("macos") if package not in CI_PROVIDED_TOOLS]
     return 0 if install_macos(packages=packages) else 1
 
@@ -152,7 +153,6 @@ def install_windows(*, msvc_arm64: bool) -> int:
         str(INSTALL_DEPENDENCIES),
         "--platform",
         "windows",
-        "--skip-gstreamer",
         "--msvc",
         "--nsis",
     ]
@@ -200,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "macos":
         if args.single_attempt:
             return install_homebrew()
-        # Each attempt runs in a child process, so a timeout can kill brew and the installers.
+        # Each attempt runs in a child process, so a timeout can kill brew and what it started.
         attempt = [sys.executable, str(Path(__file__).resolve()), "macos", "--single-attempt"]
         return install_with_retries(attempt, MACOS_ATTEMPT_TIMEOUT)
     return install_windows(msvc_arm64=args.msvc_arm64)

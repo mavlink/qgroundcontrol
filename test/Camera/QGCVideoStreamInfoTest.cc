@@ -71,6 +71,38 @@ void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneWithoutResolution_test()
     QCOMPARE(streamInfo.aspectRatio(), 1.0);
 }
 
+void QGCVideoStreamInfoTest::_stringsStopAtFieldBoundary_test()
+{
+    // MAVLink sends no terminator with a string that fills its field.
+    mavlink_video_stream_information_t info = _makeVideoStreamInfo();
+    const QByteArray name(sizeof(info.name), 'n');
+    const QByteArray uri(sizeof(info.uri), 'u');
+    (void) memcpy(info.name, name.constData(), sizeof(info.name));
+    (void) memcpy(info.uri, uri.constData(), sizeof(info.uri));
+
+    const QGCVideoStreamInfo streamInfo(info);
+    QCOMPARE(streamInfo.name(), QString::fromLatin1(name));
+    QCOMPARE(streamInfo.uri(), QString::fromLatin1(uri));
+}
+
+void QGCVideoStreamInfoTest::_updateFromAnnouncement_test()
+{
+    mavlink_video_stream_information_t info = _makeVideoStreamInfo();
+    QGCVideoStreamInfo streamInfo(info);
+    QSignalSpy spy(&streamInfo, &QGCVideoStreamInfo::infoChanged);
+
+    // The same announcement again changes nothing.
+    QVERIFY(!streamInfo.update(info));
+    QCOMPARE(spy.count(), 0);
+
+    qstrncpy(info.uri, "rtsp://127.0.0.1/moved", sizeof(info.uri));
+    info.encoding = VIDEO_STREAM_ENCODING_H265;
+    QVERIFY(streamInfo.update(info));
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(streamInfo.uri(), QStringLiteral("rtsp://127.0.0.1/moved"));
+    QCOMPARE(streamInfo.encoding(), static_cast<quint8>(VIDEO_STREAM_ENCODING_H265));
+}
+
 void QGCVideoStreamInfoTest::_updateNoChange_test()
 {
     const mavlink_video_stream_information_t info = _makeVideoStreamInfo();

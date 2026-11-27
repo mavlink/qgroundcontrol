@@ -135,6 +135,15 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
                 planner.rankPrefix("vaapi", GST_RANK_NONE);
                 planner.prioritizeZeroCopy();
             }
+            if (traits.preferVideoToolbox) {
+                // Only out of the tie: one GStreamer ranks lower, or leaves out of autoplug, stays where it is.
+                (void) planner.rank(
+                    [](const DecoderInfo& decoder) {
+                        return (decoder.family == VideoDecoderOption::VideoToolbox) &&
+                               (decoder.rank == GST_RANK_PRIMARY);
+                    },
+                    kPrioritizedRank);
+            }
             break;
         case VideoDecoderOption::Software:
             planner.demoteOtherClass(false, plan.warnings);
@@ -147,13 +156,6 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
                 planner.prioritizeZeroCopy();
             }
             break;
-        case VideoDecoderOption::Vulkan:
-            // gst-vulkan's decoders output VulkanImage memory only, which no sink bin offers: Qt can't sample the
-            // images of their VkDevice.
-            plan.warnings.append(
-                QStringLiteral("Forcing Vulkan video decoders: they output VulkanImage memory only, which the video "
-                               "sink does not take, so the streams they decode will not display."));
-            [[fallthrough]];
         case VideoDecoderOption::VAAPI:
         case VideoDecoderOption::NVIDIA:
         case VideoDecoderOption::DirectX3D:

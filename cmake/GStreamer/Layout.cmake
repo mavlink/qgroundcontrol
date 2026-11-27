@@ -1,29 +1,26 @@
 # The GStreamer layout store: what the Orchestrator and discovery resolved, as GLOBAL properties
 # QGC_GST_LAYOUT_<KEY> that every directory, the install rules and script-mode tests read through qgc_gst_layout_get.
-# Discovery records the SDK it resolved (_qgc_gst_return_discovery): ROOT_DIR, AUTO_DOWNLOADED, USE_FRAMEWORK, LIB_PATH,
-# PLUGIN_PATH, INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, FRAMEWORK_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE.
-# platform/MacOS.cmake adds FRAMEWORK_BUNDLE (the GStreamer.framework the app links) and HOMEBREW_PREFIX (a Homebrew
-# GStreamer's prefix); Orchestrator.cmake adds NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and
-# BUNDLED_PLUGINS (the requested ones among them, which the build ships). The Orchestrator copies the discovery keys
-# into the GStreamer_*/GSTREAMER_* variables of its directory for compatibility (qgc_gst_layout_export).
+# Discovery records the SDK it resolved (_qgc_gst_return_discovery): ROOT_DIR, AUTO_DOWNLOADED, LIB_PATH, PLUGIN_PATH,
+# INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE. Linux discovery adds
+# PKGCONFIG_DIRS for a GStreamer_ROOT_DIR: the directories of its .pc files. Orchestrator.cmake adds
+# NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and BUNDLED_PLUGINS (the requested ones among
+# them, which the build ships).
 
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
 # qgc_gst_resolve_layout(SDK_ROOT <root> [LIB_PATH <dir>] [PLUGIN_PATH <dir>] [INCLUDE_PATH <dir>]
-#                        [PLUGIN_SCANNER_PATH <dir>] [GIO_MODULE_PATH <dir>] [FRAMEWORK_BUNDLE <bundle>])
+#                        [PLUGIN_SCANNER_PATH <dir>] [GIO_MODULE_PATH <dir>])
 # Sets, in the caller's scope (a discovery function, which records them with _qgc_gst_return_discovery),
 # GStreamer_ROOT_DIR to the normalized <root> and the SDK layout, each defaulting to the SDK directory layout:
 # GSTREAMER_LIB_PATH (<root>/lib), GSTREAMER_PLUGIN_PATH (<lib>/gstreamer-1.0), GSTREAMER_INCLUDE_PATH (<root>/include),
 # GSTREAMER_PLUGIN_SCANNER_PATH (<root>/libexec/gstreamer-1.0) and GSTREAMER_GIO_MODULE_PATH (<lib>/gio/modules). Fails
-# configure when the root, library, plugin or include directory does not exist; with FRAMEWORK_BUNDLE also sets
-# GSTREAMER_FRAMEWORK_PATH and the layout's FRAMEWORK_BUNDLE.
+# configure when the root, library, plugin or include directory does not exist.
 # cmake-lint: disable=C0103,E1121
 function(qgc_gst_resolve_layout)
     cmake_parse_arguments(
-        PARSE_ARGV 0 ARG ""
-        "SDK_ROOT;LIB_PATH;PLUGIN_PATH;INCLUDE_PATH;PLUGIN_SCANNER_PATH;GIO_MODULE_PATH;FRAMEWORK_BUNDLE" ""
+        PARSE_ARGV 0 ARG "" "SDK_ROOT;LIB_PATH;PLUGIN_PATH;INCLUDE_PATH;PLUGIN_SCANNER_PATH;GIO_MODULE_PATH" ""
     )
     _qgc_gst_check_args(qgc_gst_resolve_layout SDK_ROOT)
 
@@ -59,11 +56,6 @@ function(qgc_gst_resolve_layout)
     set(_outputs GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH GSTREAMER_INCLUDE_PATH
                  GSTREAMER_PLUGIN_SCANNER_PATH GSTREAMER_GIO_MODULE_PATH
     )
-    if(ARG_FRAMEWORK_BUNDLE)
-        set(GSTREAMER_FRAMEWORK_PATH "${ARG_FRAMEWORK_BUNDLE}")
-        list(APPEND _outputs GSTREAMER_FRAMEWORK_PATH)
-        qgc_gst_layout_set(FRAMEWORK_BUNDLE "${ARG_FRAMEWORK_BUNDLE}")
-    endif()
     return(PROPAGATE ${_outputs})
 endfunction()
 
@@ -83,17 +75,15 @@ function(qgc_gst_layout_set key value)
     set_property(GLOBAL PROPERTY "QGC_GST_LAYOUT_${key}" "${value}")
 endfunction()
 
-# The discovery keys and the variables qgc_gst_layout_export copies them into.
+# The discovery keys and the variables of a discovery function they are recorded from.
 set(_QGC_GST_DISCOVERY_KEYS
     "ROOT_DIR|GStreamer_ROOT_DIR"
     "AUTO_DOWNLOADED|GStreamer_AUTO_DOWNLOADED"
-    "USE_FRAMEWORK|GStreamer_USE_FRAMEWORK"
     "LIB_PATH|GSTREAMER_LIB_PATH"
     "PLUGIN_PATH|GSTREAMER_PLUGIN_PATH"
     "INCLUDE_PATH|GSTREAMER_INCLUDE_PATH"
     "PLUGIN_SCANNER_PATH|GSTREAMER_PLUGIN_SCANNER_PATH"
     "GIO_MODULE_PATH|GSTREAMER_GIO_MODULE_PATH"
-    "FRAMEWORK_PATH|GSTREAMER_FRAMEWORK_PATH"
     "XCFRAMEWORK_LIB|GSTREAMER_XCFRAMEWORK_LIB"
     "IOS_CA_BUNDLE|GStreamer_IOS_CA_BUNDLE"
 )
@@ -109,21 +99,6 @@ macro(qgc_gst_layout_record_discovery)
         qgc_gst_layout_set(${_qgc_gst_layout_key} "${${_qgc_gst_layout_var}}")
     endforeach()
 endmacro()
-
-# qgc_gst_layout_export()
-# Sets, in the caller's scope, the GStreamer_*/GSTREAMER_* variable of every discovery key to its recorded value: the
-# compatibility copies the Orchestrator leaves in its directory. The GStreamer modules read the layout instead.
-function(qgc_gst_layout_export)
-    set(_outputs "")
-    foreach(_entry IN LISTS _QGC_GST_DISCOVERY_KEYS)
-        string(REPLACE "|" ";" _entry "${_entry}")
-        list(GET _entry 0 _key)
-        list(GET _entry 1 _var)
-        qgc_gst_layout_get(${_key} ${_var})
-        list(APPEND _outputs ${_var})
-    endforeach()
-    return(PROPAGATE ${_outputs})
-endfunction()
 
 # _qgc_gst_return_discovery()
 # Returns from a discovery function: records its discovery keys (qgc_gst_layout_record_discovery) and sets, in the

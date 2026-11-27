@@ -1,16 +1,14 @@
 #include "GstVideoReceiverTestBase.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSemaphore>
 #include <QtTest/QTest>
 
 #include "GstReceiverWorker.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement*)>& task)
 {
-    // The wait for the worker to run the task.
     constexpr std::chrono::seconds kRunOnPipelineTimeout{10};
 
     if (!receiver) {
@@ -51,13 +49,13 @@ bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const s
 
 GstElement* GstVideoReceiverTestBase::displaySink(const GstVideoReceiver* receiver)
 {
-    return receiver->_displaySink.get();
+    return receiver->_displaySink ? receiver->_displaySink->bin.get() : nullptr;
 }
 
-void GstVideoReceiverTestBase::setMaxRecordingPartDuration(GstVideoReceiver* receiver,
-                                                           std::chrono::milliseconds duration)
+GStreamer::GstElementPtr GstVideoReceiverTestBase::displayVideoSink(const GstVideoReceiver* receiver)
 {
-    receiver->_postToWorker([duration](GstReceiverWorker& worker) { worker.setMaxRecordingPartDuration(duration); });
+    GstElement* const qvideosink = receiver->_displaySink ? receiver->_displaySink->qvideosink.get() : nullptr;
+    return GStreamer::adoptElement(qvideosink ? GST_ELEMENT(gst_object_ref(qvideosink)) : nullptr);
 }
 
 void GstVideoReceiverTestBase::holdWorker(GstVideoReceiver* receiver,
@@ -77,5 +75,3 @@ void GstVideoReceiverTestBase::initTestCase()
         GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
 }
-
-#endif

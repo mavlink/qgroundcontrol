@@ -22,8 +22,9 @@ endfunction()
 
 # _qgc_gst_discover_linux_sdk()
 # Uses the GStreamer pkg-config finds: the system's, or one under GStreamer_ROOT_DIR, whose pkgconfig directories go
-# ahead of the system's. Its layout comes from gstreamer-1.0.pc (prefix, libdir, includedir, pluginsdir and
-# pluginscannerdir) and gio-2.0.pc (giomoduledir).
+# ahead of the system's. Those are recorded as the layout's PKGCONFIG_DIRS: the system's stay visible for GLib and the
+# like, and a GStreamer module found only there is not used (_qgc_gst_foreign_module_dir). Its layout comes from
+# gstreamer-1.0.pc (prefix, libdir, includedir, pluginsdir and pluginscannerdir) and gio-2.0.pc (giomoduledir).
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_linux_sdk)
     find_package(PkgConfig REQUIRED QUIET)
@@ -41,6 +42,7 @@ function(_qgc_gst_discover_linux_sdk)
         endif()
         list(TRANSFORM _pc_files REPLACE "/gstreamer-1\\.0\\.pc$" "")
         qgc_gst_apply_pkgconfig_env(MODE SYSTEM_AUGMENT LIBDIR ${_pc_files})
+        qgc_gst_layout_set(PKGCONFIG_DIRS "${_pc_files}")
     endif()
 
     # <layout key>|<module>|<variable>|REQUIRED or OPTIONAL; an OPTIONAL one left empty takes the SDK-layout default.
@@ -76,7 +78,7 @@ function(_qgc_gst_discover_linux_sdk)
     _qgc_gst_return_discovery()
 endfunction()
 
-# Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
+# Linux: plugins, the GIO modules for TLS and proxies, gst-plugin-scanner and the notice.
 # The libraries come from the AppImage's dependency deployment (cmake/install/CreateAppImage.cmake).
 function(qgc_gst_install_linux_sdk app_name plugin_dest_out)
     qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
@@ -92,14 +94,11 @@ function(qgc_gst_install_linux_sdk app_name plugin_dest_out)
     qgc_gst_install_gio_modules("${_gst_gio_module_path}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings)
     # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
     # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).
-    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        set(_path "${_gst_scanner_path}/${_helper}")
-        if(EXISTS "${_path}")
-            install(PROGRAMS "${_path}" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-        elseif(_helper STREQUAL "gst-plugin-scanner")
-            message(WARNING "gst-plugin-scanner not found in ${_gst_scanner_path}; AppImage video may not " "work")
-        endif()
-    endforeach()
+    if(EXISTS "${_gst_scanner_path}/gst-plugin-scanner")
+        install(PROGRAMS "${_gst_scanner_path}/gst-plugin-scanner" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
+    else()
+        message(WARNING "gst-plugin-scanner not found in ${_gst_scanner_path}; AppImage video may not " "work")
+    endif()
     _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"

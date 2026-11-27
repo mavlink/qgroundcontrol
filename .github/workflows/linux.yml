@@ -501,12 +501,104 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
+  # No other job compiles the build with no GPU path at all, which is what configure produces where
+  # it finds the GStreamer pieces of none. This one compiles the GStreamer module, the application's
+  # GStreamer sources and the GStreamer tests that way and runs nothing.
+  no-gpu-path:
+    name: Video without GPU paths (compile)
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-no-gpu-path-{1}-{2}/runner=linux-x64-tester',
+          github.run_id, github.run_attempt, strategy.job-index) ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 30
+
+    permissions:
+      actions: read
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
+      - name: Harden Runner
+        if: runner.environment == 'github-hosted'
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf # v3.2.1
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
+      - name: Enable RunsOn magic cache
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
+        with:
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # A variant of its own: the build saves no compiler cache, and must not restore another leg's.
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          cache-variant: no-gpu-path
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure without GPU paths
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: Linux-debug
+          extra-args: -DQGC_GST_ENABLE_GPU_PATHS=OFF
+
+      - name: Require no GPU path in the build
+        run: |
+          if grep -- "-- QGCGStreamer: .* zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"; then
+            echo "::error::A GPU path is still enabled in the build without GPU paths"
+            exit 1
+          fi
+
+      - name: Build without GPU paths
+        uses: ./.github/actions/cmake-build
+        with:
+          target: QGCGStreamer
+
+      # The module's definitions are PUBLIC: the application's GStreamer sources and the GStreamer
+      # tests compile with them too. Those belong to the application and the test target, which
+      # are not built here: their object files are.
+      - name: Compile the application's GStreamer sources and tests without GPU paths
+        uses: ./.github/actions/cmake-build
+        with:
+          objects-under: src/VideoManager/GStreamer test/VideoManager/GStreamer
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
   # The check a ruleset should require (none does today): a skipped matrix job reports an
   # unexpanded name, so this job has the stable one. always(): a skipped gate would count as passing.
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, appimage-distros, debug-validation, custom-plugin]
+    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, no-gpu-path]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -519,5 +611,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: build, appimage-distros, debug-validation, custom-plugin
+          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, no-gpu-path
           jobs: ${{ toJSON(needs) }}

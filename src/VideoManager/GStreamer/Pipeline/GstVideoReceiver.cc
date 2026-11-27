@@ -5,15 +5,17 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QList>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamer.h"
 #include "GstReceiverWorker.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GStreamer.GstVideoReceiver")
 
@@ -29,12 +31,19 @@ static_assert(GstVideoReceiver::kHeartbeatInterval > kWorkerShutdownTimeout);
 // stalled GUI thread) can't count twice against a worker that got no time to run a task.
 constexpr int kStuckWorkerChecks = 6;
 
+/// The receivers alive. GUI thread.
+QList<GstVideoReceiver*>& liveReceivers()
+{
+    static QList<GstVideoReceiver*> receivers;
+    return receivers;
+}
+
 }  // namespace
 
-GstVideoReceiver::GstVideoReceiver(QObject* parent)
+GstVideoReceiver::GstVideoReceiver(QObject* parent, const GstReceiverTimings& timings)
     : VideoReceiver(parent)
     , _workerThread(new QThread(this))
-    , _worker(new GstReceiverWorker())
+    , _worker(new GstReceiverWorker(timings))
     , _heartbeatTimer(new QTimer(this))
 {
     qCDebug(GstVideoReceiverLog) << this;
@@ -56,10 +65,12 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     _worker->moveToThread(_workerThread);
     (void) connect(_workerThread, &QThread::finished, _worker, &QObject::deleteLater);
     _workerThread->start();
+    liveReceivers().append(this);
 }
 
 GstVideoReceiver::~GstVideoReceiver()
 {
+    (void) liveReceivers().removeOne(this);
     _postToWorker([](GstReceiverWorker& worker) { worker.shutdown(); });
     if (_workerThread->wait(QDeadlineTimer(kWorkerShutdownTimeout))) {
         qCDebug(GstVideoReceiverLog) << this;
@@ -82,6 +93,14 @@ GstVideoReceiver::~GstVideoReceiver()
 void GstVideoReceiver::setHeartbeatInterval(std::chrono::milliseconds interval)
 {
     _heartbeatTimer->setInterval(interval);
+}
+
+void GstVideoReceiver::onGraphicsDeviceSettled()
+{
+    const QList<GstVideoReceiver*> receivers = liveReceivers();
+    for (GstVideoReceiver* const receiver : receivers) {
+        receiver->_postRequest();
+    }
 }
 
 void GstVideoReceiver::onConfigChanged()
@@ -130,7 +149,8 @@ void GstVideoReceiver::onVideoOutputChanged()
     _postRequest();
 }
 
-void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format)
+void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format,
+                                        [[maybe_unused]] const RecordingEncoding& encoding)
 {
     const quint64 id = (_request.recording ? _request.recording->id : 0) + 1;
     _request.recording = GstRecordingRequest{.file = file, .format = format, .id = id};
@@ -148,10 +168,8 @@ void GstVideoReceiver::_postRequest()
     _request.active = active();
     _request.name = name();
     _request.config = config();
-    GstElement* const displaySink = videoSink() ? _displaySink.get() : nullptr;
-    if (displaySink != _request.videoSink.get()) {
-        _request.videoSink = GStreamer::shareObject(displaySink);
-    }
+    // A decoder plugged before the device Qt renders with is known would keep a device of its own.
+    _request.videoSink = (videoSink() && HwBuffers::graphicsDeviceSettled()) ? _displaySink : nullptr;
     _postToWorker([request = _request](GstReceiverWorker& worker) { worker.apply(request); });
 }
 
@@ -264,10 +282,10 @@ void GstVideoReceiver::_releaseDisplaySink()
 bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 {
     const DisplayConfig& display = displayConfig();
-    GStreamer::GstElementPtr sink = GStreamer::adoptElement(
-        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy));
+    std::shared_ptr<const GstQgc::SinkBin> sink =
+        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy);
     QGCQVideoSinkController* const controller =
-        sink ? GStreamer::setupQVideoSinkElement(sink.get(), videoSink, this) : nullptr;
+        sink ? GStreamer::setupQVideoSinkElement(sink->qvideosink.get(), videoSink, this) : nullptr;
     if (!controller) {
         qCWarning(GstVideoReceiverLog) << "Unable to create the video sink for" << name();
         emit errorOccurred(tr("Unable to display video: the video sink could not be created."));

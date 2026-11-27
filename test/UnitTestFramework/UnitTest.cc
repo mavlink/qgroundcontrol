@@ -957,6 +957,8 @@ void UnitTest::cleanup()
 {
     _cleanupCalled = true;
     dumpFailureContextIfTestFailed(QStringLiteral("cleanup"));
+    // Again on the way out, for a failure the checks below raise: QFAIL returns from here.
+    const auto dumpGuard = qScopeGuard([this] { dumpFailureContextIfTestFailed(QStringLiteral("cleanup")); });
 
     // Keep log capture enabled through the settle/verification phase so warnings
     // emitted while draining queued events are still subject to strict checking.

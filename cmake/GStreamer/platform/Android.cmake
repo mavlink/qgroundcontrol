@@ -16,8 +16,8 @@
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
 #     archive (failing configure when a bundle-required one is missing), with its own registration template
 #     (Mobile.cmake);
-#   - it copies the plugin Java sources and fonts/CA assets into the source tree, while QGC stages them in the build
-#     directory for Gradle;
+#   - it copies the plugin Java sources and the fonts and CA assets into the source tree, while QGC stages the Java
+#     sources and the CA bundle in the build directory for Gradle;
 #   - its static-library and SDK discovery come from the SDK's FindGStreamer.cmake, while QGC's are its own
 #     (Targets.cmake, Acquire.cmake).
 
@@ -80,12 +80,38 @@ function(_qgc_gst_android_sdk_pkg_config root host out_var)
     )
 endfunction()
 
+# _qgc_gst_android_abi_root(<root> <abi> <out_root>)
+# Sets <out_root> to the SDK tree for <abi> at or under <root>: <root> itself when it is one ABI's tree, else its
+# directory for <abi> (_qgc_gst_android_abi_info), as a universal SDK has one per ABI: the official tarball unpacked,
+# or a universal build of tools/setup/build_gstreamer.py. Fails configure when <root> holds neither.
+function(_qgc_gst_android_abi_root root abi out_root)
+    set(_pc "lib/pkgconfig/gstreamer-1.0.pc")
+    string(REGEX REPLACE "/+$" "" _root "${root}")
+    if(NOT EXISTS "${_root}/${_pc}")
+        _qgc_gst_android_abi_info("${abi}" _abi)
+        if(NOT EXISTS "${_root}/${_abi_DIR}/${_pc}")
+            message(
+                FATAL_ERROR "GStreamer: GStreamer_ROOT_DIR '${root}' is neither an Android SDK tree (no ${_pc}) nor a "
+                            "universal SDK with an ${_abi_DIR}/ tree for ${abi}."
+            )
+        endif()
+        string(APPEND _root "/${_abi_DIR}")
+    endif()
+    set(${out_root}
+        "${_root}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_discover_android_sdk()
-# Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK.
+# Uses the SDK at GStreamer_ROOT_DIR, or its tree for CMAKE_ANDROID_ARCH_ABI (_qgc_gst_android_abi_root), else extracts
+# that tree of the downloaded universal SDK.
 # Windows and macOS hosts use the pkg-config the SDK bundles for them (_qgc_gst_android_sdk_pkg_config).
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_android_sdk)
-    if(NOT GStreamer_ROOT_DIR)
+    if(GStreamer_ROOT_DIR)
+        _qgc_gst_android_abi_root("${GStreamer_ROOT_DIR}" "${CMAKE_ANDROID_ARCH_ABI}" GStreamer_ROOT_DIR)
+    else()
         _qgc_gst_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
         _qgc_gst_space_free_download_cache()
         _qgc_gst_acquire_android_sdk(${_gst_android_abi_DIR} GStreamer_ROOT_DIR)
@@ -177,7 +203,7 @@ function(_qgc_gst_android_hide_archives target)
 endfunction()
 
 # _qgc_gst_android_stage_sdk_files(<ndk_build_dir> <plugin>...)
-# Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's fonts and CA bundle under
+# Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's CA bundle under
 # QGC_ANDROID_EXTRA_ASSETS_DIR at configure time, like src/Android/CMakeLists.txt does for its Java sources;
 # android/build.gradle adds both build-directory trees to the APK (androiddeployqt deletes files written into
 # android-build/ itself). Removes stale copies under QGC_ANDROID_PACKAGE_SOURCE_DIR, which Gradle would package twice.
@@ -205,12 +231,6 @@ function(_qgc_gst_android_stage_sdk_files ndk_build)
             list(APPEND _files "${ndk_build}/${_java_file}|${_java_dirs}|org/freedesktop/gstreamer/${_java_file}")
         endforeach()
     endforeach()
-    set(_fonts "${ndk_build}/fontconfig")
-    if(EXISTS "${_fonts}/fonts/Ubuntu-R.ttf" AND EXISTS "${_fonts}/fonts.conf")
-        list(APPEND _files "${_fonts}/fonts/Ubuntu-R.ttf|${_asset_dirs}|fontconfig/fonts/truetype/Ubuntu-R.ttf"
-             "${_fonts}/fonts.conf|${_asset_dirs}|fontconfig/fonts.conf"
-        )
-    endif()
     set(_ca_bundle "${_gst_root}/etc/ssl/certs/ca-certificates.crt")
     if(EXISTS "${_ca_bundle}")
         list(APPEND _files "${_ca_bundle}|${_asset_dirs}|ssl/certs/ca-certificates.crt")
@@ -272,8 +292,8 @@ endfunction()
 # generated gst_init_static_plugins() and carries the JNI state GStreamer's Android plugins need (gst_android_jni.c).
 # GStreamer::GStreamer carries the SDK's headers and links GStreamer::mobile (_qgc_gst_android_usage_target): the app
 # takes every GStreamer function from that library, which keeps QGC_GST_APP_CORE_SYMBOLS for it. Also stages the plugin
-# Java sources and the fonts/CA assets for the APK. Sets GSTREAMER_STATIC_PLUGINS, the plugins registered, in the
-# caller's scope.
+# Java sources and the CA bundle for the APK. Sets GSTREAMER_STATIC_PLUGINS, the plugins registered, in the caller's
+# scope.
 function(_qgc_gst_create_android_mobile_target)
     qgc_gst_layout_get(ROOT_DIR _gst_root)
     qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)

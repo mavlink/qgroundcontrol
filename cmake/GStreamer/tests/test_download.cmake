@@ -3,6 +3,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/.." "${CMAKE_CURRENT_LI
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Packages)
 
+# The package table is the repository's own.
+qgc_test_build_config()
 qgc_gst_get_package_url(android 1.28.2 _u_android)
 qgc_test_assert_streq(
     "android url"
@@ -10,16 +12,9 @@ qgc_test_assert_streq(
     "${_u_android}"
 )
 
-qgc_gst_get_package_url(ios 1.28.2 _u_ios)
+qgc_gst_get_package_url(ios 1.28.8 _u_ios)
 qgc_test_assert_streq(
-    "ios url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.2/gstreamer-1.0-devel-1.28.2-ios-universal.pkg"
-    "${_u_ios}"
-)
-
-qgc_gst_get_package_url(ios 1.28.8 _u_ios_xcfw)
-qgc_test_assert_streq(
-    "ios xcframework url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/gstreamer-1.28.8-xcframework.tar.xz"
-    "${_u_ios_xcfw}"
+    "ios url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/gstreamer-1.28.8-xcframework.tar.xz" "${_u_ios}"
 )
 
 qgc_gst_get_package_url(macos 1.28.2 _u_mac)
@@ -64,67 +59,45 @@ qgc_test_assert_streq("s3 macos_devel" "${_s3_base}/macos/gstreamer-1.0-devel-1.
 
 qgc_test_pass("get_s3_mirror_url routing")
 
-# Records each package download's URLS and EXPECTED_HASH instead of downloading; a .sha256sum sidecar request is
-# answered with the sidecar of <_sidecar_hash>.
+# Records each package download's URLS, EXPECTED_HASH and TIMEOUT instead of downloading.
 function(qgc_resilient_download)
-    set(_one_value_keywords
-        FILENAME
-        DESTINATION_DIR
-        RESULT_VAR
-        TIMEOUT
-        INACTIVITY_TIMEOUT
-        RETRIES
-        RETRY_BACKOFF
-        EXPECTED_HASH
-        LOG_TAG
-        FAILURE_HINT
+    cmake_parse_arguments(
+        PARSE_ARGV 0 ARG "" "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;EXPECTED_HASH;LOG_TAG;FAILURE_HINT" "URLS"
     )
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "ALLOW_FAILURE" "${_one_value_keywords}" "URLS")
-    if(ARG_FILENAME MATCHES "\\.sha256sum$")
-        file(WRITE "${ARG_DESTINATION_DIR}/${ARG_FILENAME}" "${_sidecar_hash}  package\n")
-    else()
-        set_property(GLOBAL PROPERTY _qgc_test_urls "${ARG_URLS}")
-        set_property(GLOBAL PROPERTY _qgc_test_hash "${ARG_EXPECTED_HASH}")
-    endif()
+    set_property(GLOBAL PROPERTY _qgc_test_urls "${ARG_URLS}")
+    set_property(GLOBAL PROPERTY _qgc_test_hash "${ARG_EXPECTED_HASH}")
+    set_property(GLOBAL PROPERTY _qgc_test_timeout "${ARG_TIMEOUT}")
     set(${ARG_RESULT_VAR}
         "${ARG_DESTINATION_DIR}/${ARG_FILENAME}"
         PARENT_SCOPE
     )
 endfunction()
 
-# Downloads the android <version> package with the stub above; sets _urls and _verified_hash in the caller.
-function(_qgc_test_download version)
-    _qgc_gst_download_archive(android ${version} package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}" _hash)
-    get_property(_urls GLOBAL PROPERTY _qgc_test_urls)
-    get_property(_verified GLOBAL PROPERTY _qgc_test_hash)
-    qgc_test_assert_streq("${version} reports the hash it verified against" "${_verified}" "${_hash}")
-    set(_urls
-        "${_urls}"
-        PARENT_SCOPE
-    )
-    set(_verified_hash
-        "${_verified}"
-        PARENT_SCOPE
-    )
-endfunction()
+# A package without a pinned checksum fails configure instead of being downloaded.
+if(TEST_CASE STREQUAL "unpinned")
+    _qgc_gst_download_archive(android 9.1.2 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")
+    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
+elseif(DEFINED TEST_CASE)
+    message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
+endif()
 
-# Upstream serves every package, the mirror only when upstream fails; both are held to the same checksum.
+# Upstream serves every package, the mirror only when upstream fails; both are held to the pinned checksum.
 string(SHA256 _pin "pinned")
-set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\":{\"checksums\":{\"9.1.1\":{\"android\":\"${_pin}\"}}}}")
+qgc_test_build_config(9.1.1 android ${_pin})
 qgc_gst_get_package_url(android 9.1.1 _upstream)
 qgc_gst_get_s3_mirror_url(android 9.1.1 _mirror)
-_qgc_test_download(9.1.1)
-qgc_test_assert_streq("pinned: upstream first" "${_upstream};${_mirror}" "${_urls}")
-qgc_test_assert_streq("pinned: verified against the pin" "SHA256=${_pin}" "${_verified_hash}")
-qgc_test_pass("pinned package comes from upstream, verified against its pin")
+_qgc_gst_download_archive(android 9.1.1 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")
+get_property(_urls GLOBAL PROPERTY _qgc_test_urls)
+get_property(_verified_hash GLOBAL PROPERTY _qgc_test_hash)
+qgc_test_assert_streq("upstream first" "${_upstream};${_mirror}" "${_urls}")
+qgc_test_assert_streq("verified against the pin" "SHA256=${_pin}" "${_verified_hash}")
+qgc_test_pass("package comes from upstream, verified against its pin")
 
-# An unpinned package is verified against upstream's .sha256sum sidecar.
-string(SHA256 _sidecar_hash "sidecar")
-set(QGC_BUILD_CONFIG_CONTENT "{}")
-set(GStreamer_REQUIRE_CHECKSUM OFF)
-qgc_gst_get_package_url(android 9.1.2 _upstream)
-qgc_gst_get_s3_mirror_url(android 9.1.2 _mirror)
-_qgc_test_download(9.1.2)
-qgc_test_assert_streq("unpinned: upstream first" "${_upstream};${_mirror}" "${_urls}")
-qgc_test_assert_streq("unpinned: verified against the sidecar" "SHA256=${_sidecar_hash}" "${_verified_hash}")
-qgc_test_pass("unpinned package comes from upstream, verified against the sidecar")
+# QGC_DOWNLOAD_TIMEOUT|expected wall-clock cap: a slow link can raise the SDK's cap but nothing lowers it.
+foreach(_case IN ITEMS "|1200" "300|1200" "7200|7200")
+    qgc_test_split("${_case}" QGC_DOWNLOAD_TIMEOUT _expected_timeout)
+    _qgc_gst_download_archive(android 9.1.1 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")
+    get_property(_timeout GLOBAL PROPERTY _qgc_test_timeout)
+    qgc_test_assert_streq("cap with QGC_DOWNLOAD_TIMEOUT=${QGC_DOWNLOAD_TIMEOUT}" "${_expected_timeout}" "${_timeout}")
+endforeach()
+qgc_test_pass("QGC_DOWNLOAD_TIMEOUT raises the download's wall-clock cap")

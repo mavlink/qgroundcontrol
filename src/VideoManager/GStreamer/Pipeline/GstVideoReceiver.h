@@ -2,13 +2,14 @@
 
 #include <chrono>
 #include <functional>
+#include <memory>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 
 #include "GstReceiverRequest.h"
-#include "GstScoped.h"
+#include "GstReceiverTimings.h"
 #include "VideoReceiver.h"
 
 class GstReceiverWorker;
@@ -16,6 +17,10 @@ class GstVideoReceiverTestBase;
 class QGCQVideoSinkController;
 class QThread;
 class QTimer;
+
+namespace GstQgc {
+struct SinkBin;
+}
 
 /// Also logs the receiver's worker, its PipelineSession with the branches, and PipelineDotDumper.
 Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
@@ -44,7 +49,7 @@ public:
     // Above the worker's longest waits in a row: a recording's end (3 s), RTSP TEARDOWN (1 s), a TCP connect (3 s).
     static constexpr std::chrono::seconds kHeartbeatInterval{10};
 
-    explicit GstVideoReceiver(QObject* parent = nullptr);
+    explicit GstVideoReceiver(QObject* parent = nullptr, const GstReceiverTimings& timings = {});
     /// Finalizes a recording and stops the pipeline, waiting at most a few seconds for the worker.
     ~GstVideoReceiver() override;
 
@@ -56,13 +61,17 @@ public:
     /// that long.
     void setHeartbeatInterval(std::chrono::milliseconds interval);
 
+    /// Has every receiver hand its worker the display sink, which waits for HwBuffers::graphicsDeviceSettled(): for
+    /// each time the main window's scene graph comes up. GUI thread.
+    static void onGraphicsDeviceSettled();
+
 protected:
     void onConfigChanged() override;
     void onActiveChanged() override;
     void onRestartRequested() override;
     void onReconnectRequested() override;
     void onVideoOutputChanged() override;
-    void onStartRecording(const QString& file, FileFormat format) override;
+    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
     void onStopRecording() override;
 
 private:
@@ -89,7 +98,7 @@ private:
     GstReceiverWorker* _worker = nullptr;
     /// What was asked of the worker last.
     GstReceiverRequest _request;
-    GStreamer::GstElementPtr _displaySink;
+    std::shared_ptr<const GstQgc::SinkBin> _displaySink;
     QGCQVideoSinkController* _sinkController = nullptr;
     QMetaObject::Connection _videoSizeConnection;
     QString _decoderName;

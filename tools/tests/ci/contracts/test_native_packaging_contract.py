@@ -27,11 +27,11 @@ def test_every_cpack_generator_shares_the_common_package_metadata() -> None:
         assert "include(CPack)" in contents, generator.name
 
 
-def test_arch_package_depends_on_system_gstreamer_plugins_when_not_bundled(tmp_path) -> None:
-    plugin_packages = {"gst-plugins-good", "gst-plugins-bad-libs", "gst-libav"}
-    for bundle, expected in (("ON", set()), ("OFF", plugin_packages)):
-        source_dir = tmp_path / bundle / "source"
-        build_dir = tmp_path / bundle / "build"
+def test_arch_package_depends_on_what_its_bundled_gstreamer_plugins_load(tmp_path) -> None:
+    plugin_libraries = {"gst-plugins-bad-libs", "ffmpeg", "libvpx", "libjpeg-turbo", "openh264"}
+    for video, expected in (("ON", plugin_libraries), ("OFF", set())):
+        source_dir = tmp_path / video / "source"
+        build_dir = tmp_path / video / "build"
         (source_dir / "deploy/linux").mkdir(parents=True)
         (source_dir / "deploy/linux/PKGBUILD.in").write_text(
             (REPO_ROOT / "deploy/linux/PKGBUILD.in").read_text()
@@ -42,8 +42,7 @@ cmake_minimum_required(VERSION 3.25)
 project(QGroundControl LANGUAGES NONE HOMEPAGE_URL "https://qgroundcontrol.com")
 add_custom_target(QGroundControl)
 set(QGC_APP_VERSION_STR v5.0.0)
-set(QGC_ENABLE_GST_VIDEOSTREAMING ON)
-set(QGC_GST_BUNDLE_PLUGINS {bundle})
+set(QGC_ENABLE_GST_VIDEOSTREAMING {video})
 include("{(REPO_ROOT / "cmake/install/CreateArchPackage.cmake").as_posix()}")
 """.lstrip()
         )
@@ -61,7 +60,7 @@ include("{(REPO_ROOT / "cmake/install/CreateArchPackage.cmake").as_posix()}")
         assert depends, pkgbuild
         packages = set(re.findall(r"'([^']+)'", depends.group(1)))
         assert {"gstreamer", "gst-plugins-base-libs"} <= packages
-        assert packages & plugin_packages == expected, bundle
+        assert packages & plugin_libraries == expected, video
 
 
 def test_package_version_guard_covers_target_and_cpack_entrypoints() -> None:

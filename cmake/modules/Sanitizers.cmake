@@ -263,12 +263,24 @@ leak:libQt
 leak:qt_
 leak:libfontconfig
 leak:libpulse
+# FFmpeg, under Qt Multimedia and gst-libav: it leaks a little per stream and per decoded frame, in stacks that end
+# at av_malloc.
+leak:libavutil
+# x265, which the tests' H.265 stream server encodes with, doesn't free its encoder's tables.
+leak:libx265
+# libsrt, which gst-libav's FFmpeg loads: an allocation of its static initializers is reported now and then.
+leak:libsrt
 leak:QGCCorePlugin::QGCCorePlugin
 leak:QGCOptions::QGCOptions
 leak:AirframeComponentAirframes::insert
 leak:PX4AirframeLoader::loadAirframeMetaData
 "
     )
+    # The same without FFmpeg's, for the tests of QGC's own FFmpeg code, whose leaks that one would hide: FFmpeg is
+    # built without frame pointers, so a leak's stack ends inside it whoever asked for the memory.
+    file(READ "${CMAKE_BINARY_DIR}/asan_suppressions.txt" _qgc_lsan_suppressions)
+    string(REPLACE "leak:libavutil\n" "" _qgc_lsan_suppressions "${_qgc_lsan_suppressions}")
+    file(WRITE "${CMAKE_BINARY_DIR}/asan_suppressions_own_ffmpeg.txt" "${_qgc_lsan_suppressions}")
 
     file(
         WRITE "${CMAKE_BINARY_DIR}/tsan_suppressions.txt"

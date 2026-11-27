@@ -136,12 +136,6 @@ Vehicle::Vehicle(LinkInterface* link, quint32 vehicleId, int defaultComponentId,
 
     _commonInit(link);
 
-    // Set video stream to udp if running ArduSub and Video is disabled
-    if (sub() && SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
-        SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-        SettingsManager::instance()->videoSettings()->lowLatencyMode()->setRawValue(true);
-    }
-
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
     _autopilotPlugin->setParent(this);
 

@@ -32,8 +32,8 @@ class QGCVideoStreamInfo : public QObject
 public:
     explicit QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent = nullptr);
 
-    QString uri() const { return QString(_streamInfo.uri);  }
-    QString name() const { return QString(_streamInfo.name); }
+    QString uri() const;
+    QString name() const;
     qreal aspectRatio() const;
     quint16 hfov() const { return _streamInfo.hfov; }
     quint8 type() const { return _streamInfo.type; }
@@ -47,6 +47,8 @@ public:
     qreal framerate() const { return _streamInfo.framerate; }
 
     bool update(const mavlink_video_stream_status_t &info);
+    /// Takes what the camera announced anew for the stream. True, with infoChanged(), when anything differs.
+    bool update(const mavlink_video_stream_information_t& info);
 
 signals:
     void infoChanged();

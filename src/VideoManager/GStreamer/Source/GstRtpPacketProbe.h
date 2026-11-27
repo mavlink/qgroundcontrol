@@ -17,9 +17,9 @@ struct RtpPacketCounts
     double jitterMs = -1.0;
 };
 
-/// Counts the RTP packets @p pad pushes from now on with an RtpPacketCounter, as @p bin's: for a source without a
-/// jitter buffer, which nothing else counts. @p clockRate: of their timestamps, in Hz. False when the pad takes no
-/// probe.
+/// Counts the RTP packets @p pad pushes from now on with an RtpPacketCounter, as @p bin's: for RTP over UDP, where
+/// nothing tells one sender's packets from the next one's. A jitter buffer there counts the sequence numbers a sender
+/// skips when it starts over as lost. @p clockRate: of their timestamps, in Hz. False when the pad takes no probe.
 ///
 /// The probe runs on the pad's streaming thread for every packet, in buffers and buffer lists alike: it reads the
 /// fixed header of each packet that is RTP version 2 and not an RTCP packet sent to the same port, takes the buffer's

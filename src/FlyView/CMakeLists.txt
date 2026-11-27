@@ -52,7 +52,6 @@ qt_add_qml_module(
         ObstacleDistanceOverlay.qml
         ObstacleDistanceOverlayMap.qml
         ObstacleDistanceOverlayVideo.qml
-        OnScreenCameraTrackingController.qml
         OnScreenGimbalController.qml
         PreFlightBatteryCheck.qml
         PreFlightCheckList.qml

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <array>
 #include <atomic>
-#include <cstddef>
 #include <gst/gst.h>
 
+#include <QtCore/QString>
+
+#include "KeyframeIntervalMeter.h"
 #include "VideoStreamStatsMeter.h"
 
 struct VideoStreamStats;
@@ -12,9 +13,9 @@ struct VideoStreamStats;
 /// \brief What PipelineSession measures of its stream for VideoStreamStats, apart from its branches.
 ///
 /// The tee's probe notes every buffer that reaches the tee: its size, and a keyframe's timestamp. sample() adds what
-/// the pipeline tells when asked: the RTP counters of the source's jitter buffers, with the packets their messages
-/// told they dropped, or those the source counted itself when it has none (GStreamer::rtpPacketCounts()), the latency
-/// and the codec.
+/// the pipeline tells when asked: the RTP packets the source counted itself (GStreamer::rtpPacketCounts(), RTP over
+/// UDP) with those its jitter buffer dropped, or else the counters of the source's jitter buffers (RTSP), with the
+/// packets their messages told they dropped; the latency and the codec.
 class PipelineStatsProbe
 {
 public:
@@ -35,21 +36,14 @@ public:
     /// The latency @p pipeline reports; false when it doesn't answer the latency query.
     static bool queryLatency(GstElement* pipeline, GstClockTime& min, GstClockTime& max);
 
+    /// The codec of the compressed video @p caps describe: "H.264", "H.265", ...; empty without caps.
+    static QString codecName(const GstCaps* caps);
+
 private:
-    void _noteKeyframe(GstClockTime time);
-
-    /// Keyframes whose timestamps the keyframe interval averages over: on a stream without a jitter buffer they are
-    /// arrival times, which a busy sender or network bunches up, and an average across several keyframes evens that
-    /// out.
-    static constexpr std::size_t kKeyframeWindow = 5;
-
     /// Compressed bytes that reached the tee.
     std::atomic<quint64> _bytesReceived = 0;
-    /// Timestamps of the last keyframes at the tee, oldest first. Only the tee's streaming thread uses them.
-    std::array<GstClockTime, kKeyframeWindow> _keyframeTimes{};
-    std::size_t _keyframeTimeCount = 0;
-    /// The average time between the keyframes in _keyframeTimes; GST_CLOCK_TIME_NONE before the second.
-    std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
+    /// Of the keyframes at the tee. Only the tee's streaming thread notes them.
+    KeyframeIntervalMeter _keyframes;
     /// The most packets sample() has reported lost for a source that counts its own.
     quint64 _rtpPacketsLost = 0;
 };

@@ -2,7 +2,7 @@
 
 #include "GStreamerTestBase.h"
 
-/// qgcvideosinkbin under GstHarness (gst-check), as the receiver binds it to a QVideoSink: synthetic frames through the
+/// The sink bin under GstHarness (gst-check), as the receiver binds it to a QVideoSink: synthetic frames through the
 /// bin's converter, delivered only when the test runs the GUI thread's queued calls.
 class GstQgcSinkHarnessTest : public GStreamerTestBase
 {

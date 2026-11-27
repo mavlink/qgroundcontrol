@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-# Runs the iOS SDK acquisition in script mode against a pinned stand-in for the 1.28.8+ xcframework tarball: only the
+# Runs the iOS SDK acquisition in script mode against a pinned stand-in for the xcframework tarball: only the
 # xcframework's Info.plist and iOS slices are extracted, and each slice resolves to its merged archive and headers.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
@@ -25,12 +25,11 @@ execute_process(
     WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
 )
 file(SHA256 "${_archive}" _hash)
-set(QGC_BUILD_CONFIG_CONTENT
-    "{\"gstreamer\":{\"checksums\":{\"${QGC_GST_REQUESTED_VERSION}\":{\"ios\":\"${_hash}\"}}}}"
-)
+qgc_test_build_config(${QGC_GST_REQUESTED_VERSION} ios ${_hash})
 
-_qgc_gst_acquire_ios_sdk(_expanded)
-qgc_test_assert_streq("expanded dir" "${_cache_dir}/sdk/expanded" "${_expanded}")
+_qgc_gst_acquire_ios_sdk(_acquired)
+set(_expanded "${_cache_dir}/sdk/expanded")
+qgc_test_assert_streq("acquired xcframework" "${_expanded}/GStreamer.xcframework" "${_acquired}")
 file(
     GLOB_RECURSE _extracted
     RELATIVE "${_expanded}"

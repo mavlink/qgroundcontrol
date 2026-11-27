@@ -6,6 +6,7 @@
 #include <QtTest/QTest>
 
 #include "ColoredSvgImageProvider.h"
+#include "QtVideoRecorder.h"
 #include "VideoManager/VideoTestHelpers.h"
 #include "VideoSettings.h"
 
@@ -36,6 +37,26 @@ void VideoSettingsTest::_videoFitEnumMatchesMetaData()
     QCOMPARE(values.at(1).toInt(), static_cast<int>(VideoSettings::VideoFitHeight));
     QCOMPARE(values.at(2).toInt(), static_cast<int>(VideoSettings::VideoFitFill));
     QCOMPARE(values.at(3).toInt(), static_cast<int>(VideoSettings::VideoFitNoCrop));
+}
+
+void VideoSettingsTest::_forcedAspectRatioLabelsAreTheirRatios()
+{
+    VideoSettings videoSettings;
+    const Fact* const forcedAspectRatio = videoSettings.forcedAspectRatio();
+    const QStringList labels = forcedAspectRatio->enumStrings();
+    const QVariantList values = forcedAspectRatio->enumValues();
+    QCOMPARE(labels.size(), values.size());
+    QVERIFY(labels.size() > 1);
+    QCOMPARE(labels.first(), QStringLiteral("Auto"));
+    QCOMPARE(values.first().toInt(), static_cast<int>(VideoSettings::AspectRatioAuto));
+    QCOMPARE(VideoSettings::aspectRatioOf(values.first().toInt()), 0.0);
+
+    // Every other choice is labelled with the ratio it stretches the video to, as "16:9".
+    for (qsizetype i = 1; i < labels.size(); ++i) {
+        const QStringList terms = labels.at(i).split(QLatin1Char(':'));
+        QCOMPARE(terms.size(), 2);
+        QCOMPARE(VideoSettings::aspectRatioOf(values.at(i).toInt()), terms.at(0).toDouble() / terms.at(1).toDouble());
+    }
 }
 
 void VideoSettingsTest::_videoSourcesFollowCameras()
@@ -126,6 +147,49 @@ void VideoSettingsTest::_absentStoredCameraStaysSelected()
     fact->setRawValue(noCamera);
     QTRY_VERIFY_WITH_TIMEOUT(!fact->enumValues().contains(kTestCamera), TestTimeout::shortMs());
     QCOMPARE(fact->rawValue().toString(), noCamera);
+}
+
+void VideoSettingsTest::_cameraFormatsFollowCamera()
+{
+    const QString mjpeg = QStringLiteral("1920x1080 30 fps MJPEG");
+    const QString yuyv = QStringLiteral("640x480 30 fps YUYV");
+
+    VideoSettings videoSettings;
+    // SettingsFacts ignore QSettings under unit tests, so the default stands in for the stored format.
+    videoSettings._nameToMetaDataMap[QString::fromLatin1(VideoSettings::uvcCameraFormatName)]->setRawDefaultValue(
+        mjpeg);
+    Fact* const format = videoSettings.uvcCameraFormat();
+
+    // Without a camera Auto is offered, and the stored format, which stays selected.
+    QCOMPARE(format->enumValues(), QVariantList({QString(), mjpeg}));
+    QCOMPARE(format->enumStrings().first(), QStringLiteral("Auto"));
+    QCOMPARE(format->enumStringValue(), QStringLiteral("1920x1080 30 fps MJPEG (not offered)"));
+
+    // A camera's formats follow Auto.
+    videoSettings.offerCameraFormats({mjpeg, yuyv});
+    QCOMPARE(format->enumValues(), QVariantList({QString(), mjpeg, yuyv}));
+    QCOMPARE(format->enumStringValue(), mjpeg);
+
+    // A camera without the selected format leaves it selected, until another one is.
+    videoSettings.offerCameraFormats({yuyv});
+    QCOMPARE(format->enumValues(), QVariantList({QString(), yuyv, mjpeg}));
+    format->setRawValue(QString());
+    QTRY_COMPARE_WITH_TIMEOUT(format->enumValues(), QVariantList({QString(), yuyv}), TestTimeout::shortMs());
+}
+
+void VideoSettingsTest::_recordingCodecsAreThoseQtEncodes()
+{
+    VideoSettings videoSettings;
+    const Fact* const codec = videoSettings.uvcRecordingCodec();
+
+    QVariantList values{QString()};
+    QStringList labels{QStringLiteral("Auto")};
+    for (const QString& key : QtVideoRecorder::recordingCodecs()) {
+        values.append(key);
+        labels.append(QtVideoRecorder::recordingCodecName(key));
+    }
+    QCOMPARE(codec->enumValues(), values);
+    QCOMPARE(codec->enumStrings(), labels);
 }
 
 void VideoSettingsTest::_overriddenVideoSourcesAreKept()

@@ -38,6 +38,9 @@ struct RankTraits
     /// other. The default option also demotes the legacy vaapi decoders, whose memory the GPU paths can't import; the
     /// hardware option keeps them below as a fallback.
     bool preferZeroCopyDecoders = false;
+    /// iOS: for the default option, rank the VideoToolbox decoders above the software ones. GStreamer ranks both
+    /// PRIMARY there, and of two decoders of one rank decodebin3 plugs the first by name, which is the software one.
+    bool preferVideoToolbox = false;
     /// Windows: the Direct3D API Qt renders with. After any option, the D3D decoders whose frames it can't sample are
     /// demoted; for the default and hardware options, those it prefers rank above every other.
     std::optional<D3DApi> rhiD3DApi;

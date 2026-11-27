@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-# The iOS SDK version comes from gst/gstversion.h, which every SDK layout has, including an xcframework slice that holds
-# only libGStreamer.a and Headers (no GStreamer.framework/Info.plist, which the version used to be read from).
+# The iOS SDK version comes from gst/gstversion.h: an xcframework slice holds only libGStreamer.a and Headers.
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../SdkState.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../platform/IOS.cmake")
@@ -22,15 +21,17 @@ function(_qgc_test_version_header dir version)
     )
 endfunction()
 
-# Writes a GStreamer.framework under <dir> with a merged binary and headers for <version>.
-function(_qgc_test_framework dir version)
-    file(WRITE "${dir}/GStreamer.framework/Versions/1.0/GStreamer" "")
-    _qgc_test_version_header("${dir}/GStreamer.framework/Versions/1.0/Headers" ${version})
+# Writes a GStreamer.xcframework under <dir> whose slices hold a merged archive and headers for <version>.
+function(_qgc_test_xcframework dir version)
+    foreach(_slice IN ITEMS ios-arm64 ios-arm64_x86_64-simulator)
+        file(WRITE "${dir}/GStreamer.xcframework/${_slice}/libGStreamer.a" "")
+        _qgc_test_version_header("${dir}/GStreamer.xcframework/${_slice}/Headers" ${version})
+    endforeach()
 endfunction()
 
 if(TEST_CASE STREQUAL "below-requested")
-    _qgc_test_framework("${_sandbox}" 1.28.2)
-    _qgc_gst_ios_layout("${_sandbox}/GStreamer.framework" _layout)
+    _qgc_test_xcframework("${_sandbox}" 1.28.2)
+    _qgc_gst_ios_layout("${_sandbox}/GStreamer.xcframework" _layout)
     _qgc_gst_ios_sdk_version("${_layout_INCLUDE}" _version)
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 elseif(DEFINED TEST_CASE)
@@ -38,22 +39,12 @@ elseif(DEFINED TEST_CASE)
 endif()
 
 set(_xcfw "${_sandbox}/GStreamer.xcframework")
-foreach(_slice IN ITEMS ios-arm64 ios-arm64_x86_64-simulator)
-    file(WRITE "${_xcfw}/${_slice}/libGStreamer.a" "")
-    _qgc_test_version_header("${_xcfw}/${_slice}/Headers" 1.28.9)
-endforeach()
+_qgc_test_xcframework("${_sandbox}" 1.28.9)
 _qgc_gst_ios_layout("${_xcfw}" _layout)
 qgc_test_assert_streq("slice archive" "${_xcfw}/ios-arm64/libGStreamer.a" "${_layout_LIB}")
 _qgc_gst_ios_sdk_version("${_layout_INCLUDE}" _version)
 qgc_test_assert_streq("xcframework slice version" 1.28.9 "${_version}")
-qgc_test_pass("xcframework slice without Info.plist")
-
-_qgc_test_framework("${_sandbox}/fw" 1.28.7)
-_qgc_gst_ios_layout("${_sandbox}/fw/GStreamer.framework" _layout)
-qgc_test_assert_streq("framework archive" "${_sandbox}/fw/GStreamer.framework/Versions/1.0/GStreamer" "${_layout_LIB}")
-_qgc_gst_ios_sdk_version("${_layout_INCLUDE}" _version)
-qgc_test_assert_streq("framework version" 1.28.7 "${_version}")
-qgc_test_pass("framework")
+qgc_test_pass("xcframework slice")
 
 file(MAKE_DIRECTORY "${_sandbox}/no-headers")
 _qgc_gst_ios_sdk_version("${_sandbox}/no-headers" _version)

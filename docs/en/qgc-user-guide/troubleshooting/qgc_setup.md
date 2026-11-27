@@ -36,29 +36,29 @@ If using _Windows Defender_:
   You'll find QGC under **O**: _Open source ground control app provided by QGroundControl dev team_
   :::
 
-## Ubuntu: Video Streaming Fails (Missing Gstreamer) {#missing_gstreamer}
+## Video Does Not Show {#video_troubleshooting}
 
-On Ubuntu you must install _Gstreamer_ components in order to see video streams.
-If these are not installed _QGroundControl_ is unable to create the gstreamer nodes and fails with:
+The [Video indicator](../fly_view/fly_view_toolbar.md#video) in the Fly View toolbar tells whether a stream arrives:
+its dropdown shows the bitrate, decoder, display path and packet loss of each stream
+(see [Video Statistics](../fly_view/video.md#video-statistics)).
 
-```sh
-VideoReceiver::start() failed. Error with gst_element_factory_make(‘avdec_h264’)
-```
+- **Nothing arrives** (the view says **WAITING FOR VIDEO**, and the dropdown shows no frame rate): check the
+  **Source** and its address in [Application Settings > Video](../settings_view/video.md), that no other program
+  listens on the same UDP port, and that no firewall blocks the stream (on Windows, allow _QGroundControl_ through the
+  firewall as described [above](#waiting_for_connection)). To receive an RTSP stream over TCP, enter its address as
+  `rtspt://`.
+- **The stream arrives but has no picture**: _QGroundControl_ says in a message why it can't decode the stream. When
+  the dropdown names a hardware **Decoder**, set **Force video decoder priority** to **Software**.
+- **The picture is wrong** (wrong colours, or a green or torn picture): turn on **Force CPU video path**. If that
+  doesn't help, set **Force video decoder priority** to **Software**.
+- **_QGroundControl_ says at startup that GStreamer failed to initialize**: it plays the streams with Qt Multimedia
+  instead, which the **Video backend** setting can also choose. The application log has the cause.
 
-The [download/install instructions for Ubuntu](../getting_started/download_and_install.md#ubuntu) include _GStreamer_ setup information.
+These settings are described in [Application Settings > Video](../settings_view/video.md#settings). When you report a
+video problem, attach the [application log](console_logging.md), with the logging categories
+`Video.GStreamer.GstVideoReceiver` and `Video.VideoManager` turned on.
 
-## Ubuntu 18.04: Video Streaming Fails on Dual Video Adapter Systems {#dual_vga}
-
-The version of GStreamer in Ubuntu 18.04 has a bug that prevents video displaying when using a VA API based decoder (i.e. vaapih264dec etc.) on systems that have both Intel and NVidia video display adapters.
-
-::: info
-More generally, while the problem is known to occur on Ubuntu 18.04 with Intel and NVidia VGAs, it might occur on any linux system and other types of (dual) VGAs.
-:::
-
-The easiest way to get _QGroundControl_ to work in this case is to start it using the following command line:
-
-```sh
-LIBVA_DRIVER_NAME=fakedriver ./QGroundControl
-```
-
-Other alternatives are to disable one of the VGAs, uninstall VA API components, or upgrade to GStreamer 1.16 (there is no easy way to do this on Ubuntu 18.04 - please contribute a recipe if you find one!)
+When a stream played with GStreamer fails or stalls, _QGroundControl_ also saves a graph of its video pipeline as a
+`.dot` file in the `qgc-pipeline-dot` folder of its cache directory (on Linux, under `~/.cache/QGroundControl/`). It
+keeps the 10 newest files, and the log names each file it saves. Attach the newest one as well: it shows the pipeline's
+elements and formats but not their settings, so it holds no stream address or password.

@@ -107,6 +107,7 @@ def _clear_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in [
         *CONFIGURE_INPUTS,
         *BUILD_INPUTS,
+        "INPUT_OBJECTS_UNDER",
         *CTEST_INPUTS,
         "QGC_CACHE_PROGRAM",
         "QGC_CHECK_RESULT_CACHE_DIR",
@@ -297,6 +298,80 @@ def test_build_reads_action_inputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
 
     assert build.commands == [["cmake", "--build", ".", "--target", "autogen", "--parallel", "3"]]
     assert build.logs == [str(tmp_path / "build-output.log")]
+
+
+def _write_compile_commands(build: Path, source: Path, entries: list[tuple[str, str]]) -> None:
+    """Configure *build* for *source* with one compile command per (file, output) of *entries*."""
+    build.mkdir()
+    (build / "CMakeCache.txt").write_text(
+        f"CMAKE_HOME_DIRECTORY:INTERNAL={source}\n", encoding="utf-8"
+    )
+    commands = [
+        {"directory": str(build), "file": file, "output": output} for file, output in entries
+    ]
+    (build / "compile_commands.json").write_text(json.dumps(commands), encoding="utf-8")
+
+
+def test_build_selects_the_objects_of_the_sources_below_a_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source, build = tmp_path / "checkout", tmp_path / "build"
+    _write_compile_commands(
+        build,
+        source,
+        [
+            # One source that two targets compile, with an absolute and a relative output.
+            (
+                str(source / "src/Video/Sink.cc"),
+                str(build / "CMakeFiles/App.dir/src/Video/Sink.cc.o"),
+            ),
+            (str(source / "src/Video/Sink.cc"), "src/Video/CMakeFiles/Video.dir/Sink.cc.o"),
+            (
+                str(source / "test/Video/SinkTest.cc"),
+                "test/CMakeFiles/Tests.dir/Video/SinkTest.cc.o",
+            ),
+            # Outside the directories: another module, one whose name only starts alike, and a
+            # generated source, which is in the build directory.
+            (str(source / "src/Vehicle/Vehicle.cc"), "CMakeFiles/App.dir/src/Vehicle/Vehicle.cc.o"),
+            (str(source / "src/VideoManager/Manager.cc"), "CMakeFiles/App.dir/Manager.cc.o"),
+            (
+                str(build / "src/Video/Video_autogen/mocs.cpp"),
+                "src/Video/CMakeFiles/Video.dir/mocs.cpp.o",
+            ),
+        ],
+    )
+    monkeypatch.chdir(build)
+    monkeypatch.setenv("INPUT_TARGET", "all")
+    monkeypatch.setenv("INPUT_OBJECTS_UNDER", "src/Video test/Video")
+    fake = _fake_build(monkeypatch, 0)
+
+    assert main(["build"]) == 0
+    assert fake.commands == [
+        [
+            "cmake",
+            "--build",
+            ".",
+            "--target",
+            "CMakeFiles/App.dir/src/Video/Sink.cc.o",
+            "src/Video/CMakeFiles/Video.dir/Sink.cc.o",
+            "test/CMakeFiles/Tests.dir/Video/SinkTest.cc.o",
+        ]
+    ]
+
+
+def test_build_fails_for_a_directory_whose_sources_the_build_does_not_compile(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source, build = tmp_path / "checkout", tmp_path / "build"
+    _write_compile_commands(
+        build, source, [(str(source / "src/Video/Sink.cc"), "CMakeFiles/App.dir/Sink.cc.o")]
+    )
+    monkeypatch.chdir(build)
+    fake = _fake_build(monkeypatch, 0)
+
+    assert main(["build", "--objects-under", "src/Video", "src/Renamed"]) == 1
+    assert fake.commands == []
+    assert "the build compiles no source below src/Renamed" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(

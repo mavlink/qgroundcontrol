@@ -116,8 +116,9 @@ and the full list. Each rule's reason is its `description` in `renovate.json`.
   (`docs/.nvmrc`), Android Gradle, and the actions in workflows and composite actions. Regex
   managers add the Docker variant base images, the uv `required-version` floor (from uv's PyPI
   releases), the pins in `build-config.json` (the CI CMake, following get-cmake's tags, Ninja, the
-  `tools` releases, the Android OpenSSL release, and the AppImage tools), the C++ libraries that
-  `CPMAddPackage` fetches from GitHub at a version tag, and ArduPilot's parameter repository.
+  `tools` releases, the Android OpenSSL release, the AppImage tools, and the iOS CA bundle), the
+  C++ libraries that `CPMAddPackage` fetches from GitHub at a version tag, and ArduPilot's
+  parameter repository.
 - Updates arrive as one weekly grouped PR (before 06:00 UTC on Monday), with Android libraries in
   a second and lock file maintenance (`tools/uv.lock`, `docs/package-lock.json`) in a third on
   the same schedule. Renovate merges nothing itself, and major updates wait for approval on the
@@ -149,10 +150,17 @@ and the full list. Each rule's reason is its `description` in `renovate.json`.
 - Pins that carry SHA-256 digests wait for approval there and then open their own PR, which must
   add the new release's digests by hand before its checksum checks pass: the `build-config.json`
   `tools` pins, the Android OpenSSL release (held to the 3.5 long-term support series), linuxdeploy,
-  and appimagetool. appimagelint is not updated: it publishes only a rolling `continuous` release,
-  so `build-config.json` pins one reviewed build by digest.
-  `test_build_tools_contract.py::test_schema_requires_the_pins_and_renovate_tracks_them` keeps the
+  appimagetool, and the iOS CA bundle. appimagelint is not updated: it publishes only a rolling
+  `continuous` release, so `build-config.json` pins one reviewed build by digest.
+- The iOS CA bundle (`gstreamer.ca_bundle_url`) is a dated Mozilla CA snapshot from curl.se, the
+  trust root for `rtsps://` streams on iOS. Renovate reads the dates from the links on
+  <https://curl.se/docs/caextract.html> (a custom `html` datasource) and its PR changes the date in
+  the URL; set `gstreamer.ca_bundle_sha256` to the hash in `<the new URL>.sha256` and check it
+  against a download (`curl -fsSL <the new URL> | sha256sum`). Android takes its bundle from the
+  GStreamer SDK instead.
+- `test_build_tools_contract.py::test_schema_requires_the_pins_and_renovate_tracks_them` keeps the
   tracked set equal to these pins plus CMake and Ninja. Renovate does not track the other
-  `build-config.json` values (Qt, the Android SDK and NDK, Xcode, GStreamer, the analysis
-  toolchain); bump them by hand (`just check-deps` and `just check-gstreamer` report newer Qt and
-  GStreamer releases).
+  `build-config.json` values (Qt, the Android SDK and NDK, Xcode, the GStreamer versions, the
+  analysis toolchain); bump them by hand (`just check-deps` and `just check-gstreamer` report newer
+  Qt and GStreamer releases; `just update-gstreamer <version>` writes a GStreamer release's
+  version and package checksums).

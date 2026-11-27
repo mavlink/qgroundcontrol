@@ -8,7 +8,7 @@
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GstScoped.h"
-#include "RecordingBranch.h"
+#include "RecordingSink.h"
 
 using namespace std::chrono_literals;
 
@@ -94,7 +94,6 @@ void watchDecoder([[maybe_unused]] GstBin* bin, [[maybe_unused]] GstBin* subBin,
 
 }  // namespace
 
-/// Whether decodebin3 has a decoder for @p sample's codec to plug: one ranked at least MARGINAL.
 bool hasDecoderFor(const Sample& sample)
 {
     const GstCapsPtr caps = adoptCaps(gst_caps_new_empty_simple(sample.mediaType));
@@ -105,7 +104,6 @@ bool hasDecoderFor(const Sample& sample)
     return found;
 }
 
-/// appsrc ! <parser> ! decodebin3 ! appsink, the sink taking raw video in system memory, which every decoder can give.
 DecodeResult decodeSample(const Sample& sample, const QByteArray& data, std::chrono::milliseconds timeout)
 {
     DecoderWatch watch;
@@ -154,14 +152,13 @@ DecodeResult decodeSample(const Sample& sample, const QByteArray& data, std::chr
     return result;
 }
 
-/// appsrc ! RecordingBranch's file sink (h264parse ! muxer ! filesink), as a recording is muxed.
 QString recordSample(const QString& file, VideoReceiver::FileFormat format, const QByteArray& h264,
                      std::chrono::milliseconds timeout)
 {
     const GstElementPtr pipeline = adoptFloating(gst_pipeline_new("selftest-record"));
     const GstCapsPtr caps = byteStreamCaps(kH264Sample);
     GstElementPtr sourceOwner = makeElement("appsrc");
-    GstElementPtr fileSinkOwner = RecordingBranch::makeFileSink(file, format, caps.get());
+    GstElementPtr fileSinkOwner = RecordingSink::create(file, format, caps.get()).bin;
     if (!pipeline || !sourceOwner || !fileSinkOwner) {
         return QStringLiteral("cannot create appsrc or the recording sink");
     }
@@ -175,7 +172,6 @@ QString recordSample(const QString& file, VideoReceiver::FileFormat format, cons
     return playToEos(pipeline.get(), source, h264, timeout);
 }
 
-/// filesrc ! <demuxer> ! fakesink: the recorded file opens and holds video.
 QString readBack(const QString& file, const char* demuxer, std::chrono::milliseconds timeout)
 {
     std::atomic<int> buffers = 0;

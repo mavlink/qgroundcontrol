@@ -9,7 +9,6 @@
 #include "GstRtpPacketProbe.h"
 #include "GstScoped.h"
 #include "VideoStreamStats.h"
-#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 
@@ -21,8 +20,11 @@ struct JitterBufferTotals
 {
     bool found = false;
     quint64 packetsPushed = 0;
-    /// Never arrived ("num-lost"), or dropped on arrival to stay within the latency.
+    /// Never arrived, by the jitter buffer's count ("num-lost"): those that came too late as well, and the sequence
+    /// numbers a sender skipped when it started over.
     quint64 packetsLost = 0;
+    /// Dropped on arrival to stay within the latency.
+    quint64 packetsDroppedOnLatency = 0;
     quint64 packetsLate = 0;
     quint64 packetsDuplicate = 0;
     quint64 rtxRequested = 0;
@@ -45,12 +47,15 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
         GstStructure* rawStats = nullptr;
         g_object_get(element, "stats", &rawStats, nullptr);
         const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-        const auto field = [&stats](const char* name) -> guint64 { return GstQgc::frameStatsField(stats.get(), name); };
+        const auto field = [&stats](const char* name) {
+            guint64 value = 0;
+            return (stats && gst_structure_get_uint64(stats.get(), name, &value)) ? value : guint64(0);
+        };
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");
-        sum->packetsLost +=
-            field("num-lost") + GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
+        sum->packetsLost += field("num-lost");
+        sum->packetsDroppedOnLatency += GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
         sum->packetsLate += field("num-late");
         sum->packetsDuplicate += field("num-duplicates");
         sum->rtxRequested += field("rtx-count");
@@ -67,8 +72,9 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
     return totals;
 }
 
-/// The codec of the compressed video @p caps describe: "H.264", "H.265", ...; empty without caps.
-QString codecName(const GstCaps* caps)
+}  // namespace
+
+QString PipelineStatsProbe::codecName(const GstCaps* caps)
 {
     if (!caps || gst_caps_is_empty(caps) || gst_caps_is_any(caps)) {
         return {};
@@ -91,8 +97,6 @@ QString codecName(const GstCaps* caps)
     return QString::fromUtf8(gst_structure_get_name(structure));
 }
 
-}  // namespace
-
 void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
 {
     (void) _bytesReceived.fetch_add(gst_buffer_get_size(buffer), std::memory_order_relaxed);
@@ -101,7 +105,7 @@ void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
     }
     const GstClockTime time = GST_BUFFER_PTS_IS_VALID(buffer) ? GST_BUFFER_PTS(buffer) : GST_BUFFER_DTS(buffer);
     if (GST_CLOCK_TIME_IS_VALID(time)) {
-        _noteKeyframe(time);
+        _keyframes.note(std::chrono::nanoseconds(time));
     }
 }
 
@@ -119,30 +123,6 @@ void PipelineStatsProbe::noteElementMessage(GstMessage* message)
     g_object_set_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey, GSIZE_TO_POINTER(total));
 }
 
-void PipelineStatsProbe::_noteKeyframe(GstClockTime time)
-{
-    if (_keyframeTimeCount > 0) {
-        const GstClockTime previous = _keyframeTimes[_keyframeTimeCount - 1];
-        // Parameter sets that arrive in a buffer of their own share the keyframe's timestamp.
-        if (time == previous) {
-            return;
-        }
-        // Timestamps that went back start over, as after a new segment.
-        if (time < previous) {
-            _keyframeTimeCount = 0;
-        }
-    }
-    if (_keyframeTimeCount == kKeyframeWindow) {
-        std::shift_left(_keyframeTimes.begin(), _keyframeTimes.end(), 1);
-        --_keyframeTimeCount;
-    }
-    _keyframeTimes[_keyframeTimeCount++] = time;
-    if (_keyframeTimeCount >= 2) {
-        const GstClockTime span = _keyframeTimes[_keyframeTimeCount - 1] - _keyframeTimes[0];
-        _keyframeInterval.store(span / (_keyframeTimeCount - 1), std::memory_order_relaxed);
-    }
-}
-
 void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstElement* tee,
                                 VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats)
 {
@@ -156,25 +136,33 @@ void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstEle
     stats.rtxRecovered = -1;
     const JitterBufferTotals jitterBuffers = jitterBufferTotals(source);
     if (jitterBuffers.found) {
-        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = jitterBuffers.packetsPushed,
-                                                          .packetsLost = jitterBuffers.packetsLost};
         stats.jitterMs = static_cast<double>(jitterBuffers.maxJitterNs) / GST_MSECOND;
         stats.packetsLate = static_cast<qint64>(jitterBuffers.packetsLate);
         stats.packetsDuplicate = static_cast<qint64>(jitterBuffers.packetsDuplicate);
         stats.rtxRequested = static_cast<qint64>(jitterBuffers.rtxRequested);
         stats.rtxRecovered = static_cast<qint64>(jitterBuffers.rtxRecovered);
-    } else if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
-        // A packet that arrives late is no longer lost, but the meter takes a counter that shrank for one that started
-        // again from zero: the count it is given only grows, and the next packets lost make up for the late one.
-        _rtpPacketsLost = std::max(_rtpPacketsLost, packets->packetsLost);
-        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = packets->packetsReceived,
-                                                          .packetsLost = _rtpPacketsLost};
-        stats.jitterMs = packets->jitterMs;
+    }
+    if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
+        // The source's own count of the packets that never arrived, and those a jitter buffer had no use for: too late
+        // for it, or dropped to stay within its latency. A packet that arrives late is no longer lost, but the meter
+        // takes a counter that shrank for one that started again from zero: the count it is given only grows, and the
+        // next packets lost make up for the late one.
+        _rtpPacketsLost = std::max(
+            _rtpPacketsLost, packets->packetsLost + jitterBuffers.packetsLate + jitterBuffers.packetsDroppedOnLatency);
+        // Of those that arrived, a jitter buffer passes on what it did not drop.
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{
+            .packetsReceived = jitterBuffers.found ? jitterBuffers.packetsPushed : packets->packetsReceived,
+            .packetsLost = _rtpPacketsLost};
+        if (!jitterBuffers.found) {
+            stats.jitterMs = packets->jitterMs;
+        }
+    } else if (jitterBuffers.found) {
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{
+            .packetsReceived = jitterBuffers.packetsPushed,
+            .packetsLost = jitterBuffers.packetsLost + jitterBuffers.packetsDroppedOnLatency};
     }
 
-    const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);
-    stats.keyframeIntervalMs =
-        GST_CLOCK_TIME_IS_VALID(keyframeInterval) ? static_cast<double>(keyframeInterval) / GST_MSECOND : -1.0;
+    stats.keyframeIntervalMs = _keyframes.intervalMs();
 
     GstClockTime minLatency = 0;
     GstClockTime maxLatency = 0;

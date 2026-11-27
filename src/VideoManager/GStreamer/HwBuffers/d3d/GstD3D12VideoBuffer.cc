@@ -1,54 +1,26 @@
 #include "GstD3DVideoBufferCommon.h"
 
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <array>
 #include <atomic>
+#include <d3d11_4.h>  // ID3D11Device5, ID3D11DeviceContext4, ID3D11Fence
 #include <d3d12.h>
 #include <gst/d3d12/gstd3d12.h>
 #include <rhi/qrhi_platform.h>
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include <d3d11_4.h>  // ID3D11Device5, ID3D11DeviceContext4, ID3D11Fence
 
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
-#endif
 
+#include "GstD3D11PictureCopy.h"
 #include "GstD3D12ContextBridge.h"
 #include "GstHwPathRegistry.h"
-#include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11PictureCopy.h"
-#endif
 
 QGC_LOGGING_CATEGORY(GstD3D12Log, "Video.GStreamer.HwBuffers.GstD3D12Buf")
 
 namespace {
-
-/// Every once-only log latch of the path, so resetCachedState() re-arms them as one.
-struct D3D12Diagnostics : GstD3DVideoBufferCommon::MapDiagnostics
-{
-    std::atomic<bool> loggedMultiPlane{false};
-    std::atomic<bool> loggedForeignDevice{false};
-    std::atomic<bool> loggedArraySlice{false};
-    std::atomic<bool> loggedNotShared{false};
-
-    void reset() noexcept
-    {
-        GstD3DVideoBufferCommon::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedMultiPlane, &loggedForeignDevice, &loggedArraySlice, &loggedNotShared}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(D3D12Diagnostics) ==
-                  sizeof(GstD3DVideoBufferCommon::MapDiagnostics) + (4 * sizeof(std::atomic<bool>)),
-              "D3D12Diagnostics::reset() must list every flag");
-
-D3D12Diagnostics s_diag;
 
 /// True once Qt Quick is known to render with Direct3D 12. A stream may start before the render thread says what it
 /// renders with.
@@ -64,7 +36,6 @@ bool d3d12RhiSamples(QVideoFrameFormat::PixelFormat pixelFormat)
     return description && (description->nplanes == 1);
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// True when @p device says it opens a Direct3D 12 device's resources as textures, NV12 with both planes: what
 /// gst-d3d11 asks of a device before its own interop (gst_d3d11_device_d3d12_import_supported()). WARP says so too
 /// and then opens NV12 without its chroma plane, but no decoder shares its adapter.
@@ -80,9 +51,8 @@ bool d3d11OpensD3D12(ID3D11Device* device)
            SUCCEEDED(device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS4, &options4, sizeof(options4))) &&
            options4.ExtendedNV12SharedTextureSupported;
 }
-#endif
 
-/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool().
+/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes().
 class D3D12PlaneResolver
 {
 public:
@@ -91,7 +61,6 @@ public:
     using Device = GstD3D12Device;
 
     static constexpr const char* kMemoryName = "GstD3D12Memory";
-    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY;
 
     static const QLoggingCategory& log() { return GstD3D12Log(); }
 
@@ -121,8 +90,7 @@ public:
     static bool prepare(Memory* mem, int plane)
     {
         if (!gst_d3d12_memory_sync(mem)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNullResource,
-                             "resolve: gst_d3d12_memory_sync failed for plane" << plane);
+            QGC_HW_WARN_ONCE(GstD3D12Log, "resolve: gst_d3d12_memory_sync failed for plane" << plane);
             return false;
         }
         return true;
@@ -132,36 +100,9 @@ public:
     // textures, and its decoders copy a frame out of a reference-only array before they hand it on.
     static Handle* copySlice(Handle* /*resource*/, guint subIdx, int plane)
     {
-        QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedArraySlice,
+        QGC_HW_WARN_ONCE(GstD3D12Log,
                          "resolve: plane" << plane << "is slice" << subIdx << "of a texture array — CPU fallback");
         return nullptr;
-    }
-
-    static GstBufferPool* newPool(Device* device) { return gst_d3d12_buffer_pool_new(device); }
-
-    // gst_d3d12_memory_get_d3d11_texture() opens a resource on a Direct3D 11 device only from a shared heap, and with
-    // a render-target binding. A decoder that copies its frames into the downstream pool allocates them as that pool
-    // says.
-    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
-    {
-        D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE;
-        D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-        if (!qtRendersWithD3D12()) {
-            resourceFlags = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
-            heapFlags = D3D12_HEAP_FLAG_SHARED;
-            GstD3D12Format deviceFormat = {};
-            if (gst_d3d12_device_get_format(device, GST_VIDEO_INFO_FORMAT(vinfo), &deviceFormat) &&
-                ((deviceFormat.support1 & D3D12_FORMAT_SUPPORT1_RENDER_TARGET) != 0)) {
-                resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-            }
-        }
-#endif
-        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
-                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, resourceFlags, heapFlags)) {
-            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
-            gst_d3d12_allocation_params_free(params);
-        }
     }
 };
 
@@ -183,7 +124,6 @@ bool onDevice(ID3D12Resource* resource, void* qrhiDevice)
     return same;
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// A fence the Direct3D 11 context of Qt's device signals and a Direct3D 12 device waits on. The two devices order
 /// nothing between them, so this is what tells that Direct3D 11 is done reading a resource of the other.
 class InteropFence
@@ -285,10 +225,9 @@ std::shared_ptr<InteropFence> interopFence(ID3D11Device* device11, ID3D12Device*
     }
     return s_interopFence->isValid() ? s_interopFence : nullptr;
 }
-#endif
 
 /// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard and the decoder sync run in the
-/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
+/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so importTextures() on the
 /// render thread only imports resolved resources. A Direct3D 12 QRhi samples the resource itself. A Direct3D 11 QRhi
 /// can't, but the resource opens as a texture of its device: the picture is copied out of that on the render thread,
 /// as the D3D11 path copies it out of a decoder's padded texture, and GStreamer never uses Qt's device.
@@ -296,12 +235,12 @@ class D3D12VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D12
 {
 public:
     D3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12, s_diag)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12)
     {
-        // The D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path, here for the
-        // whole stream rather than frame by frame in mapTextures().
+        // The D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path, refused here on
+        // the streaming thread rather than in importTextures().
         if (qtRendersWithD3D12() && !d3d12RhiSamples(format.pixelFormat())) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedMultiPlane,
+            QGC_HW_WARN_ONCE(GstD3D12Log,
                              "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
             return;
         }
@@ -309,7 +248,6 @@ public:
         (void) resolve(resolver);
     }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     ~D3D12VideoBuffer() override
     {
         // The decoder writes its next frame into this resource once the sample goes: not before Direct3D 11 copied it.
@@ -317,38 +255,32 @@ public:
             _readFence->wait(_readValue);
         }
     }
-#endif
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         if (rhi.backend() == QRhi::D3D11) {
             return mapOnD3D11(rhi, old);
         }
-#endif
         if (!beginMap(rhi, QRhi::D3D12)) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         if (!d3d12RhiSamples(_format.pixelFormat())) {
-            QGC_HW_WARN_ONCE(
-                GstD3D12Log, s_diag.loggedMultiPlane,
-                "mapTextures: multi-plane D3D12Memory" << _format.pixelFormat() << "can't be sampled by QRhi");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: multi-plane D3D12Memory" << _format.pixelFormat()
+                                                                                 << "can't be sampled by QRhi");
+            return {};
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: a resource of another device
         // imports fine but renders corrupt.
         const auto* native = static_cast<const QRhiD3D12NativeHandles*>(rhi.nativeHandles());
         if (!native || !onDevice(_handles[0], native->dev)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedForeignDevice,
-                             "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
+            return {};
         }
-        return finishMap(rhi, old, _handles);
+        return importResolved(rhi, _handles);
     }
 
 private:
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    /// mapTextures() for a Direct3D 11 QRhi.
+    /// importTextures() for a Direct3D 11 QRhi.
     QVideoFrameTexturesUPtr mapOnD3D11(QRhi& rhi, QVideoFrameTexturesUPtr& old)
     {
         GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);
@@ -356,7 +288,7 @@ private:
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
         if (!buffer || !device || !context) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         // One NV12/P010 resource holds every plane. Its Direct3D 11 view belongs to the memory, which keeps one per
         // device; none opens for a resource on another adapter, or one whose heap isn't shared.
@@ -365,31 +297,23 @@ private:
         const std::shared_ptr<InteropFence> fence =
             shared ? interopFence(device, gst_d3d12_device_get_device_handle(memory->device)) : nullptr;
         if (!fence) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNotShared,
+            QGC_HW_WARN_ONCE(GstD3D12Log,
                              "mapTextures: the decoder's resource can't be shared with QRhi's Direct3D 11 device "
                              "— CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
 
         ID3D11Texture2D* const picture =
             GstD3D11PictureCopy::copy(device, context, shared, 0, QRect(QPoint(0, 0), _format.frameSize()), old, 0);
         if (!picture) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                             "mapTextures: CreateTexture2D for the picture copy failed");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: CreateTexture2D for the picture copy failed");
+            return {};
         }
         _readFence = fence;
         _readValue = fence->signal(context);
 
-        const GstHwMapTail tail{.path = HwVideoBufferPath::D3D12,
-                                .frameSize = _format.frameSize(),
-                                .pixelFormat = _format.pixelFormat(),
-                                .log = &GstD3D12Log(),
-                                .diag = &s_diag,
-                                .successTag = "D3D12 on D3D11"};
         const std::array<ID3D11Texture2D*, GstHw::kMaxPlanes> planes{picture};
-        QVideoFrameTexturesUPtr textures =
-            GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, planes, 1);
+        QVideoFrameTexturesUPtr textures = importPlanes(rhi, planes, 1, "D3D12 on D3D11");
         picture->Release();
         return textures;
     }
@@ -397,10 +321,8 @@ private:
     /// What mapOnD3D11() signalled last, for the destructor to wait on.
     std::shared_ptr<InteropFence> _readFence;
     quint64 _readValue = 0;
-#endif
 };
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// HwPathDescriptor::probeDevice: whether the Direct3D 11 device Qt Quick renders with takes this path's frames, for
 /// the sink to offer their memory.
 void probeDevice(QRhi& rhi)
@@ -410,17 +332,13 @@ void probeDevice(QRhi& rhi)
     auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
     QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.store(device && d3d11OpensD3D12(device), std::memory_order_release);
 }
-#endif
 
 void resetCachedState() noexcept
 {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     {
         const QMutexLocker lock(&s_interopFenceMutex);
         s_interopFence.reset();
     }
-#endif
-    s_diag.reset();
 }
 
 }  // namespace
@@ -429,12 +347,9 @@ constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
     .path = HwVideoBufferPath::D3D12,
     .matches = [](GstMemory* mem) -> bool { return gst_is_d3d12_memory(mem); },
     .construct = &GstHwPaths::construct<D3D12VideoBuffer>,
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     .probeDevice = &probeDevice,
-#endif
     .resetCaches = &resetCachedState,
-    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D12PlaneResolver>,
     .bridge = &GstD3D12ContextBridge::instance,
 };
 
-#endif  // QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

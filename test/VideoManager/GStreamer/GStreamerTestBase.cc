@@ -1,7 +1,5 @@
 #include "GStreamerTestBase.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <QtCore/QRegularExpression>
 
 #include "GStreamer.h"
@@ -29,18 +27,4 @@ void GStreamerTestBase::init()
     // rtspsrc's proxy lookup.
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("\"pxbackend\" \"Could not parse ignore mask")));
-
-    // On headless/software-GL CI the sink bin cannot honor construct-only GPU properties. The warning is
-    // environment-dependent.
-    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("gpu-zerocopy.*can't be set after construction")));
 }
-
-#else
-
-void GStreamerTestBase::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif

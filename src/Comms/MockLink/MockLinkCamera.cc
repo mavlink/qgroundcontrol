@@ -14,17 +14,12 @@
 
 QGC_LOGGING_CATEGORY(MockLinkCameraLog, "Comms.MockLink.MockLinkCamera")
 
-MockLinkCamera::MockLinkCamera(MockLink *mockLink,
-                               bool captureVideo,
-                               bool captureImage,
-                               bool hasModes,
-                               bool hasVideoStream,
-                               bool canCaptureImageInVideoMode,
-                               bool canCaptureVideoInImageMode,
-                               bool hasBasicZoom,
-                               bool hasTrackingPoint,
-                               bool hasTrackingRectangle)
+MockLinkCamera::MockLinkCamera(MockLink* mockLink, bool captureVideo, bool captureImage, bool hasModes,
+                               bool hasVideoStream, bool canCaptureImageInVideoMode, bool canCaptureVideoInImageMode,
+                               bool hasBasicZoom, bool hasTrackingPoint, bool hasTrackingRectangle,
+                               MockConfiguration::CameraThermalStream thermalStream)
     : _mockLink(mockLink)
+    , _thermalStream(thermalStream)
 {
     // Build capability flags from configuration
     uint32_t configuredFlags = 0;
@@ -50,6 +45,22 @@ MockLinkCamera::MockLinkCamera(MockLink *mockLink,
     _cameras[1].compId   = MAV_COMP_ID_CAMERA2;
     _cameras[1].capFlags = CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
     _cameras[1].cameraMode = CAMERA_MODE_IMAGE;
+
+    switch (_thermalStream) {
+        case MockConfiguration::CameraThermalStreamNone:
+            break;
+        case MockConfiguration::CameraThermalStreamSecondStream:
+            _cameras[0].thermalStreamId = 2;
+            break;
+        case MockConfiguration::CameraThermalStreamSecondCamera:
+            // As mavlink-camera-manager: each stream is the only one, with the id 1, of a camera component of its own
+            _cameras[0].streamCount = 1;
+            _cameras[1].capFlags |= CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
+            _cameras[1].streamCount = 1;
+            _cameras[1].thermalStreamId = 1;
+            _cameras[1].transmittedStreams = 0;
+            break;
+    }
 }
 
 MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
@@ -188,7 +199,8 @@ bool MockLinkCamera::streamTransmitted(uint8_t compId, uint8_t streamId)
 {
     QMutexLocker locker(&_camerasMutex);
     const CameraState* cam = _findCamera(compId);
-    return cam && (streamId >= 1) && (streamId <= kNumStreams) && (cam->transmittedStreams & (1u << (streamId - 1)));
+    return cam && (streamId >= 1) && (streamId <= cam->streamCount) &&
+           (cam->transmittedStreams & (1u << (streamId - 1)));
 }
 
 bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
@@ -228,7 +240,7 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             const uint8_t streamId = static_cast<uint8_t>(request.param1);
             if (streamId == 0) {
                 // Request all streams
-                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                for (uint8_t s = 1; s <= cam->streamCount; s++) {
                     _sendVideoStreamInformation(targetCompId, s);
                 }
             } else {
@@ -244,7 +256,7 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
         if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
             const uint8_t streamId = static_cast<uint8_t>(request.param1);
             if (streamId == 0) {
-                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                for (uint8_t s = 1; s <= cam->streamCount; s++) {
                     _sendVideoStreamStatus(targetCompId, s);
                 }
             } else {
@@ -259,12 +271,12 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
     case MAV_CMD_VIDEO_START_STREAMING:
     case MAV_CMD_VIDEO_STOP_STREAMING: {
         const int streamId = static_cast<int>(request.param1);
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) || (streamId < 0) || (streamId > kNumStreams)) {
+        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) || (streamId < 0) || (streamId > cam->streamCount)) {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
             return true;
         }
         // Stream 0 names every stream
-        const uint32_t streams = (streamId == 0) ? ((1u << kNumStreams) - 1) : (1u << (streamId - 1));
+        const uint32_t streams = (streamId == 0) ? ((1u << cam->streamCount) - 1) : (1u << (streamId - 1));
         if (request.command == MAV_CMD_VIDEO_START_STREAMING) {
             cam->transmittedStreams |= streams;
         } else {
@@ -538,7 +550,7 @@ bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request
         }
         const uint8_t streamId = static_cast<uint8_t>(request.param2);
         if (streamId == 0) {
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
+            for (uint8_t s = 1; s <= cam->streamCount; s++) {
                 _sendVideoStreamInformation(targetCompId, s);
             }
         } else {
@@ -556,7 +568,7 @@ bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request
         }
         const uint8_t streamId = static_cast<uint8_t>(request.param2);
         if (streamId == 0) {
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
+            for (uint8_t s = 1; s <= cam->streamCount; s++) {
                 _sendVideoStreamStatus(targetCompId, s);
             }
         } else {
@@ -737,10 +749,25 @@ void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
                                << "index:" << cam->imagesCaptured;
 }
 
+uint16_t MockLinkCamera::_thermalStreamFlags() const
+{
+    // mavlink-camera-manager flags a stream as thermal or as running, never as both
+    return (_thermalStream == MockConfiguration::CameraThermalStreamSecondCamera)
+               ? VIDEO_STREAM_STATUS_FLAGS_THERMAL
+               : (VIDEO_STREAM_STATUS_FLAGS_THERMAL | VIDEO_STREAM_STATUS_FLAGS_RUNNING);
+}
+
 void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamId)
 {
+    const CameraState* cam = _findCamera(compId);
+    if (!cam || (streamId < 1) || (streamId > cam->streamCount)) {
+        return;
+    }
+    const bool thermal = (streamId == cam->thermalStreamId);
+
     const int cameraIndex = compId - MAV_COMP_ID_CAMERA;
-    const QString name = QStringLiteral("Stream %1-%2").arg(cameraIndex + 1).arg(streamId);
+    const QString name =
+        (thermal ? QStringLiteral("Thermal %1-%2") : QStringLiteral("Stream %1-%2")).arg(cameraIndex + 1).arg(streamId);
     QByteArray nameBA = name.toLocal8Bit();
     nameBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_NAME_LEN);
 
@@ -792,6 +819,18 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
         }
         break;
     }
+    if (thermal) {
+        // The stream server serves the visible-light stream only: the thermal one has an address of its own, a port
+        // the server sends none of its stream types to.
+        streamType = VIDEO_STREAM_TYPE_RTPUDP;
+        encoding = VIDEO_STREAM_ENCODING_H264;
+        uri = QStringLiteral("udp://127.0.0.1:5602");
+        flags = _thermalStreamFlags();
+    }
+
+    // mavlink-camera-manager sends no count
+    const uint8_t streamCount =
+        (_thermalStream == MockConfiguration::CameraThermalStreamSecondCamera) ? 0 : cam->streamCount;
 
     QByteArray uriBA = uri.toLocal8Bit();
     uriBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_URI_LEN);
@@ -800,7 +839,7 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
     (void) mavlink_msg_video_stream_information_pack_chan(
         _mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
         streamId,     // stream_id
-        kNumStreams,  // count
+        streamCount,  // count
         streamType,   // type
         flags,        // flags
         30,           // framerate
@@ -829,6 +868,11 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
     if (servedType == MockConfiguration::VideoStreamNone
             && _mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
         flags = 0;
+    }
+    // QGC takes a stream's flags from its status as well
+    const CameraState* cam = _findCamera(compId);
+    if (cam && (streamId == cam->thermalStreamId)) {
+        flags = _thermalStreamFlags();
     }
 
     mavlink_message_t msg{};

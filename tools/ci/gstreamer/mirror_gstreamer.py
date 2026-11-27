@@ -5,11 +5,12 @@ Downloads the prebuilt SDK packages published at gstreamer.freedesktop.org for a
 given version, verifies each against its checksum pinned in .github/build-config.json
 (else its upstream ``.sha256sum`` sidecar), then uploads them to
 ``s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>`` — the layout the
-build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
-shared with cmake/GStreamer/Packages.cmake and the installers.
+build's S3 fallback mirror reads. ``common.gstreamer`` reads the package layout from
+build-config.json, as cmake/GStreamer/Packages.cmake does.
 
-Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version each platform's
-``gstreamer.version.<platform>`` in build-config.json is mirrored, and the work directory falls back to RUNNER_TEMP.
+Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version
+``gstreamer.version.sdk`` in build-config.json is mirrored, and the work directory falls back to
+RUNNER_TEMP.
 """
 
 from __future__ import annotations
@@ -23,14 +24,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.build_config import get_build_config_value, get_gstreamer_version
+from common.build_config import get_build_config_value
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
-from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
+from common.gstreamer import (
+    package_platform,
+    package_url,
+    pinned_checksum,
+    platform_packages,
+    upstream_checksum,
+)
 from common.markdown import code_span, md_table, summary_section
-from common.net import download_file, read_url_text
+from common.net import download_file
 
 S3_BUCKET = "qgroundcontrol"
-PLATFORMS = tuple(PLATFORM_PACKAGES)
 
 
 @dataclass(frozen=True)
@@ -49,35 +55,27 @@ class Artifact:
         return f"dependencies/gstreamer/{self.s3_dir}/{self.filename}"
 
 
-def _version_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.split(".") if part.isdigit())
-
-
-def artifacts_for(platform: str, version: str, minimum: str | None = None) -> list[Artifact]:
-    """Return the upstream artifact(s) to mirror for *platform* at *version*.
-
-    *minimum* defaults to build-config.json's ``gstreamer.version.bundled_minimum``, the oldest SDK the build accepts.
-    """
-    if platform not in PLATFORM_PACKAGES:
+def artifacts_for(platform: str, version: str) -> list[Artifact]:
+    """Return the upstream artifact(s) to mirror for *platform* at *version*."""
+    packages = platform_packages()
+    if platform not in packages:
         raise ValueError(f"Unknown platform: {platform!r}")
-    minimum = minimum or get_build_config_value("gstreamer.version.bundled_minimum")
-    if minimum and _version_tuple(version) < _version_tuple(minimum):
-        raise ValueError(f"GStreamer SDKs require version >= {minimum} (got {version!r})")
     return [
         Artifact(package, package_url(package, version), package_platform(package))
-        for package in PLATFORM_PACKAGES[platform]
+        for package in packages[platform]
     ]
 
 
 def resolve_platforms(value: str) -> list[str]:
     """Expand 'all' or a comma list into validated platform names."""
+    platforms = list(platform_packages())
     if not value or value == "all":
-        return list(PLATFORMS)
+        return platforms
     requested = [p.strip() for p in value.split(",") if p.strip()]
-    unknown = [p for p in requested if p not in PLATFORMS]
+    unknown = [p for p in requested if p not in platforms]
     if unknown:
         raise ValueError(
-            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(PLATFORMS)}"
+            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(platforms)}"
         )
     return requested
 
@@ -88,10 +86,9 @@ def _download(url: str, dest: Path, expected_sha256: str) -> None:
 
 def _expected_sha(artifact: Artifact, version: str) -> str:
     """Return the pinned checksum, which the build treats as authoritative, else the upstream sidecar's."""
-    pinned = pinned_checksum(version, artifact.package)
-    if pinned:
-        return pinned
-    return read_url_text(f"{artifact.url}.sha256sum", timeout=60).split()[0].strip().lower()
+    return pinned_checksum(version, artifact.package) or upstream_checksum(
+        artifact.package, version
+    )
 
 
 def mirror_artifact(
@@ -125,7 +122,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--version",
         default=env_default("MIRROR_VERSION"),
         help="GStreamer version to mirror for every platform, e.g. 1.28.3 "
-        "(default: $MIRROR_VERSION, else each platform's gstreamer.version.<platform> in build-config.json)",
+        "(default: $MIRROR_VERSION, else gstreamer.version.sdk in build-config.json)",
     )
     parser.add_argument(
         "--platforms",
@@ -154,15 +151,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    version = args.version or get_build_config_value("gstreamer.version.sdk")
     try:
-        jobs: list[tuple[Artifact, str]] = []
-        for platform in resolve_platforms(args.platforms):
-            version = args.version or get_gstreamer_version(platform)
-            if not version:
-                raise ValueError(
-                    f"build-config.json has no gstreamer.version.{platform}; pass --version"
-                )
-            jobs.extend((artifact, version) for artifact in artifacts_for(platform, version))
+        if not version:
+            raise ValueError("build-config.json has no gstreamer.version.sdk; pass --version")
+        artifacts = [
+            artifact
+            for platform in resolve_platforms(args.platforms)
+            for artifact in artifacts_for(platform, version)
+        ]
     except ValueError as exc:
         gh_error(str(exc))
         return 1
@@ -171,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[list[str]] = []
-    for artifact, version in jobs:
+    for artifact in artifacts:
         try:
             status = mirror_artifact(
                 artifact,
@@ -183,18 +180,18 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, RuntimeError) as exc:
             gh_error(f"Failed to mirror {artifact.filename}: {exc}")
             return 1
-        rows.append([code_span(artifact.s3_dir), version, code_span(artifact.filename), status])
+        rows.append([code_span(artifact.s3_dir), code_span(artifact.filename), status])
 
     write_step_summary(
         summary_section(
             "GStreamer mirror",
             [
-                ("Version", args.version or "gstreamer.version.<platform> of build-config.json"),
+                ("Version", version),
                 ("Destination", code_span(f"s3://{S3_BUCKET}/dependencies/gstreamer/")),
                 ("Mode", "dry run" if args.dry_run else "upload"),
                 ("Files", len(rows)),
             ],
-            body=md_table(["Platform", "Version", "File", "Status"], rows, markdown=True),
+            body=md_table(["Platform", "File", "Status"], rows, markdown=True),
         )
     )
     return 0

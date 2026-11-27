@@ -36,7 +36,7 @@ public:
 
     static VideoBackend& instance();
 
-    /// True when the backend is skipped under unit tests (opt back in with QGC_TEST_ENABLE_GSTREAMER).
+    /// True when the backend is skipped under unit tests.
     static bool disabledForUnitTests();
 
     /// The persisted gstDebugLevel setting, read before the settings system exists; nullopt when it was never set.
@@ -45,8 +45,6 @@ public:
     /// What the backend offers.
     struct Capabilities
     {
-        /// Plays network video streams; their settings are shown only then.
-        bool streaming = false;
         /// GStreamer: the decoder, RTP jitter-buffer and display-sink settings apply, and Qt Multimedia's player is the
         /// alternative VideoSettings::videoBackend offers.
         bool pipelineSettings = false;
@@ -68,8 +66,10 @@ public:
 
     virtual Capabilities capabilities() const = 0;
 
-    /// A receiver that can play: once initialize() has failed, one that needs no initialization.
-    virtual VideoReceiver* createReceiver(QObject* parent) = 0;
+    /// The receiver for a network stream, chosen here and nowhere else: the backend's own, or Qt Multimedia's player
+    /// when the user chose it (VideoSettings::videoBackend) or the backend has none to give. A build with
+    /// QGC_ENABLE_FFMPEG_VIDEO also offers the experimental FFmpegVideoReceiver.
+    VideoReceiver* createReceiver(QObject* parent);
 
     // The rest is setup and tuning a backend that needs none leaves alone.
 
@@ -97,12 +97,9 @@ public:
 
     virtual void onMainWindowReady([[maybe_unused]] QQuickWindow* window) {}
 
-    /// Android: hands the backend the JavaVM, application context and class loader (jobject, or null) its plugins
-    /// look up through JNI.
-    virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
-                                    [[maybe_unused]] void* classLoader)
-    {}
-
 protected:
     VideoBackend() = default;
+
+    /// The backend's own receiver; null when it has none, as once initialize() has failed.
+    virtual VideoReceiver* createOwnReceiver([[maybe_unused]] QObject* parent) { return nullptr; }
 };

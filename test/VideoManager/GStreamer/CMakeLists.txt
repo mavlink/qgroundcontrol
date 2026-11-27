@@ -18,21 +18,11 @@ target_sources(
         GStreamerTestHelpers.h
         SelfTest/GstSelfTestPipelineTest.cc
         SelfTest/GstSelfTestPipelineTest.h
-        HwBuffers/GStreamerHwFrameTexturesTest.cc
-        HwBuffers/GStreamerHwImportCacheTest.cc
-        HwBuffers/GstHwBuffersGlReadbackTest.cc
-        HwBuffers/GstHwBuffersGlReadbackTest.h
-        HwBuffers/GstHwBuffersPipelineTest.cc
-        HwBuffers/GstHwBuffersPipelineTest.h
         HwBuffers/GstHwBuffersTest.cc
         HwBuffers/GstHwBuffersTest.h
-        HwBuffers/GstHwBuffersVulkanReadbackTest.cc
-        HwBuffers/GstHwBuffersVulkanReadbackTest.h
         HwBuffers/GstHwImageReadback.h
-        HwBuffers/apple/GStreamerIOSurfaceTest.cc
-        HwBuffers/d3d/GStreamerD3DTest.cc
-        HwBuffers/dmabuf/GStreamerDmaBufTest.cc
-        HwBuffers/gl/GStreamerGlTest.cc
+        HwBuffers/gl/GstHwBuffersGlTest.cc
+        HwBuffers/gl/GstHwBuffersGlTest.h
         Pipeline/GstRecordingSinkTest.cc
         Pipeline/GstRecordingSinkTest.h
         Pipeline/GstVideoReceiverComponentsTest.cc
@@ -51,6 +41,8 @@ target_sources(
         Source/GstSourceFactoryStreamTest.h
         Source/GstSourceFactoryTest.cc
         Source/GstSourceFactoryTest.h
+        Source/RtpPacketCounterTest.cc
+        Source/RtpPacketCounterTest.h
         Sink/GstQgcSinkControllerTest.cc
         Sink/GstQgcSinkControllerTest.h
         Sink/gstqgc/GstQgcSinkPipelineTest.cc
@@ -63,27 +55,34 @@ target_sources(
         Sink/gstqgc/GstQgcVideoFormatsTest.h
 )
 
-# Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources ("gstqgc/GstQgcCaps.h").
+# Sink/ makes "gstqgc/GstQgcTestSupport.h" resolve the way the sources include the sink's headers
+# ("gstqgc/GstQgcSinkPolicy.h"). The tests look into the GPU paths, whose folders only the GStreamer library has on its
+# include path.
+set(_qgc_gst_hwbuffers_dir "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/HwBuffers")
 target_include_directories(
     QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink
+        ${_qgc_gst_hwbuffers_dir}/common
+        ${_qgc_gst_hwbuffers_dir}/dmabuf
+        ${_qgc_gst_hwbuffers_dir}/gl
+        ${_qgc_gst_hwbuffers_dir}/d3d
+        ${_qgc_gst_hwbuffers_dir}/apple
+        ${_qgc_gst_hwbuffers_dir}/android
 )
 
 # The encoded stream the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by
 # src/VideoManager/GStreamer/SelfTest/Media/generate.sh. The other two streams of that directory are the app's
 # self-test samples, which the tests read from the app's resources.
-if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/SelfTest/Media")
-    qt_add_resources(
-        ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
-        PREFIX "/unittest/video"
-        BASE "${_qgc_gst_test_media}"
-        FILES
-            "${_qgc_gst_test_media}/h264_320x240.h264"
-    )
-endif()
+set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/SelfTest/Media")
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
+    PREFIX "/unittest/video"
+    BASE "${_qgc_gst_test_media}"
+    FILES
+        "${_qgc_gst_test_media}/h264_320x240.h264"
+)
 
 # Pipeline-free cases run in the Unit pass; classes that play pipelines, open sockets or use the GPU are Integration, so
 # a crash in a GPU path only takes down its own class.
@@ -96,24 +95,140 @@ add_qgc_test(GstQgcSinkTest LABELS Unit)
 add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
+add_qgc_test(RtpPacketCounterTest LABELS Unit)
 add_qgc_test(GStreamerHelpersTest LABELS Integration)
-add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)
+add_qgc_test(GstHwBuffersGlTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)
 add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
 add_qgc_test(GstSourceFactoryStreamTest LABELS Integration)
-add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration)
+add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration SHARDS 2)
 add_qgc_test(GstVideoReceiverReconnectTest LABELS Integration)
 add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration SHARDS 2)
 add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
-# Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an
-# X display.
-set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
-add_qgc_test(GstHwBuffersGlReadbackTest LABELS Integration GPU ${_qgc_gl_readback_env})
-# Needs a platform plugin with Vulkan support, which the offscreen QPA lacks too.
-add_qgc_test(
-    GstHwBuffersVulkanReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
-)
+
+# A GPU path's tests are built only where the GStreamer layer compiled the path
+# (src/VideoManager/GStreamer/HwBuffers/CMakeLists.txt): a test that skips then tells of the host, not of the build.
+function(_qgc_gst_test_has result definition)
+    get_target_property(_definitions QGCGStreamer INTERFACE_COMPILE_DEFINITIONS)
+    if("${definition}=1" IN_LIST _definitions)
+        set(${result}
+            TRUE
+            PARENT_SCOPE
+        )
+    else()
+        set(${result}
+            FALSE
+            PARENT_SCOPE
+        )
+    endif()
+endfunction()
+_qgc_gst_test_has(_qgc_test_any_gpu_path QGC_HAS_ANY_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_dmabuf QGC_HAS_GST_DMABUF_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_dmabuf_vulkan QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+_qgc_gst_test_has(_qgc_test_glmemory QGC_HAS_GST_GLMEMORY_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_iosurface QGC_HAS_GST_IOSURFACE_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_d3d QGC_HAS_GST_D3D_GPU_PATH)
+
+# moc reads these definitions in the test headers, and the classes built follow them, but AUTOMOC reruns moc in an
+# existing build directory only when the files it read change. Removing its timestamp when the definitions change makes
+# it run.
+get_target_property(_qgc_gst_definitions QGCGStreamer INTERFACE_COMPILE_DEFINITIONS)
+set(_qgc_gst_definitions_file "${CMAKE_CURRENT_BINARY_DIR}/gst-definitions.txt")
+set(_qgc_gst_previous_definitions "")
+if(EXISTS "${_qgc_gst_definitions_file}")
+    file(READ "${_qgc_gst_definitions_file}" _qgc_gst_previous_definitions)
+endif()
+if(NOT _qgc_gst_previous_definitions STREQUAL "${_qgc_gst_definitions}")
+    file(WRITE "${_qgc_gst_definitions_file}" "${_qgc_gst_definitions}")
+    get_target_property(_qgc_unit_tests_dir QGCUnitTests BINARY_DIR)
+    file(REMOVE "${_qgc_unit_tests_dir}/QGCUnitTests_autogen/timestamp")
+endif()
+
+if(_qgc_test_any_gpu_path)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwFrameTexturesTest.cc
+            HwBuffers/GstHwFrameTexturesTest.h
+    )
+    add_qgc_test(GstHwFrameTexturesTest LABELS Unit)
+endif()
+
+if(_qgc_test_dmabuf)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/dmabuf/GstHwBuffersDmaBufTest.cc
+            HwBuffers/dmabuf/GstHwBuffersDmaBufTest.h
+    )
+    add_qgc_test(GstHwBuffersDmaBufTest LABELS Unit)
+    add_qgc_test(GstHwBuffersDmaBufPipelineTest LABELS Integration GPU)
+endif()
+
+if(_qgc_test_d3d)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/d3d/GstHwBuffersD3DTest.cc
+            HwBuffers/d3d/GstHwBuffersD3DTest.h
+    )
+    add_qgc_test(GstHwBuffersD3DTest LABELS Integration GPU)
+endif()
+
+# The path is iOS's too; the test decodes with VideoToolbox's desktop decoder.
+if(MACOS AND _qgc_test_iosurface)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/apple/GstHwBuffersIOSurfaceTest.cc
+            HwBuffers/apple/GstHwBuffersIOSurfaceTest.h
+    )
+    add_qgc_test(GstHwBuffersIOSurfaceTest LABELS Integration GPU)
+endif()
+
+if(LINUX AND (_qgc_test_dmabuf OR _qgc_test_glmemory))
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersGlReadbackTest.cc
+            HwBuffers/GstHwBuffersGlReadbackTest.h
+    )
+    # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping)
+    # without an X display.
+    add_qgc_test(
+        GstHwBuffersGlReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
+                                                                           "QT_XCB_GL_INTEGRATION=set:xcb_egl"
+    )
+endif()
+
+if(LINUX AND _qgc_test_any_gpu_path)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersRhiCaptureTest.cc
+            HwBuffers/GstHwBuffersRhiCaptureTest.h
+    )
+    # Qt Quick on OpenGL, on the offscreen platform with GLX (Mesa llvmpipe), as VideoStreamOutputRenderTest has it,
+    # and with the threaded render loop, whose order of initialisation the test needs.
+    add_qgc_test(
+        GstHwBuffersRhiCaptureTest LABELS Integration NoSanitizer
+        ENV_MODIFICATION "QT_QUICK_BACKEND=set:rhi" "QSG_RHI_BACKEND=set:opengl" "QSG_RENDER_LOOP=set:threaded"
+    )
+endif()
+
+if(_qgc_test_dmabuf_vulkan)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersVulkanReadbackTest.cc
+            HwBuffers/GstHwBuffersVulkanReadbackTest.h
+    )
+    # Needs a platform plugin with Vulkan support, which the offscreen QPA lacks too.
+    add_qgc_test(
+        GstHwBuffersVulkanReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
+    )
+endif()
 
 # The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
 # distribution ships it (src/VideoManager/GStreamer/CMakeLists.txt).
@@ -129,16 +244,3 @@ if(TARGET GStreamer::Check)
     add_qgc_test(GstQgcSinkHarnessTest LABELS Unit)
     add_qgc_test(GstSourceFactoryHarnessTest LABELS Unit)
 endif()
-
-# GStreamerTest checks the runtime GStreamer against the floor the build accepts: the system minimum on Linux, the
-# official SDKs' elsewhere.
-if(LINUX)
-    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version minimum)
-else()
-    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version bundled_minimum)
-endif()
-set_property(
-    SOURCE Runtime/GStreamerTest.cc TARGET_DIRECTORY QGCUnitTests
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_MINIMUM_VERSION=\"${_qgc_gst_runtime_minimum}\""
-)

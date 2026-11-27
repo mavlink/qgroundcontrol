@@ -3,19 +3,19 @@
 #include <cstdint>
 #include <functional>
 
-#include <QtCore/QFuture>
 #include <QtCore/QList>
 #include <QtCore/QObject>
-#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtQml/QQmlListProperty>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-class MavlinkCameraControlInterface;
+#include "VehicleVideoStreams.h"
+
+class QGCNetworkAvailabilityMonitor;
 class QGCVideoStreamInfo;
 class QQuickWindow;
 class UVCCameraController;
-class Vehicle;
+class VideoBackendInit;
 class VideoReceiver;
 class VideoRecordingService;
 class VideoSettings;
@@ -25,17 +25,22 @@ class VideoTelemetryOverlay;
 /// QML facade of the video sources, each a VideoStreamController: the primary stream, the thermal stream, the USB
 /// camera, whose receiver is uvcCamera, and the streams shown in tiles. One of the primary stream and the camera is
 /// the main picture: the camera while the video source setting names one and no vehicle camera advertises a stream.
-/// decoding and aspectRatio forward to the primary stream, thermalAspectRatio to the thermal stream, and recording
-/// covers the main picture and the thermal stream. The other properties, such as hasVideo and isUvc, are the manager's
-/// own state.
+/// decoding forwards to the primary stream, and recording covers the main picture and the thermal stream. The other
+/// properties, such as hasVideo and isUvc, are the manager's own state.
 ///
 /// The tiles show what else there is to see, up to VideoSettings::maxVideoTiles of them, and no more than the row of
 /// tiles has room for (tileRoom): the USB camera VideoSettings::uvcTileCamera names, while a stream is the video
 /// source, then the other streams of the active vehicle's current camera, then its other cameras' streams. Each stream
-/// in a tile has a source of its own, which plays that stream for as long as it is shown. When the vehicle's current
+/// in a tile has a source of its own, which plays that stream for as long as it is shown. There are no tiles, and so
+/// none of their sources, until a row of tiles that is shown has told its room. When the vehicle's current
 /// stream becomes one that plays in a tile, that source becomes the primary stream and the former one takes a tile:
 /// neither stream restarts. The camera selected in its tile (selectSource()) is the main picture as well, with the
-/// primary stream in a tile, until a stream is selected.
+/// primary stream in a tile, until a stream is selected: it stays the main picture whatever the room for tiles.
+///
+/// The thermal stream is the active vehicle's: its current camera's or, when that camera has none, that of the first
+/// of its other cameras that has one, as with a sender that makes a camera of each stream. A current camera that
+/// advertises thermal streams only has its thermal stream played by the primary stream, as the main picture, and
+/// there is no thermal stream then.
 class VideoManager : public QObject
 {
     Q_OBJECT
@@ -50,15 +55,16 @@ class VideoManager : public QObject
     /// The source of the vehicle's current stream, or of the stream the settings configure. Never null.
     Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream NOTIFY primaryStreamChanged FINAL)
     Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT FINAL)
+    /// The source of the main picture: the USB camera while isUvc, else the primary stream. Never null.
+    Q_PROPERTY(VideoStreamController* mainSource READ mainSource NOTIFY mainSourceChanged FINAL)
     Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT FINAL)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged FINAL)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     /// A source falls short (VideoStreamStats::degraded()) of the frame rate its camera is set up for: the one a
     /// stream's camera advertises, while the stream is decoded, or the USB camera's own.
     Q_PROPERTY(bool degraded READ degraded NOTIFY degradedChanged FINAL)
     Q_PROPERTY(bool fullScreen READ fullScreen WRITE setFullScreen NOTIFY fullScreenChanged FINAL)
     Q_PROPERTY(bool hasThermal READ hasThermal NOTIFY hasThermalChanged FINAL)
-    /// A USB camera plays, as the main picture (isUvc) or in a tile.
+    /// A USB camera is there to play, as the main picture (isUvc) or in a tile: it plays while its tile has room.
     Q_PROPERTY(bool hasUvcCamera READ hasUvcCamera NOTIFY hasUvcCameraChanged FINAL)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged FINAL)
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged FINAL)
@@ -72,11 +78,11 @@ class VideoManager : public QObject
     /// How many sources are shown in tiles.
     Q_PROPERTY(int tileCount READ tileCount NOTIFY tileCountChanged FINAL)
     /// How many tiles the row of tiles has room for, which it tells while it is shown: no more sources than that play
-    /// in tiles, whatever VideoSettings::maxVideoTiles allows. -1 until a row tells.
+    /// in tiles, whatever VideoSettings::maxVideoTiles allows. A row that is no longer shown tells 0 once it has been
+    /// out of view for idleSourceGraceMs. -1 until a row tells, which leaves no room either: no row shows tiles.
     Q_PROPERTY(int tileRoom READ tileRoom WRITE setTileRoom NOTIFY tileRoomChanged FINAL)
-    Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
-    Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged FINAL)
-    Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged FINAL)
+    /// VideoStreamController::kIdleGrace in milliseconds, for the row of tiles.
+    Q_PROPERTY(int idleSourceGraceMs READ idleSourceGraceMs CONSTANT FINAL)
     /// The telemetry VideoView shows over the primary stream or the USB camera: empty while
     /// VideoSettings::showTelemetryOverlay is off.
     Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged FINAL)
@@ -84,7 +90,9 @@ class VideoManager : public QObject
     friend class TopLevelViewsTest;
     friend class VideoManagerInitTest;
     friend class VideoManagerTest;
+    friend class VideoManagerTestBase;
     friend class VideoManagerVehicleTest;
+    friend class VideoQmlTest;
 
 public:
     explicit VideoManager(QObject* parent = nullptr);
@@ -97,7 +105,7 @@ public:
     {
         Waiting,                ///< Nothing keeps the video from playing: it is awaited.
         Stopped,                ///< stopVideo(), until startVideo().
-        DisabledWhileDisarmed,  ///< VideoSettings::disableWhenDisarmed, until the vehicle arms.
+        DisabledWhileDisarmed,  ///< VideoSettings::disableWhenDisarmed, until the vehicle arms or startVideo().
     };
     Q_ENUM(NoVideoReason)
 
@@ -108,10 +116,12 @@ public:
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
     /// See VideoRecordingService::startRecording().
     Q_INVOKABLE void startRecording(const QString& baseName = QString());
-    /// Undoes stopVideo() and "disable when disarmed", and reconnects the streams.
+    /// Undoes stopVideo() and reconnects the streams. Video that is off for a disarmed vehicle
+    /// (VideoSettings::disableWhenDisarmed) plays again as well, until the vehicle's armed state next changes.
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
-    /// Stops the sources, and any recording, until startVideo().
+    /// Stops the sources, and any recording, until startVideo(). The active vehicle's camera is told to stop
+    /// transmitting its streams meanwhile, as it is while the video is off for a disarmed vehicle.
     Q_INVOKABLE void stopVideo();
     /// Makes @p source, one shown in a tile, the main picture. A stream of a vehicle's camera becomes that camera's
     /// current stream, and its camera the current camera, as the camera panel selects them. The USB camera takes
@@ -133,6 +143,8 @@ public:
     VideoStreamController* primaryStream() const { return _primaryStream; }
 
     VideoStreamController* thermalStream() const { return _thermalStream; }
+
+    VideoStreamController* mainSource() const { return isUvc() ? _cameraSource : _primaryStream; }
 
     UVCCameraController* uvcCamera() const { return _uvcCamera; }
 
@@ -164,10 +176,7 @@ public:
 
     int tileRoom() const { return _tileRoom; }
 
-    double aspectRatio() const;
-    double thermalAspectRatio() const;
-
-    QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
+    int idleSourceGraceMs() const;
 
     QString telemetryOverlayText() const;
 
@@ -179,7 +188,7 @@ public:
 signals:
     void sourcesChanged();
     void primaryStreamChanged();
-    void aspectRatioChanged();
+    void mainSourceChanged();
     void autoStreamConfiguredChanged();
     void decodingChanged();
     void degradedChanged();
@@ -195,34 +204,16 @@ signals:
     void telemetryOverlayTextChanged();
     void tileCountChanged();
     void tileRoomChanged();
-    void uvcVideoSourceIDChanged();
 
 private:
-    enum class InitState : uint8_t
-    {
-        NotStarted,
-        Pending,
-        Ready,
-        Failed,
-    };
-
     /// A stream a camera of the active vehicle advertises.
-    struct AdvertisedStream
-    {
-        QPointer<QGCVideoStreamInfo> streamInfo;
-        QPointer<MavlinkCameraControlInterface> camera;
-        /// For the user: the camera's name, when the vehicle has several, and the stream's.
-        QString name;
-    };
+    using AdvertisedStream = VehicleVideoStreams::Stream;
 
     void _connectSettings();
     void _onMainWindowReady();
-    void _watchBackendInit(const QFuture<bool>& future);
-    void _onBackendInitComplete(bool success);
-
-    /// Ready or failed: either way the backend makes receivers, after a failure the ones that need no initialization.
-    bool _backendInitFinished() const { return (_initState == InitState::Ready) || (_initState == InitState::Failed); }
-
+    /// The backend's initialization is over: applies the decoder setting to a backend that is @p ready, tells the
+    /// user of one that failed, and gives the streams their receivers either way.
+    void _onBackendInitFinished(bool ready);
     void _createVideoReceivers();
     /// Rebuilds the streams' display sinks and reconnects them; tries a camera that failed again.
     void _restartSources();
@@ -231,9 +222,8 @@ private:
     /// pass once this one is over, not within it.
     void _updateState();
     void _updateStateNow();
-    void _setActiveVehicle(Vehicle* vehicle);
-    /// Reads the streams the active vehicle's cameras advertise.
-    void _updateStreamInfo();
+    /// The active vehicle changed, to none perhaps; its streams follow (_setAdvertisedStreams()).
+    void _onVehicleChanged();
     /// Shows @p current as the primary stream and @p thermal as the thermal stream; @p others, in the order they are
     /// to fill the tiles, are the streams to show in tiles. The source that plays @p current in a tile, if one does,
     /// becomes the primary stream; otherwise the primary stream plays it.
@@ -245,8 +235,12 @@ private:
     void _updateTileStreams(int count);
     /// The tile's source that plays @p streamInfo, if any.
     VideoStreamController* _tileStream(const QGCVideoStreamInfo* streamInfo) const;
-    /// Tells each camera of the active vehicle which of its streams play in tiles.
+    /// Tells each camera of the active vehicle which of its streams play besides its current one: those in tiles, and
+    /// its thermal stream while the source that plays it wants it. None while the video is stopped.
     void _nameExtraStreams();
+    /// VideoSettings::disableWhenDisarmed keeps the video off: the active vehicle is disarmed, and the video wasn't
+    /// started again since.
+    bool _disabledWhileDisarmed() const;
     void _connectSource(VideoStreamController* source);
     /// In the background (hidden or suspended) no stream is displayed, so none is decoded for display.
     void _onApplicationStateChanged(Qt::ApplicationState state);
@@ -254,8 +248,11 @@ private:
     void _updateSourceSummary();
     void _onArmedChanged(bool armed);
     void _communicationLostChanged(bool communicationLost);
-    /// The streams' sources are likely back, with a vehicle that connected or whose link returned: a stream waiting
-    /// to reconnect does so now.
+    /// Reconnects the streams when @p network, the device's own, comes back: no vehicle's link tells of it without
+    /// a vehicle, or with video on another network than the telemetry. init() gives the platform's.
+    void _followNetwork(QGCNetworkAvailabilityMonitor* network);
+    /// The streams' sources are likely back, with a vehicle that connected or whose link returned, or with the
+    /// device's network: a stream waiting to reconnect does so now.
     void _reconnectStreams();
 
     VideoSettings* const _videoSettings;
@@ -274,12 +271,12 @@ private:
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
     /// Whether a local camera of that description is attached.
     std::function<bool(const QString& camera)> _cameraAttached;
-    QPointer<Vehicle> _activeVehicle;
+    /// The active vehicle and its cameras.
+    VehicleVideoStreams* const _vehicleStreams;
     /// The streams to show in tiles, in the order they are to fill them.
     QList<AdvertisedStream> _otherStreams;
 
-    InitState _initState = InitState::NotStarted;
-    QFuture<bool> _backendInitFuture;
+    VideoBackendInit* const _backendInit;
 
     bool _hasMainWindow = false;
     bool _cleanedUp = false;
@@ -292,7 +289,11 @@ private:
     int _tileStreamSerial = 0;
     int _tileCount = 0;
     int _tileRoom = -1;
-    bool _disabledWhileDisarmed = false;
+    /// The active vehicle is disarmed; false without one.
+    bool _vehicleDisarmed = false;
+    /// startVideo() was called for video that was off for a disarmed vehicle: it plays until the vehicle's armed
+    /// state changes.
+    bool _restartedWhileDisarmed = false;
     bool _autoStreamConfigured = false;
     bool _degraded = false;
     bool _hasThermal = false;

@@ -5,8 +5,8 @@ import QGroundControl.Controls
 
 import "VideoStreamFormat.js" as VideoStreamFormat
 
-// The health of one video stream, from its controller's stats; shown only while the stream is measured. The camera's
-// advertised values follow the measured ones when they are known.
+// The health of one video source, a stream or the USB camera, from its controller's stats; shown only while the source
+// is measured. The camera's advertised values follow the measured ones when they are known.
 QGCGroupBox {
     id: root
 
@@ -15,7 +15,7 @@ QGCGroupBox {
     readonly property videoStreamStats _stats: stream.stats
     readonly property size   _videoSize:    stream.videoSize
     readonly property var    _info:         stream.streamInfo
-    readonly property real   _cameraFps:    _info ? _info.framerate : 0
+    readonly property real   _cameraFps:    _info ? _info.framerate : _stats.cameraFps
     readonly property real   _cameraKbps:   _info ? _info.bitrate / 1000 : 0
     readonly property size   _cameraSize:   _info ? _info.resolution : Qt.size(0, 0)
     readonly property bool   _cameraSizeDiffers: _cameraSize.width > 0 && (_cameraSize.width !== _videoSize.width
@@ -40,17 +40,21 @@ QGCGroupBox {
     }
 
     LabelledLabel {
-        label:              qsTr("URL")
+        // The USB camera's is its name.
+        label:              root.stream.role === VideoSourceRole.Camera ? qsTr("Camera") : qsTr("URL")
         labelText:          root.stream.uri
+        labelTextFormat:    Text.PlainText
         labelTextElide:     Text.ElideMiddle
         labelMaximumWidth:  ScreenTools.defaultFontPixelWidth * 40
         visible:            root.stream.uri !== ""
     }
 
     LabelledLabel {
-        label:      qsTr("Camera stream")
-        labelText:  root._info ? root._info.name : ""
-        visible:    labelText !== ""
+        label:              qsTr("Camera stream")
+        // The camera names it.
+        labelText:          root._info ? root._info.name : ""
+        labelTextFormat:    Text.PlainText
+        visible:            labelText !== ""
     }
 
     // Frames shown: none for a stream that isn't decoded, as the thermal stream while its view is off.
@@ -64,6 +68,7 @@ QGCGroupBox {
     LabelledLabel {
         label:      qsTr("Dropped")
         labelText:  qsTr("%n frame(s)", "", root._stats.framesDropped)
+        visible:    root._stats.framesDropped >= 0
     }
 
     LabelledLabel {

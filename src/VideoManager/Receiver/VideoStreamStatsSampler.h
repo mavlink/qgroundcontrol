@@ -10,8 +10,8 @@ class StreamSupervisor;
 ///
 /// The backend fills the fields only it can measure and counts what VideoStreamStatsMeter turns into rates; the sampler
 /// adds the fields every backend reports alike: uptime and reconnects from the receiver's StreamSupervisor, and the
-/// recording's time and size from its RecordingPlan. It keeps the stats it last produced, so a receiver publishes
-/// changes only.
+/// recording's time and size from its RecordingPlan, where it records with one. It keeps the stats it last produced,
+/// so a receiver publishes changes only.
 class VideoStreamStatsSampler
 {
 public:
@@ -28,6 +28,8 @@ public:
     /// after reset() only sets the meter's baseline.
     bool sample(const VideoStreamStatsMeter::Counters& counters, VideoStreamStats stats,
                 const RecordingPlan* recording);
+    /// The same for a receiver that records without a RecordingPlan: @p stats has the recording's time and size too.
+    bool sample(const VideoStreamStatsMeter::Counters& counters, VideoStreamStats stats);
 
 private:
     bool _publish(const VideoStreamStats& stats);

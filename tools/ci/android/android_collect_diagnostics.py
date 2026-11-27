@@ -29,7 +29,7 @@ ADB_TIMEOUT_SHORT = 20
 ADB_TIMEOUT_LONG = 30
 
 GSTREAMER_LOG_PATTERN = re.compile(
-    r"gst|gstreamer|libgst|GST_PLUGIN|GstVideoReceiver|qml6glsink|qgcvideosinkbin",
+    r"gst|gstreamer|libgst|GST_PLUGIN|GstVideoReceiver|qgcvideosinkbin",
     re.IGNORECASE,
 )
 GSTREAMER_LOAD_ERROR_PATTERN = re.compile(

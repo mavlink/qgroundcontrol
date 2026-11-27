@@ -1,6 +1,9 @@
 #include "SignalHandlerTest.h"
 
+#include <csignal>
 #include <memory>
+
+#include <QtTest/QSignalSpy>
 
 #include "SignalHandler.h"
 #include "UnitTest.h"
@@ -60,4 +63,21 @@ void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
     handler1.reset();
     QVERIFY(SignalHandler::current() == nullptr);
 }
+
+void SignalHandlerTest::_testTerminateIsSignalled()
+{
+#ifdef Q_OS_WIN
+    QSKIP("SIGTERM is handled on POSIX only");
+#else
+    SignalHandler handler;
+    QCOMPARE(handler.setupSignalHandlers(), 0);
+    QSignalSpy terminateSpy(&handler, &SignalHandler::terminateRequested);
+
+    // With the signal connected the handler leaves the application alone: its receiver closes it.
+    QCOMPARE(::raise(SIGTERM), 0);
+    QVERIFY(terminateSpy.wait(TestTimeout::shortMs()));
+    QCOMPARE(terminateSpy.count(), 1);
+#endif
+}
+
 UT_REGISTER_TEST(SignalHandlerTest, TestLabel::Unit, TestLabel::Utilities)

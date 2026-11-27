@@ -5,12 +5,13 @@
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 
 #include "GstHwVideoBuffer.h"
+#include "GstQtDmaBufImport.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
 class QRhi;
 
-/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. mapTextures() (render thread) waits for the
+/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. importTextures() (render thread) waits for the
 /// producer's writes, then hands the planes to Qt's DMABuf importer under a GL QRhi, or imports them as VkImages under
 /// a Vulkan QRhi (GstDmaBufVulkanImport). The buffer stays referenced until the textures are gone and the GPU has
 /// drawn with them.
@@ -25,27 +26,19 @@ public:
     /// which EGL must never be asked about.
     static EGLDisplay eglDisplayFor(const HwVideoBufferContext& context);
 
-    /// True when @p fd is a dma-buf to the kernel. GStreamer's dmabuf allocator wraps any fd, so the memory type
-    /// doesn't tell.
-    static bool isDmaBufFd(int fd) noexcept;
-
     bool isDmaBuf() const override { return true; }
 
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::DmaBuf; }
+
     MapData map(QVideoFrame::MapMode mode) override;
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
     /// Failed imports of one layout in a row that disable the path: Qt's importer warns on every one.
     static constexpr int kMaxConsecutiveImportFailures = 30;
 
-    /// How mapTextures() ended, for the disable latch.
-    enum class ImportOutcome
-    {
-        Imported,
-        NotImportable,  ///< Stopped before the driver was asked: by the QRhi mapping it, or by the frame's layout.
-        Rejected,       ///< The driver refused the frame.
-        Unrecoverable,  ///< The driver refused it in a way no later frame avoids (EGL_BAD_MATCH).
-    };
+    /// How importTextures() ended, for the disable latch.
+    using ImportOutcome = GstQtDmaBufImport::ImportOutcome;
 
     /// True once an import failed in a way later frames can't avoid; cleared by resetCachedState().
     static bool importDisabled() noexcept;
@@ -54,9 +47,9 @@ public:
 #ifdef QGC_UNITTEST_BUILD
     /// Feeds one import the driver refused, of no particular frame, into the disable latch.
     static void recordImportFailureForTest(bool unrecoverable);
-    /// Feeds the outcome of one import of this frame into the disable latch, as mapTextures() does.
+    /// Feeds the outcome of one import of this frame into the disable latch, as importTextures() does.
     void noteImportOutcomeForTest(ImportOutcome outcome) const;
-    /// The wait on the producer's writes mapTextures() runs before importing @p buffer; true once they completed.
+    /// The wait on the producer's writes importTextures() runs before importing @p buffer; true once they completed.
     static bool waitForProducerWritesForTest(GstBuffer* buffer);
     /// Stands in for the fence of the GPU's work when a GL import's textures are deleted: @p fd turns readable once
     /// the test lets the GPU be done. -1 restores EGL's fence.
@@ -64,18 +57,21 @@ public:
 #endif
 
 private:
-    /// The import itself; without textures, @p failure tells why when the driver refused.
-    QVideoFrameTexturesUPtr importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old, ImportOutcome& failure);
+    /// The import itself; without textures, @p failure tells why when the driver refused or a dma-buf fd could not be
+    /// duplicated.
+    QVideoFrameTexturesUPtr importFrame(QRhi& rhi, ImportOutcome& failure);
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, QVideoFrameTexturesUPtr& old,
-                                         ImportOutcome& failure);
+    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
 #endif
     QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
     /// Counts @p outcome in the run of failed imports of this frame's layout, which disables the path at
-    /// kMaxConsecutiveImportFailures: a refusal by the driver, and any failure of a tiled frame.
+    /// kMaxConsecutiveImportFailures: a refusal by the driver, and a tiled frame that could not be imported. An fd
+    /// that could not be duplicated counts for a tiled frame alone, which has no other way to the screen.
     void noteImportOutcome(ImportOutcome outcome) const;
     /// A vendor tiling from DMA_DRM caps: the memory has no CPU-readable layout.
     bool isTiled() const noexcept;
+
+    bool hasCpuLayout() const override { return !isTiled() && GstHwVideoBuffer::hasCpuLayout(); }
 
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;
     /// From DMA_DRM caps; DRM_FORMAT_MOD_INVALID (implicit, driver-resolved) for legacy DMABuf caps.

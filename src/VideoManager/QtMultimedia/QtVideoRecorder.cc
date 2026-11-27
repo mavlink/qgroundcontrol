@@ -68,17 +68,26 @@ QtVideoRecorder::QtVideoRecorder(QObject* parent)
     (void) connect(_recorder, &QMediaRecorder::recorderStateChanged, this, &QtVideoRecorder::_onRecorderStateChanged);
     (void) connect(_recorder, &QMediaRecorder::errorOccurred, this,
                    [this](QMediaRecorder::Error, const QString& errorString) { _onRecorderError(errorString); });
-    // The first encoded frame starts the recording: Qt reports RecordingState before its encoder is set up.
+    // The first encoded frame starts the file: Qt reports RecordingState before its encoder is set up.
     (void) connect(_recorder, &QMediaRecorder::durationChanged, this, [this](qint64 duration) {
-        if (!_recording && (duration > 0) && (_recorder->recorderState() == QMediaRecorder::RecordingState)) {
-            _recording = true;
+        if (!_fileStarted && (duration > 0) && (_recorder->recorderState() == QMediaRecorder::RecordingState)) {
+            _fileStarted = true;
             emit recordingStarted(_recordingFile);
-            emit recordingChanged(true);
         }
     });
 }
 
 QtVideoRecorder::~QtVideoRecorder() = default;
+
+qint64 QtVideoRecorder::recordedMs() const
+{
+    return _fileStarted ? _recorder->duration() : -1;
+}
+
+qint64 QtVideoRecorder::recordedBytes() const
+{
+    return _fileStarted ? QFileInfo(_recordingFile).size() : -1;
+}
 
 QList<QMediaFormat> QtVideoRecorder::recordingFormats(QMediaFormat::FileFormat container,
                                                       QMediaFormat::VideoCodec codec)
@@ -199,7 +208,7 @@ void QtVideoRecorder::_recordNextFormat()
     // times the bit rate Qt worked out from the quality: 45 Mbit/s rather than 6 for 1080p at High on a Snapdragon
     // 778G. No setting of the recorder corrects the times; a lower quality still makes a smaller file.
     _recorder->setQuality(_quality);
-    // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingBranch).
+    // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingSink).
     QMediaMetaData metaData;
     metaData.insert(QMediaMetaData::Date, QDateTime::currentDateTimeUtc());
     metaData.insert(QMediaMetaData::Comment, VideoReceiver::recordingComment());
@@ -210,10 +219,26 @@ void QtVideoRecorder::_recordNextFormat()
 
 void QtVideoRecorder::_retryNextFormat()
 {
-    if (_stopRequested || active() || _pendingFormats.isEmpty()) {
-        return;
+    _retryQueued = false;
+    if (!_stopRequested && !active() && !_pendingFormats.isEmpty()) {
+        _recordNextFormat();
     }
-    _recordNextFormat();
+    _endRecordingIfStopped();
+}
+
+void QtVideoRecorder::_setRecording(bool recording)
+{
+    if (recording != _recording) {
+        _recording = recording;
+        emit recordingChanged(_recording);
+    }
+}
+
+void QtVideoRecorder::_endRecordingIfStopped()
+{
+    if (!active() && !_retryQueued) {
+        _setRecording(false);
+    }
 }
 
 void QtVideoRecorder::stop()
@@ -224,35 +249,37 @@ void QtVideoRecorder::stop()
 
 void QtVideoRecorder::stopAndWait(std::chrono::milliseconds timeout)
 {
-    if (!_recording) {
-        stop();
-        return;
-    }
     QEventLoop loop;
     QTimer::singleShot(timeout, &loop, &QEventLoop::quit);
-    (void) connect(this, &QtVideoRecorder::recordingChanged, &loop, [&loop](bool recording) {
-        if (!recording) {
-            loop.quit();
-        }
-    });
+    // After _onRecorderStateChanged(), connected first: the recording is reported, or its empty file removed, by then.
+    (void) connect(_recorder, &QMediaRecorder::recorderStateChanged, &loop,
+                   [&loop](QMediaRecorder::RecorderState state) {
+                       if (state == QMediaRecorder::StoppedState) {
+                           loop.quit();
+                       }
+                   });
     stop();
-    if (_recording) {
+    if (active()) {
         (void) loop.exec();
     }
 }
 
 void QtVideoRecorder::_onRecorderStateChanged(QMediaRecorder::RecorderState state)
 {
+    if (state == QMediaRecorder::RecordingState) {
+        _setRecording(true);
+        return;
+    }
     if (state != QMediaRecorder::StoppedState) {
         return;
     }
-    if (_recording) {
-        _recording = false;
+    if (_fileStarted) {
+        _fileStarted = false;
         emit recordingFinished(_recordingFile, _recordingError);
-        emit recordingChanged(false);
     } else {
         _onRecordingNotStarted();
     }
+    _endRecordingIfStopped();
 }
 
 void QtVideoRecorder::_onRecorderError(const QString& errorString)
@@ -260,7 +287,7 @@ void QtVideoRecorder::_onRecorderError(const QString& errorString)
     qCWarning(QtVideoRecorderLog) << "Recording error:" << _recordingFile << errorString;
     _recordingError = errorString;
     // A recorder that is still running reports the end when it stops.
-    if (!_recording && (_recorder->recorderState() == QMediaRecorder::StoppedState)) {
+    if (!_fileStarted && (_recorder->recorderState() == QMediaRecorder::StoppedState)) {
         _onRecordingNotStarted();
     }
 }
@@ -274,6 +301,7 @@ void QtVideoRecorder::_onRecordingNotStarted()
     if (!_pendingFormats.isEmpty() && _recorder->captureSession()) {
         qCDebug(QtVideoRecorderLog) << "Encoder failed, trying the next format:" << _recordingError;
         // Not from the recorder's own signal.
+        _retryQueued = true;
         QMetaObject::invokeMethod(this, &QtVideoRecorder::_retryNextFormat, Qt::QueuedConnection);
         return;
     }

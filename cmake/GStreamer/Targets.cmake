@@ -12,9 +12,12 @@
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/PkgConfig.cmake")
 
 # _qgc_gst_pkg_target(<name> <module> [REQUIRED|QUIET])
-# Creates GStreamer::<name>, linking PkgConfig::PC_GStreamer_<name> from pkg-config <module>, when the module is found.
+# Creates GStreamer::<name>, linking PkgConfig::PC_GStreamer_<name> from pkg-config <module>, when the module is found
+# in the SDK. Beside a Linux GStreamer_ROOT_DIR pkg-config also finds the system's modules: one of those is another
+# GStreamer's, with its own headers and libgstreamer, so it is reported and not used.
 function(_qgc_gst_pkg_target name module)
     qgc_gst_layout_get(ROOT_DIR _gst_root)
     if(TARGET GStreamer::${name})
@@ -23,6 +26,15 @@ function(_qgc_gst_pkg_target name module)
     pkg_check_modules(PC_GStreamer_${name} ${ARGN} IMPORTED_TARGET GLOBAL "${module}")
     set(_imported PkgConfig::PC_GStreamer_${name})
     if(NOT TARGET ${_imported})
+        return()
+    endif()
+    _qgc_gst_foreign_module_dir("${module}" _foreign_dir)
+    if(_foreign_dir)
+        message(
+            WARNING
+                "GStreamer: ${module} is missing from GStreamer_ROOT_DIR (${_gst_root}). The one in ${_foreign_dir} "
+                "belongs to another GStreamer and is not used."
+        )
         return()
     endif()
     get_target_property(_libraries ${_imported} INTERFACE_LINK_LIBRARIES)
@@ -110,12 +122,11 @@ function(_qgc_gst_link_closure out_var)
 endfunction()
 
 # _qgc_gst_create_sdk_targets()
-# Creates the targets listed above from the SDK at GStreamer_ROOT_DIR, then applies the macOS framework overlay or
-# builds GStreamer::mobile. Sets GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION (empty without libavcodec's
-# pkg-config file) and, on Android, GSTREAMER_STATIC_PLUGINS in the caller's scope.
+# Creates the targets listed above from the SDK at GStreamer_ROOT_DIR, then, on Android, builds GStreamer::mobile. Sets
+# GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION (empty without libavcodec's pkg-config file) and, on Android,
+# GSTREAMER_STATIC_PLUGINS in the caller's scope.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
-    qgc_gst_layout_get(USE_FRAMEWORK _gst_use_framework)
     # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake: Linux honors the distribution
     # minimum (1.20), the bundled-SDK platforms the SDK version they download, so a downgraded SDK fails configure.
     _qgc_gst_pkg_target(Core "gstreamer-1.0>=${QGC_GST_REQUESTED_VERSION}" REQUIRED)
@@ -146,9 +157,7 @@ function(_qgc_gst_create_sdk_targets)
     set(GStreamer_LIBAVCODEC_VERSION "${PC_GStreamer_Libavcodec_VERSION}")
 
     set(_outputs GStreamer_VERSION GStreamer_LIBAVCODEC_VERSION)
-    if(_gst_use_framework)
-        _qgc_gst_apply_macos_framework_overlay()
-    elseif(ANDROID)
+    if(ANDROID)
         _qgc_gst_create_android_mobile_target()
         list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)
     endif()

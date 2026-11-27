@@ -1,26 +1,29 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QMetaObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtMultimedia/QCamera>
+#include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QtVideoRecorder.h"
 #include "VideoReceiver.h"
+#include "VideoStreamStatsMeter.h"
 
 class QImageCapture;
 class QMediaCaptureSession;
 class QMediaDevices;
-class QQuickItem;
 class QTimer;
 class QVideoFrame;
-class UVCStreamMonitor;
+class QVideoSink;
+class QtVideoRecorder;
 
 /// A USB (UVC) camera as a VideoReceiver: the camera the config's URI names by its description, which is its video
 /// source name. Owns its QCamera and capture session, measures its frames, takes its photos and records it. The user
@@ -29,45 +32,40 @@ class UVCStreamMonitor;
 /// The camera is tracked by its device id, so unplugging it is noticed even while another camera of the same name stays
 /// attached; the controller then runs that one. After an error the camera is recreated up to kMaxRetries times.
 ///
-/// The camera runs while the receiver is active and has a VideoOutput: a UVCVideoOutput.qml, which registers itself
-/// once it is created and turns and mirrors the picture as rotation and mirrored say, with its orientation and mirrored
-/// properties. Stopped until then, streaming from the camera's first frame, and reconnecting while it waits to retry
-/// after an error.
+/// The camera runs while the receiver is active and has a VideoOutput, which the camera's VideoStreamController hands
+/// it. Stopped until then, streaming from the camera's first frame, and reconnecting while it waits to retry after an
+/// error.
+///
+/// Its stats come from the frames the capture session hands the VideoOutput, about once a second while they arrive:
+/// valid, fps, cameraFps, codec (the camera's capture format, such as "MJPEG" or "YUYV"), gpuPath ("CPU" for frames
+/// in memory, "GPU" for textures), uptimeMs, and recordingMs and recordingBytes while it records; framesDropped and
+/// bitrateKbps are -1, and the other network stream fields keep their defaults.
 class UVCCameraController : public VideoReceiver
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_MOC_INCLUDE("UVCStreamMonitor.h")
 
-    Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT FINAL)
-    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged FINAL)
-    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT FINAL)
     Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged FINAL)
     Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged FINAL)
     Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged FINAL)
-    Q_PROPERTY(int rotation READ rotation NOTIFY transformChanged FINAL)
-    Q_PROPERTY(bool mirrored READ mirrored NOTIFY transformChanged FINAL)
 
     friend class UVCCameraControllerTest;
     friend class VideoManagerTest;
+    friend class VideoQmlTest;
 
 public:
     static constexpr int kMaxRetries = 3;
     static constexpr std::chrono::seconds kRetryInterval{2};
 
-    explicit UVCCameraController(QObject* parent = nullptr);
+    /// @p clock times the stats; the steady clock by default.
+    explicit UVCCameraController(QObject* parent = nullptr, VideoStreamStatsMeter::Clock clock = {});
     ~UVCCameraController() override;
-
-    UVCStreamMonitor* monitor() const { return _monitor; }
 
     /// The selected camera's description, the config's URI; empty while none is.
     QString device() const { return config().uri; }
-
-    /// Emits camerasChanged() from now on when a camera is plugged in or unplugged.
-    void watchCameras();
 
     /// The formats the selected camera offers, as UVCDevices::formatNames(); empty without a camera.
     QStringList formats() const { return _formats; }
@@ -108,22 +106,10 @@ public:
     /// doesn't read the focus range, so it can't set a focus distance.
     bool focusAdjustable() const;
 
-    /// For QML: setVideoOutput(), with @p videoOutput to display the camera in it, replacing any other, and with none
-    /// to stop displaying in @p videoOutput if it is the output set. That one happens on the next event loop pass,
-    /// unless another output registered by then: it takes the camera over without the camera stopping.
-    Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
-    Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
-
-    /// Turns the camera's picture clockwise by @p rotation and then mirrors it when @p mirrored, on display and in
-    /// photos; recordings keep the camera's own picture. On display the VideoOutput does it, on top of the frames' own
-    /// rotation and mirroring: see rotation() and mirrored().
+    /// Turns the camera's photos clockwise by @p rotation and then mirrors them when @p mirrored, as the output
+    /// showing the camera does its picture (VideoStreamController::setTransform()). Recordings keep the camera's own
+    /// picture.
     void setTransform(QtVideo::Rotation rotation, bool mirrored);
-
-    /// The clockwise rotation, in degrees, and the mirroring after it, that a VideoOutput showing the camera applies
-    /// as its orientation and mirrored properties.
-    int rotation() const { return static_cast<int>(_rotation); }
-
-    bool mirrored() const { return _mirrored; }
 
     bool encodesRecordings() const override { return true; }
 
@@ -131,21 +117,12 @@ public:
     /// would cut short.
     void shutDown() override;
 
-    /// For QML: QtVideoRecorder::recordingCodecs() and recordingCodecName().
-    static QStringList recordingCodecs() { return QtVideoRecorder::recordingCodecs(); }
-
-    Q_INVOKABLE static QString recordingCodecName(const QString& key)
-    {
-        return QtVideoRecorder::recordingCodecName(key);
-    }
-
 signals:
     /// A camera was plugged in or unplugged.
     void camerasChanged();
     void formatsChanged();
     /// The camera's adjustable controls, or its zoom range, changed.
     void controlsChanged();
-    void transformChanged();
 
 protected:
     void onConfigChanged() override;
@@ -154,8 +131,10 @@ protected:
     void onReconnectRequested() override;
     void onVideoOutputChanged() override;
     /// Records the camera's video as QtVideoRecorder::start() does, while it runs. Recreating the camera (another
-    /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file.
-    void onStartRecording(const QString& file, FileFormat format) override;
+    /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file. A start it refuses,
+    /// as the camera isn't running or a recording is in progress, is reported as recordingFinished() for @p file
+    /// with the reason.
+    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
     void onStopRecording() override;
     /// Takes a photo, turned and mirrored as setTransform() says and saved off the GUI thread: a still capture where
     /// Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the camera
@@ -165,7 +144,7 @@ protected:
 private:
     void _createCamera();
     void _releaseCamera();
-    /// Connects the camera, the VideoOutput and the monitor, and runs the camera while both exist.
+    /// Connects the camera and the VideoOutput, and runs the camera while both exist.
     void _connectVideoOutput();
     /// Replaces the camera with a new one for the selected device, if the receiver is active and one is attached.
     void _recreateCamera();
@@ -173,6 +152,10 @@ private:
     void _startOver();
     void _updateState();
     void _onVideoFrame(const QVideoFrame& frame);
+    /// Publishes the stats of the frames counted so far.
+    void _sample();
+    /// A new stream starts: the measurements so far are cleared.
+    void _restartStats();
     void _onCameraError(const QString& errorString);
     void _onVideoInputsChanged();
     void _onImageAvailable(int id, const QVideoFrame& frame);
@@ -194,7 +177,22 @@ private:
     /// The camera runs into a VideoOutput.
     bool _running() const;
 
-    UVCStreamMonitor* const _monitor;
+    /// The frames shown since the stats last restarted, as the latest one described them.
+    struct FrameCounters
+    {
+        void count(const QVideoFrame& frame);
+
+        quint64 frames = 0;
+        QVideoFrameFormat::PixelFormat pixelFormat = QVideoFrameFormat::Format_Invalid;
+        double streamFrameRate = 0.0;
+        bool gpu = false;
+    };
+
+    const VideoStreamStatsMeter::Clock _clock;
+    VideoStreamStatsMeter _meter;
+    FrameCounters _frameCounters;
+    std::optional<qint64> _streamingSinceMs;
+    QTimer* const _sampleTimer;
     QMediaDevices* const _mediaDevices;
     QTimer* const _retryTimer;
     /// Outlives the capture sessions, like _recorder.
@@ -206,6 +204,8 @@ private:
     Controls _controls;
     QMediaCaptureSession* _captureSession = nullptr;
     QMetaObject::Connection _frameConnection;
+    /// The output's sink that _frameConnection and the capture session were last given.
+    QPointer<QVideoSink> _connectedSink;
     QString _formatName;
     QStringList _formats;
     QByteArray _cameraId;

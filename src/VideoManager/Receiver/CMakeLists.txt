@@ -1,20 +1,28 @@
 # ============================================================================
 # Video Receiver API
-# The backend-neutral VideoReceiver and VideoBackend, the reconnect policy, the stream statistics and screenshots;
-# GStreamer/ implements them
+# The backend-neutral VideoReceiver and VideoBackend, the reconnect policy, the stall watchdog, the stream statistics
+# and screenshots; GStreamer/ implements them
 # ============================================================================
 
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        KeyframeIntervalMeter.cc
+        KeyframeIntervalMeter.h
         RecordingPlan.cc
         RecordingPlan.h
+        SessionVideoReceiver.cc
+        SessionVideoReceiver.h
         StreamSupervisor.cc
         StreamSupervisor.h
+        StreamWatchdog.cc
+        StreamWatchdog.h
         VideoReceiver.cc
         VideoReceiver.h
         VideoBackend.cc
         VideoBackend.h
+        VideoBackendInit.cc
+        VideoBackendInit.h
         VideoDecoderOptions.h
         VideoScreenshot.cc
         VideoScreenshot.h

@@ -9,10 +9,9 @@
 #include "VideoReceiver.h"
 #include "VideoStreamStats.h"
 
-typedef struct _GstElement GstElement;
-
-// What GstVideoReceiver and its GstReceiverWorker pass between their threads: the receiver hands over the whole
-// GstReceiverRequest after each of its requests, and the worker reports its whole GstReceiverStatus after each change.
+namespace GstQgc {
+struct SinkBin;
+}
 
 struct GstRecordingRequest
 {
@@ -22,13 +21,13 @@ struct GstRecordingRequest
     quint64 id = 0;
 };
 
-/// Everything the receiver asks for, as it stands after each of its requests.
+/// Everything GstVideoReceiver asks of its GstReceiverWorker, handed whole to the worker's thread after each request.
 struct GstReceiverRequest
 {
     bool active = false;
     QString name;
     VideoReceiver::Config config;
-    std::shared_ptr<GstElement> videoSink;
+    std::shared_ptr<const GstQgc::SinkBin> videoSink;
     /// Counts restart() calls: a new count restarts the stream, with videoSink.
     quint64 restarts = 0;
     /// Counts reconnectNow() calls: a new count cuts a reconnect's backoff short.
@@ -36,7 +35,7 @@ struct GstReceiverRequest
     std::optional<GstRecordingRequest> recording;
 };
 
-/// What the worker reports, as it stands after each change.
+/// What GstReceiverWorker reports, whole, to the receiver's GUI thread after each change.
 struct GstReceiverStatus
 {
     VideoReceiver::State state = VideoReceiver::State::Stopped;

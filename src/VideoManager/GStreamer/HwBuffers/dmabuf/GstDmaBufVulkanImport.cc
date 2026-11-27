@@ -4,9 +4,11 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
 #include <drm_fourcc.h>
 #include <fcntl.h>
 #include <limits>
+#include <memory>
 #include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
@@ -31,7 +33,9 @@ QGC_LOGGING_CATEGORY(GstDmaBufVulkanLog, "Video.GStreamer.HwBuffers.GstDmaBufVul
 
 namespace {
 
+using GstDmaBufVulkan::DeviceFns;
 using GstHw::kMaxPlanes;
+using GstQtDmaBufImport::ImportOutcome;
 
 constexpr char kDeviceExtensionsVariable[] = "QT_VULKAN_DEVICE_EXTENSIONS";
 
@@ -101,8 +105,6 @@ ImportDevice s_device;
 std::atomic<void*> s_importDevice{nullptr};
 const char s_deviceCleanupKey = 0;
 
-GstHw::MapDiagnostics s_diag;
-std::atomic<bool> s_loggedImportFailed{false};
 
 /// True when @p physicalDevice has every extension of kRequiredDeviceExtensions and Qt was asked to enable them: QRhi
 /// enables exactly the extensions QT_VULKAN_DEVICE_EXTENSIONS names that the device has, and Vulkan can't tell which
@@ -191,33 +193,6 @@ void forgetDevice(const QRhi* rhi)
     }
 }
 
-/// Entry points the import needs. Device-level ones come from vkGetDeviceProcAddr for the QRhi's VkDevice: an
-/// instance-level lookup of a device function may return a trampoline or null.
-struct DeviceFns
-{
-    PFN_vkCreateImage createImage = nullptr;
-    PFN_vkDestroyImage destroyImage = nullptr;
-    PFN_vkAllocateMemory allocateMemory = nullptr;
-    PFN_vkFreeMemory freeMemory = nullptr;
-    PFN_vkBindImageMemory bindImageMemory = nullptr;
-    PFN_vkGetImageMemoryRequirements getImageMemoryRequirements = nullptr;
-    PFN_vkGetMemoryFdPropertiesKHR getMemoryFdProperties = nullptr;
-    PFN_vkGetPhysicalDeviceMemoryProperties getPhysicalDeviceMemoryProperties = nullptr;
-    PFN_vkCreateFence createFence = nullptr;
-    PFN_vkDestroyFence destroyFence = nullptr;
-    PFN_vkGetFenceStatus getFenceStatus = nullptr;
-    PFN_vkWaitForFences waitForFences = nullptr;
-    PFN_vkQueueSubmit queueSubmit = nullptr;
-    PFN_vkQueueWaitIdle queueWaitIdle = nullptr;
-
-    bool ok() const noexcept
-    {
-        return createImage && destroyImage && allocateMemory && freeMemory && bindImageMemory &&
-               getImageMemoryRequirements && getMemoryFdProperties && getPhysicalDeviceMemoryProperties &&
-               createFence && destroyFence && getFenceStatus && waitForFences && queueSubmit && queueWaitIdle;
-    }
-};
-
 // Bumped by resetCachedState() so every render thread re-resolves after a device reset.
 std::atomic<quint64> s_deviceFnsGeneration{0};
 
@@ -265,7 +240,8 @@ const DeviceFns& deviceFns(QVulkanInstance& inst, VkDevice dev)
     return fns;
 }
 
-/// The images of one frame and their memory, owned by one frame bundle, and the buffer they sample.
+/// The images of one frame and their memory, owned by the frame's GstVulkanOwnedFrameTextures, and the buffer they
+/// sample.
 struct OwnedPlanes
 {
     VkDevice dev = VK_NULL_HANDLE;
@@ -291,11 +267,36 @@ void destroyPlanes(const OwnedPlanes& owned)
     }
 }
 
+/// What a waiter thread takes of a retired frame: its buffer, and the fence of the GPU work that sampled its images.
+struct RetiredBuffer
+{
+    VkDevice dev = VK_NULL_HANDLE;
+    VkFence fence = VK_NULL_HANDLE;
+    PFN_vkWaitForFences waitForFences = nullptr;
+    GstBuffer* buffer = nullptr;
+    /// Set once the waiter has let go of the buffer and is through with the fence.
+    std::shared_ptr<std::atomic<bool>> done;
+};
+
+/// GFunc of retire()'s pool: lets go of the RetiredBuffer @p data's buffer once its fence signalled. vkWaitForFences
+/// needs no external synchronization, so it runs beside the render thread's use of the device.
+void waitForRetiredFence(gpointer data, gpointer /*userData*/)
+{
+    const std::unique_ptr<RetiredBuffer> retired(static_cast<RetiredBuffer*>(data));
+    (void) retired->waitForFences(retired->dev, 1, &retired->fence, VK_TRUE, UINT64_MAX);
+    if (retired->buffer) {
+        gst_buffer_unref(retired->buffer);
+    }
+    retired->done->store(true, std::memory_order_release);
+    retired->done->notify_all();
+}
+
 // Render-thread confined, like the QRhi whose queue the fences are submitted to.
 struct RetiredPlanes
 {
-    OwnedPlanes owned;
+    OwnedPlanes owned;                              ///< Without its buffer, which the fence's waiter holds.
     VkFence fence = VK_NULL_HANDLE;
+    std::shared_ptr<std::atomic<bool>> waiterDone;  ///< RetiredBuffer::done of the fence's waiter.
 };
 
 thread_local std::vector<RetiredPlanes> t_retiredPlanes;
@@ -309,7 +310,9 @@ void destroyRetired(const RetiredPlanes& retired)
     }
 }
 
-// Destroys @p dev's retired planes whose fence signalled; with @p waitAll (QRhi teardown) waits for every fence first.
+// Destroys @p dev's retired planes whose fence signalled and whose waiter is through with it: vkDestroyFence needs the
+// fence to itself. With @p waitAll (QRhi teardown) waits for both first, which also leaves no waiter in a call on the
+// device that is about to be destroyed.
 void reapRetired(VkDevice dev, bool waitAll)
 {
     for (auto it = t_retiredPlanes.begin(); it != t_retiredPlanes.end();) {
@@ -319,8 +322,10 @@ void reapRetired(VkDevice dev, bool waitAll)
             continue;
         }
         if (waitAll) {
+            it->waiterDone->wait(false, std::memory_order_acquire);
             (void) o.fns.waitForFences(dev, 1, &it->fence, VK_TRUE, UINT64_MAX);
-        } else if (o.fns.getFenceStatus(dev, it->fence) != VK_SUCCESS) {
+        } else if (!it->waiterDone->load(std::memory_order_acquire) ||
+                   (o.fns.getFenceStatus(dev, it->fence) != VK_SUCCESS)) {
             ++it;
             continue;
         }
@@ -331,24 +336,40 @@ void reapRetired(VkDevice dev, bool waitAll)
 
 void retire(VkQueue queue, const OwnedPlanes& owned)
 {
-    RetiredPlanes retired{owned};
+    // GLib's threads, as many as there are fences pending, as for the buffers of the GL import (unrefAfterGpuReads()
+    // of GstDmaBufVideoBuffer.cc).
+    static GThreadPool* const waiters = g_thread_pool_new(&waitForRetiredFence, nullptr, -1, FALSE, nullptr);
+    RetiredPlanes retired;
+    retired.owned = owned;
     const VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr, 0};
     // A submit without batches signals its fence once all work already submitted to the queue has completed.
-    if (owned.fns.createFence(owned.dev, &fenceInfo, nullptr, &retired.fence) != VK_SUCCESS ||
+    if (!waiters || owned.fns.createFence(owned.dev, &fenceInfo, nullptr, &retired.fence) != VK_SUCCESS ||
         owned.fns.queueSubmit(queue, 0, nullptr, retired.fence) != VK_SUCCESS) {
         (void) owned.fns.queueWaitIdle(queue);
         destroyRetired(retired);
         return;
     }
-    t_retiredPlanes.push_back(retired);
+    retired.owned.buffer = nullptr;
+    retired.waiterDone = std::make_shared<std::atomic<bool>>(false);
+    // A false return only says no thread could be started now: the wait stays queued.
+    (void) g_thread_pool_push(waiters,
+                              new RetiredBuffer{.dev = owned.dev,
+                                                .fence = retired.fence,
+                                                .waitForFences = owned.fns.waitForFences,
+                                                .buffer = owned.buffer,
+                                                .done = retired.waiterDone},
+                              nullptr);
+    t_retiredPlanes.push_back(std::move(retired));
     reapRetired(owned.dev, /*waitAll=*/false);
 }
 
-/// Release callback for a frame bundle owning @p owned (see GstVulkanOwnedFrameTextures::adoptVulkanResources). Qt
-/// destroys a bundle when its pool slot is reused, which can be right after the frame that last sampled it was
-/// submitted, so the callback queues a fence behind QRhi's submitted work and, once it signals, destroys the images and
-/// lets go of the buffer; a keyed QRhi cleanup callback destroys what is left while the device still exists. Render
-/// thread only.
+/// Release callback for the textures owning @p owned (see GstVulkanOwnedFrameTextures::adoptVulkanResources). Qt
+/// destroys a frame's textures when their pool slot is reused, which can be right after the frame that last sampled
+/// them was submitted, so the callback queues a fence behind QRhi's submitted work. Another thread waits for the fence
+/// and then lets go of the buffer, so the decoder gets it back without a later frame: one with a fixed pool may need it
+/// to decode that frame. The images, their memory and the fence are destroyed on the render thread, which Vulkan
+/// requires to be the only thread using them then: when a later frame's textures are released, and by a keyed QRhi
+/// cleanup callback, which destroys what is left while the device still exists. Render thread only.
 std::function<void()> deferredRelease(QRhi& rhi, VkQueue queue, const OwnedPlanes& owned)
 {
     const VkDevice dev = owned.dev;
@@ -359,10 +380,11 @@ std::function<void()> deferredRelease(QRhi& rhi, VkQueue queue, const OwnedPlane
 
 /// Creates on @p dev the image of one plane, @p size texels of @p format laid out as @p plane says, and binds it to the
 /// plane's dma-buf, imported for it alone: a dedicated allocation, which some drivers require of dma-buf images.
-/// False, with the cause logged once, when the driver refuses; the caller destroys what @p image and @p memory hold.
-bool importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDevice,
-                 const GstQtDmaBufImport::Plane& plane, VkFormat format, QSize size, VkImage& image,
-                 VkDeviceMemory& memory)
+/// Why it could not, with the cause logged once: the driver refused, or the plane's fd could not be duplicated. The
+/// caller destroys what @p image and @p memory hold.
+std::optional<ImportOutcome> importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDevice,
+                                         const GstQtDmaBufImport::Plane& plane, VkFormat format, QSize size,
+                                         VkImage& image, VkDeviceMemory& memory)
 {
     VkSubresourceLayout layout = {};
     layout.offset = plane.offset;
@@ -395,16 +417,20 @@ bool importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDe
 
     if (const VkResult result = fns.createImage(dev, &imageInfo, nullptr, &image); result != VK_SUCCESS) {
         image = VK_NULL_HANDLE;
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "vkCreateImage failed (VkResult=" << result << "format=" << format << "modifier=" << Qt::hex
                                                            << modifierInfo.drmFormatModifier << Qt::dec << ")");
-        return false;
+        return ImportOutcome::Rejected;
     }
 
     // Vulkan owns an imported fd from a successful allocation on; until then it is ours to close.
     const int fd = ::fcntl(plane.fd, F_DUPFD_CLOEXEC, 0);
     if (fd < 0) {
-        return false;
+        const int dupError = errno;
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "duplicating a plane's dma-buf fd failed: errno"
+                                                 << dupError << qUtf8Printable(qt_error_string(dupError))
+                                                 << "(the driver refused nothing)");
+        return ImportOutcome::FdDupFailed;
     }
     VkMemoryFdPropertiesKHR fdProperties = {};
     fdProperties.sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR;
@@ -443,16 +469,15 @@ bool importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDe
     if (allocated != VK_SUCCESS) {
         memory = VK_NULL_HANDLE;
         ::close(fd);
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "importing a dma-buf as image memory failed (VkResult=" << allocated << ")");
-        return false;
+        return ImportOutcome::Rejected;
     }
     if (const VkResult bound = fns.bindImageMemory(dev, image, memory, 0); bound != VK_SUCCESS) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
-                         "vkBindImageMemory failed (VkResult=" << bound << ")");
-        return false;
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "vkBindImageMemory failed (VkResult=" << bound << ")");
+        return ImportOutcome::Rejected;
     }
-    return true;
+    return std::nullopt;
 }
 
 }  // namespace
@@ -551,28 +576,26 @@ std::vector<quint64> importableModifiers(quint32 planeFourcc)
 
 void resetCachedState() noexcept
 {
-    s_diag.reset();
-    s_loggedImportFailed.store(false, std::memory_order_relaxed);
     s_deviceFnsGeneration.fetch_add(1, std::memory_order_acq_rel);
 }
 
-QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVideoFrameTexturesUPtr& old,
+QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi,
                                        std::span<const GstQtDmaBufImport::Plane> planes,
                                        QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
-                                       bool& rejected)
+                                       ImportOutcome& failure)
 {
-    rejected = false;
+    failure = ImportOutcome::NotImportable;
     const auto* handles = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
     const auto* description = QVideoTextureHelper::textureDescription(pixelFormat);
     // Another window's QRhi, whose device wasn't probed, may lack the extensions or the layouts.
     if (!handles || !handles->inst || (handles->dev == VK_NULL_HANDLE) || (handles->gfxQueue == VK_NULL_HANDLE) ||
         (handles->physDev != importDevice()) || !description || planes.empty() ||
         (std::ssize(planes) != description->nplanes) || (planes.size() > std::size_t(kMaxPlanes))) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
     const DeviceFns& fns = deviceFns(*handles->inst, handles->dev);
     if (!fns.ok()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     OwnedPlanes owned;
@@ -593,40 +616,125 @@ QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVid
             imported = false;
             break;
         }
-        imported = importPlane(fns, handles->dev, handles->physDev, planes[i], kPlaneFormats[format].vkFormat,
-                               description->rhiPlaneSize(frameSize, int(i), &rhi), owned.images[i], owned.memories[i]);
-        rejected = !imported;
+        if (const std::optional<ImportOutcome> planeFailure =
+                importPlane(fns, handles->dev, handles->physDev, planes[i], kPlaneFormats[format].vkFormat,
+                            description->rhiPlaneSize(frameSize, int(i), &rhi), owned.images[i], owned.memories[i])) {
+            failure = *planeFailure;
+            imported = false;
+        }
     }
     if (!imported) {
         destroyPlanes(owned);
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
-    const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
-                            .frameSize = frameSize,
-                            .pixelFormat = pixelFormat,
-                            .log = &GstDmaBufVulkanLog(),
-                            .diag = &s_diag,
-                            .preflight = false,
-                            .successTag = "DMABuf->Vulkan"};
-    bool adopted = false;
-    QVideoFrameTexturesUPtr textures =
-        GstHwFrameTexturesBase::finishMap<GstVulkanOwnedFrameTextures>(source, rhi, old, tail, nullptr, [&] {
-            auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(
-                &rhi, frameSize, pixelFormat, std::span<const VkImage>(owned.images.data(), planes.size()));
-            if (bundle->allPlanesValid()) {
-                owned.buffer = gst_buffer_ref(buffer);
-                bundle->adoptVulkanResources(deferredRelease(rhi, handles->gfxQueue, owned));
-                adopted = true;
-            }
-            return bundle;
-        });
-    if (!adopted) {
+    auto textures = std::make_unique<GstVulkanOwnedFrameTextures>(
+        &rhi, frameSize, pixelFormat, std::span<const VkImage>(owned.images.data(), planes.size()));
+    // NV12 chroma can fail while luma succeeds; a partial set would render with missing planes.
+    if (!textures->allPlanesValid()) {
+        textures.reset();
         destroyPlanes(owned);
+        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                 GstHwPathTelemetry::HwFallbackReason::MapFailed);
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
+                         "QRhiTexture::createFrom failed (format=" << int(pixelFormat) << "size=" << frameSize << ")");
+        return {};
+    }
+    owned.buffer = gst_buffer_ref(buffer);
+    textures->adoptVulkanResources(deferredRelease(rhi, handles->gfxQueue, owned));
+    textures->holdSample(source.refSample());
+    if (QGC_HW_ONCE()) {
+        qCInfo(GstDmaBufVulkanLog) << "First DMABuf->Vulkan zero-copy mapTextures success: size=" << frameSize
+                                   << "format=" << int(pixelFormat) << "planes=" << planes.size();
     }
     return textures;
 }
 
+#ifdef QGC_UNITTEST_BUILD
+std::optional<ImportOutcome> importPlaneForTest(const DeviceFns& fns, const GstQtDmaBufImport::Plane& plane)
+{
+    OwnedPlanes owned;
+    owned.fns = fns;
+    const std::optional<ImportOutcome> failure =
+        importPlane(fns, VK_NULL_HANDLE, VK_NULL_HANDLE, plane, VK_FORMAT_R8_UNORM, QSize(64, 64), owned.images[0],
+                    owned.memories[0]);
+    destroyPlanes(owned);
+    return failure;
+}
+
+std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, GstBuffer* buffer)
+{
+    OwnedPlanes owned;
+    // Any non-null handles: only @p fns is given them.
+    owned.dev = VkDevice(quintptr(1));
+    owned.images[0] = VkImage(quintptr(1));
+    owned.memories[0] = VkDeviceMemory(quintptr(1));
+    owned.buffer = gst_buffer_ref(buffer);
+    owned.fns = fns;
+    return deferredRelease(rhi, VK_NULL_HANDLE, owned);
+}
+#endif
+
 }  // namespace GstDmaBufVulkan
+
+GstVulkanOwnedFrameTextures::GstVulkanOwnedFrameTextures(QRhi* rhi, QSize size,
+                                                         QVideoFrameFormat::PixelFormat pixelFormat,
+                                                         std::span<const VkImage> images)
+    : _count(static_cast<int>((std::min) (images.size(), std::size_t(kMaxPlanes))))
+{
+    const auto* description = QVideoTextureHelper::textureDescription(pixelFormat);
+    if (!description) {
+        return;
+    }
+    for (int i = 0; i < _count; ++i) {
+        const VkImage image = images[std::size_t(i)];
+        if (image == VK_NULL_HANDLE) {
+            continue;
+        }
+        // A substituted format would misread the image.
+        auto& texture = _textures[std::size_t(i)];
+        texture.reset(rhi->newTexture(
+            description->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
+            description->rhiPlaneSize(size, i, rhi), 1));
+        // QRhi's first barrier transitions from this layout; UNDEFINED would let the driver discard the imported
+        // contents, GENERAL preserves them.
+        if (texture && !texture->createFrom({quint64(image), VK_IMAGE_LAYOUT_GENERAL})) {
+            texture.reset();
+        }
+    }
+}
+
+GstVulkanOwnedFrameTextures::~GstVulkanOwnedFrameTextures()
+{
+    // The QRhiTextures must be gone before the VkImages they wrap.
+    for (auto& texture : _textures) {
+        texture.reset();
+    }
+    if (_release) {
+        _release();
+    }
+    if (_sample) {
+        gst_sample_unref(_sample);
+    }
+}
+
+QRhiTexture* GstVulkanOwnedFrameTextures::texture(uint plane) const
+{
+    return (plane < static_cast<uint>(_count)) ? _textures[plane].get() : nullptr;
+}
+
+bool GstVulkanOwnedFrameTextures::allPlanesValid() const noexcept
+{
+    return (_count > 0) && std::all_of(_textures.begin(), _textures.begin() + _count,
+                                       [](const std::unique_ptr<QRhiTexture>& texture) { return texture != nullptr; });
+}
+
+void GstVulkanOwnedFrameTextures::holdSample(GstSample* sample) noexcept
+{
+    if (_sample) {
+        gst_sample_unref(_sample);
+    }
+    _sample = sample;
+}
 
 #endif  // QGC_HAS_GST_DMABUF_VULKAN_IMPORT

@@ -1,5 +1,7 @@
 #include "QGCQVideoSinkController.h"
 
+#include <utility>
+
 #include <QtCore/QThread>
 #include <QtGui/QWindow>
 #include <QtMultimedia/QVideoFrame>
@@ -8,6 +10,8 @@
 #include <QtQuick/QQuickWindow>
 
 #include "QGCLoggingCategory.h"
+#include "gstqgc/GstQgcSinkBin.h"
+#include "gstqgc/gstqgcqvideosink.h"
 
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
 
@@ -52,7 +56,7 @@ void QGCQVideoSinkController::setActive(bool active)
     _active = active;
     if (!_element || _bindingReleased)
         return;
-    g_object_set(_element.get(), "active", active ? TRUE : FALSE, nullptr);
+    GstQgc::setSinkActive(_element.get(), active);
 }
 
 void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
@@ -75,7 +79,8 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
         return;
     }
     // Unbinding turned the element off: bound again, it goes on as setActive() last asked.
-    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), "active", _active ? TRUE : FALSE, nullptr);
+    GstQgc::setSinkTarget(_element.get(), raw);
+    GstQgc::setSinkActive(_element.get(), _active);
     if (_videoSink != raw) {
         _clearVideoSinkFrame();
     }
@@ -107,13 +112,7 @@ void QGCQVideoSinkController::releaseFrame()
 
 QSize QGCQVideoSinkController::pictureSize() const
 {
-    if (!_element) {
-        return {};
-    }
-    gint width = 0;
-    gint height = 0;
-    g_object_get(_element.get(), "picture-width", &width, "picture-height", &height, nullptr);
-    return ((width > 0) && (height > 0)) ? QSize(width, height) : QSize();
+    return _element ? GstQgc::sinkPictureSize(_element.get()) : QSize();
 }
 
 void QGCQVideoSinkController::_releaseElementBinding()
@@ -125,7 +124,8 @@ void QGCQVideoSinkController::_releaseElementBinding()
         QObject::disconnect(_sinkDestroyedConnection);
         _sinkDestroyedConnection = {};
     }
-    g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
+    GstQgc::setSinkActive(_element.get(), false);
+    GstQgc::setSinkTarget(_element.get(), nullptr);
     _bindingReleased = true;
     _clearVideoSinkFrame();
 }
@@ -135,3 +135,42 @@ void QGCQVideoSinkController::_clearVideoSinkFrame()
     releaseFrame();
     _videoSink.clear();
 }
+
+namespace GStreamer {
+
+std::shared_ptr<const GstQgc::SinkBin> createVideoSink(const QByteArray& conversionElement,
+                                                       bool disablePixelAspectRatio, [[maybe_unused]] bool gpuZeroCopy)
+{
+    GstQgc::SinkBinConfig config{.conversionElement = conversionElement, .disablePar = disablePixelAspectRatio};
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    config.gpuZeroCopy = gpuZeroCopy;
+#endif
+    GstQgc::SinkBin sinkBin = GstQgc::makeSinkBin(config);
+    if (!sinkBin) {
+        // completeInit() found the sink's elements at startup: the registry changed underfoot, or the chain doesn't
+        // link here.
+        qCCritical(QGCQVideoSinkControllerLog) << "the video sink bin could not be built";
+        return nullptr;
+    }
+    return std::make_shared<const GstQgc::SinkBin>(std::move(sinkBin));
+}
+
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* qvideosink, QVideoSink* videoSink,
+                                                QObject* controllerParent)
+{
+    if (!qvideosink || !videoSink || !controllerParent) {
+        // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
+        qCWarning(QGCQVideoSinkControllerLog) << "null qvideosink, videoSink, or controllerParent";
+        return nullptr;
+    }
+
+    auto* controller = new QGCQVideoSinkController(qvideosink, controllerParent);
+
+    // Route the initial install through the controller so its destroyed-sink QPointer guard
+    // covers setup, not just later swaps.
+    controller->setVideoSink(QPointer<QVideoSink>(videoSink));
+
+    return controller;
+}
+
+}  // namespace GStreamer

@@ -18,7 +18,7 @@
 
 #include <EGL/egl.h>
 // Qt 6 on xcb uses GLX by default — fall back to GLX context wrapping when EGL isn't available.
-#if __has_include(<gst/gl/x11/gstgldisplay_x11.h>) && __has_include(<QtGui/qopenglcontext_platform.h>)
+#if __has_include(<gst/gl/x11/gstgldisplay_x11.h>)
 #include <gst/gl/x11/gstgldisplay_x11.h>
 
 #include <QtGui/qopenglcontext_platform.h>
@@ -47,8 +47,8 @@ GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
 }
 
 constexpr char kGlAppContextType[] = "gst.gl.app_context";
-// A pipeline is given these in this order: a gst-gl element creates its GL context as soon as it is handed another
-// display, sharing with the app context it holds by then.
+// Set in this order: a gst-gl element that has a display already creates its GL context as soon as it is handed
+// another, sharing with the app context it holds by then.
 constexpr const char* kContextTypes[] = {kGlAppContextType, GST_GL_DISPLAY_CONTEXT_TYPE};
 
 class GlContextBridge final : public GstContextBridgeBase
@@ -79,14 +79,9 @@ bool GlContextBridge::primeLocked()
 {
     QOpenGLContext* qtCtx = QOpenGLContext::globalShareContext();
     if (!qtCtx) {
-        if (retryWithinBudget()) {
-            qCInfo(GstGlBridgeLog) << "globalShareContext() is null — Qt GL not initialized yet"
-                                   << "(attempt" << failedPrimes() << "/" << kMaxPrimeRetries << ")";
-        } else if (retriesJustExhausted()) {
-            qCWarning(GstGlBridgeLog) << "globalShareContext() still null after" << kMaxPrimeRetries
-                                      << "retries; GL bridge giving up";
-        }
-        return false;
+        // Qt makes it on demand once HwBuffers::configureQtGraphics() has asked for shared contexts.
+        qCDebug(GstGlBridgeLog) << "globalShareContext() is null: Qt's OpenGL contexts aren't shared";
+        return retryLater();
     }
 
     // Try EGL first (Wayland, eglfs, xcb_egl, Android); fall back to GLX (Linux xcb default on Qt 6).
@@ -150,7 +145,7 @@ bool GlContextBridge::primeLocked()
         // Qt's QGLXContext exposes the X11 Display* + GLXContext we need to wrap.
         auto* glx = qtCtx->nativeInterface<QNativeInterface::QGLXContext>();
         // What Qt's context is can't change while the application runs, so these stay off rather than retry (and
-        // warn) on every context request.
+        // warn) for every pipeline.
         if (!glx) {
             qCWarning(GstGlBridgeLog) << "Qt GL context exposes neither EGL nor GLX; GL bridge disabled";
             return false;

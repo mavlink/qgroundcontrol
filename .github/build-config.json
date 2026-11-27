@@ -31,13 +31,18 @@
   },
   "gstreamer": {
     "version": {
-      "default": "1.28.8",
       "minimum": "1.20.0",
-      "bundled_minimum": "1.28.0",
-      "android": "1.28.8",
-      "ios": "1.28.8",
-      "macos": "1.28.8",
-      "windows": "1.28.8"
+      "sdk": "1.28.9"
+    },
+    "package_url": "https://gstreamer.freedesktop.org/data/pkg",
+    "package_mirror_url": "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer",
+    "packages": {
+      "android": "android/{version}/gstreamer-1.0-android-universal-{version}.tar.xz",
+      "ios": "ios/{version}/gstreamer-{version}-xcframework.tar.xz",
+      "macos": "macos/{version}/gstreamer-1.0-{version}-universal.pkg",
+      "macos_devel": "macos/{version}/gstreamer-1.0-devel-{version}-universal.pkg",
+      "windows_msvc_x64": "windows/{version}/msvc/gstreamer-1.0-msvc-x86_64-{version}.exe",
+      "windows_msvc_arm64": "windows/{version}/msvc/gstreamer-1.0-msvc-arm64-{version}.exe"
     },
     "plugins": {
       "common": [
@@ -84,22 +89,22 @@
       "linux": [
         "nvcodec",
         "qsv",
-        "va",
-        "vulkan"
+        "switchbin",
+        "va"
       ]
     },
     "checksums": {
-      "1.28.8": {
-        "android": "f19c6f971a956675402452fce0fe772d66dbd0d28d70999618355813ea593a99",
-        "windows_msvc_x64": "e4c41ee6ee9c6c32a45d198463ec08d79bac3bd5fa58adc93d13fe4a08abc9d9",
-        "windows_msvc_arm64": "52974e1717bb680272bd3db79a0bde231464eca54b6db83f0b3e57d202fe1600",
-        "macos": "d371ab04a7632713626836c2fc234e863cc98484c74c473eba99b0fbd9b3a3fe",
-        "macos_devel": "e6d380bc17be7eccf13e0154567d4718fc9321da822408c7ca0cd808b3d4a3f7",
-        "ios": "d34ae6bd55b6cb9959734299536003d315deea1ab46f84182113692528d04fb5"
+      "1.28.9": {
+        "android": "04ca3f41c8fc7359c4f92f3705ffee0533890b1f5ea94a49509f1ede0d241a53",
+        "ios": "935142321b865ab4abbf6a1c1a437ac234061111edbbc35d922783d17bbbf29c",
+        "macos": "05d27c8e9b4374bbcf1788cf1604bb4b1a4bdcbdc13bc37b67d3a225c8aa86a6",
+        "macos_devel": "54e27ccc9af096f7f12cff32b6111b7f1b867d968cb8888e80719ad46a97c777",
+        "windows_msvc_x64": "ce4008705e8c6fe92803535b82fb3d6551e183f438e6ef26682ac4d0aca61076",
+        "windows_msvc_arm64": "53cc68ab3cd2b19af93acd0d197790ee1fd5a9f5e200afa2a48ca40fa4ae029a"
       }
     },
-    "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
-    "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
+    "ca_bundle_url": "https://curl.se/ca/cacert-2026-11-05.pem",
+    "ca_bundle_sha256": "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285"
   },
   "gstreamer_plugin_policy": {
     "alternates": [
@@ -131,8 +136,7 @@
       "openh264",
       "qsv",
       "va",
-      "vpx",
-      "vulkan"
+      "vpx"
     ],
     "mock_server_debug": [
       "mpegtsmux",

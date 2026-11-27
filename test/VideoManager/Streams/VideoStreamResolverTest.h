@@ -12,6 +12,8 @@ private slots:
     void _testStreamSettingsPassThrough();
     void _testDisplayConfig_data();
     void _testDisplayConfig();
+    void _testForcedAspectRatio_data();
+    void _testForcedAspectRatio();
     void _testNetworkSources_data();
     void _testNetworkSources();
 };

@@ -73,28 +73,9 @@ set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GS
           _xcfw_foundation
 )
 # User options share the QGC_GST_ / GStreamer_ prefixes and must survive an SDK change.
-set(_gpu_paths
-    DMABUF
-    CUDA
-    GLMEMORY
-    IOSURFACE
-    D3D11
-    D3D12
-    AHARDWAREBUFFER
-    VULKAN
-)
+set(_gpu_paths GPU_PATHS AHARDWAREBUFFER)
 list(TRANSFORM _gpu_paths PREPEND QGC_GST_ENABLE_)
-list(
-    APPEND
-    _kept
-    ${_gpu_paths}
-    QGC_GST_VERSION
-    QGC_GST_CUDA_STUB_DIR
-    QGC_GST_DOWNLOAD_TIMEOUT
-    QGC_GST_BUNDLE_PLUGINS
-    QGC_GST_USE_HOMEBREW
-    GStreamer_REQUIRE_CHECKSUM
-)
+list(APPEND _kept ${_gpu_paths})
 # Returns <var>'s cache value, or "<unset>"; get_property handles names that ${} cannot (e.g. "::").
 function(_qgc_test_cache_value var out_var)
     set(_value "<unset>")

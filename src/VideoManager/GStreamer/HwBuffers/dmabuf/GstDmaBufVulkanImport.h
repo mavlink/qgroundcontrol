@@ -7,6 +7,8 @@
 #include <array>
 #include <functional>
 #include <gst/gst.h>
+#include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -14,7 +16,7 @@
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GstHwFrameTexturesBase.h"
+#include "GstHwVideoBuffer.h"
 #include "GstQtDmaBufImport.h"
 
 /// DMABuf frames under a Vulkan QRhi. Each plane becomes a single-plane VkImage on Qt's device over the imported
@@ -45,46 +47,83 @@ bool canImport(const GstQtDmaBufImport::PlaneFourccs& planeFourccs, quint64 modi
 std::vector<quint64> importableModifiers(quint32 planeFourcc);
 
 /// Imports @p planes, which must match GstQtDmaBufImport::planeFourccs(@p pixelFormat), as textures of @p rhi that
-/// sample the dma-bufs in place. @p source's sample and @p buffer stay referenced until the GPU has finished with the
-/// textures. Without textures, @p rejected tells whether the driver refused the import. @p rhi's thread, Vulkan only.
-QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVideoFrameTexturesUPtr& old,
+/// sample the dma-bufs in place. @p buffer stays referenced until the GPU has finished with the textures, @p source's
+/// sample until Qt destroys them. Without textures, @p failure tells why: NotImportable, Rejected or FdDupFailed.
+/// @p rhi's thread, Vulkan only.
+QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi,
                                        std::span<const GstQtDmaBufImport::Plane> planes,
                                        QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
-                                       bool& rejected);
+                                       GstQtDmaBufImport::ImportOutcome& failure);
 
-/// Re-arms the once-logged warnings and makes every render thread resolve its Vulkan device functions again.
+/// Makes every render thread resolve its Vulkan device functions again.
 void resetCachedState() noexcept;
+
+/// Entry points the import needs. Device-level ones come from vkGetDeviceProcAddr for the QRhi's VkDevice: an
+/// instance-level lookup of a device function may return a trampoline or null.
+struct DeviceFns
+{
+    PFN_vkCreateImage createImage = nullptr;
+    PFN_vkDestroyImage destroyImage = nullptr;
+    PFN_vkAllocateMemory allocateMemory = nullptr;
+    PFN_vkFreeMemory freeMemory = nullptr;
+    PFN_vkBindImageMemory bindImageMemory = nullptr;
+    PFN_vkGetImageMemoryRequirements getImageMemoryRequirements = nullptr;
+    PFN_vkGetMemoryFdPropertiesKHR getMemoryFdProperties = nullptr;
+    PFN_vkGetPhysicalDeviceMemoryProperties getPhysicalDeviceMemoryProperties = nullptr;
+    PFN_vkCreateFence createFence = nullptr;
+    PFN_vkDestroyFence destroyFence = nullptr;
+    PFN_vkGetFenceStatus getFenceStatus = nullptr;
+    PFN_vkWaitForFences waitForFences = nullptr;
+    PFN_vkQueueSubmit queueSubmit = nullptr;
+    PFN_vkQueueWaitIdle queueWaitIdle = nullptr;
+
+    bool ok() const noexcept
+    {
+        return createImage && destroyImage && allocateMemory && freeMemory && bindImageMemory &&
+               getImageMemoryRequirements && getMemoryFdProperties && getPhysicalDeviceMemoryProperties &&
+               createFence && destroyFence && getFenceStatus && waitForFences && queueSubmit && queueWaitIdle;
+    }
+};
+
+#ifdef QGC_UNITTEST_BUILD
+/// Imports @p plane as importTextures() does each plane of a frame, on a device that is @p fns alone, and destroys
+/// what it created. Why the import failed; nothing when it didn't.
+std::optional<GstQtDmaBufImport::ImportOutcome> importPlaneForTest(const DeviceFns& fns,
+                                                                   const GstQtDmaBufImport::Plane& plane);
+/// The release callback importTextures() gives a frame's textures, for textures whose one image and its memory are on
+/// a device that is @p fns alone and of @p rhi, and which hold a new reference to @p buffer.
+std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, GstBuffer* buffer);
+#endif
 
 }  // namespace GstDmaBufVulkan
 
-/// Owns the VkImages and VkDeviceMemory a DMABuf import created, one per plane; released with the bundle.
-class GstVulkanOwnedFrameTextures final : public GstHwFrameTexturesBase
+/// Owns the VkImages and VkDeviceMemory a DMABuf import created, one per plane, and the frame's sample; released with
+/// the textures. Wraps the images itself, where every other path has Qt wrap its handles: QRhi must take them in
+/// VK_IMAGE_LAYOUT_GENERAL, and Qt's helper passes layout 0.
+class GstVulkanOwnedFrameTextures final : public QVideoFrameTextures
 {
 public:
+    /// Planes QRhi rejects stay null, as do null images.
     GstVulkanOwnedFrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                                std::span<const VkImage> images)
-    {
-        // QRhi's first barrier transitions from this layout; UNDEFINED would let the driver discard the imported
-        // contents, GENERAL preserves them.
-        wrapPlanes(rhi, size, pixelFormat, images, VK_IMAGE_LAYOUT_GENERAL);
-    }
+                                std::span<const VkImage> images);
+    ~GstVulkanOwnedFrameTextures() override;
 
-    ~GstVulkanOwnedFrameTextures() override
-    {
-        // The QRhiTextures must be gone before the VkImages they wrap.
-        for (auto& texture : _textures) {
-            texture.reset();
-        }
-        if (_release) {
-            _release();
-        }
-    }
+    QRhiTexture* texture(uint plane) const override;
 
-    /// Transfers the VkImages and their memory into the bundle: @p release runs once, when Qt destroys the bundle.
+    /// True when the textures have planes and every one of them wrapped its image.
+    bool allPlanesValid() const noexcept;
+
+    /// Transfers the VkImages and their memory into the textures: @p release runs once, when Qt destroys them.
     void adoptVulkanResources(std::function<void()> release) noexcept { _release = std::move(release); }
 
+    /// Takes over @p sample's reference, held until destruction.
+    void holdSample(GstSample* sample) noexcept;
+
 private:
+    std::array<std::unique_ptr<QRhiTexture>, GstHw::kMaxPlanes> _textures;
+    int _count = 0;
     std::function<void()> _release;
+    GstSample* _sample = nullptr;
 };
 
 #endif  // QGC_HAS_GST_DMABUF_VULKAN_IMPORT

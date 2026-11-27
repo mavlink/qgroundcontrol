@@ -46,6 +46,16 @@ PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat);
 /// context current. Render thread, GL QRhi only.
 EGLDisplay importDisplay(QRhi& rhi);
 
+/// How a frame's import ended, under OpenGL or Vulkan, for the DMABuf path's disable latch.
+enum class ImportOutcome
+{
+    Imported,
+    NotImportable,  ///< Stopped before the driver was asked: by the QRhi mapping it, or by the frame's layout.
+    Rejected,       ///< The driver refused the frame.
+    Unrecoverable,  ///< The driver refused it in a way no later frame avoids (EGL_BAD_MATCH).
+    FdDupFailed,    ///< A plane's dma-buf fd could not be duplicated (EMFILE, EBADF): no fault of the driver's.
+};
+
 struct ImportResult
 {
     QVideoFrameTexturesUPtr textures;

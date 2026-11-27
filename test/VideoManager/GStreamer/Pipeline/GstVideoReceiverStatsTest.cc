@@ -1,14 +1,12 @@
 #include "GstVideoReceiverStatsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <memory>
 
-#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerDecoderRanks.h"
 #include "VideoStreamStats.h"
+#include "gstqgc/GstQgcTestSupport.h"
 
 namespace {
 
@@ -112,29 +110,21 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream()
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 
-void GstVideoReceiverStatsTest::_testStatsCountFramesTooLateToDisplay()
+void GstVideoReceiverStatsTest::_testFramesLateForTheClockAreDisplayed()
 {
     Receiver receiving;
     QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
     QVERIFY(receiving.startStreaming());
     QVERIFY(receiving.display());
     QVERIFY_TRUE_WAIT(receiving.receiver->stats().valid, TestTimeout::mediumMs());
-    const qint64 droppedBefore = receiving.receiver->stats().framesDropped;
 
-    // From here on every frame is due a second before it arrives, as on a display that can't keep up with the clock.
-    // The sink drops such frames before it would show them, so it never counts them as delivered or superseded.
-    // GStreamer's own warning, once it has dropped enough of them in a row.
-    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("A lot of buffers are being dropped")));
-    bool delayed = false;
-    QVERIFY(runOnPipeline(receiving.receiver.get(), [&delayed](GstElement* pipeline) {
-        if (const GStreamer::GstElementPtr sink = GstTest::findByFactory(pipeline, "qgcqvideosink")) {
-            g_object_set(sink.get(), "ts-offset", -static_cast<gint64>(GST_SECOND), nullptr);
-            delayed = true;
-        }
-    }));
-    QVERIFY(delayed);
-    QVERIFY_TRUE_WAIT(receiving.receiver->stats().framesDropped >= (droppedBefore + GstReceiverTest::kFrameRate),
+    // From here on every frame is due a second before it arrives, as from a decoder that fell behind the clock. The
+    // sink shows each one all the same: a GstVideoSink would drop them, and show one a second.
+    const GStreamer::GstElementPtr sink = displayVideoSink(receiving.receiver.get());
+    QVERIFY(sink);
+    g_object_set(sink.get(), "ts-offset", -static_cast<gint64>(GST_SECOND), nullptr);
+    const guint64 deliveredBefore = GstQgcTest::framesDelivered(sink.get());
+    QVERIFY_TRUE_WAIT(GstQgcTest::framesDelivered(sink.get()) >= (deliveredBefore + (2 * GstReceiverTest::kFrameRate)),
                       TestTimeout::mediumMs());
     QVERIFY(receiving.errorSpy.isEmpty());
 }
@@ -161,15 +151,25 @@ void GstVideoReceiverStatsTest::_testStatsCountFramesTheDisplayQueueLeaks()
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 
-void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
+void GstVideoReceiverStatsTest::_testStatsCountLostPackets_data()
 {
+    QTest::addColumn<bool>("lowLatency");
+
+    // RTP over UDP is counted where it arrives, with a jitter buffer behind that or without.
+    QTest::newRow("jitter buffer") << false;
+    QTest::newRow("low latency") << true;
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountLostPackets()
+{
+    QFETCH(bool, lowLatency);
     // One buffer or buffer list of RTP packets in seven never arrives.
     constexpr int kDropOneIn = 7;
 
     Receiver receiving;
     QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
     VideoReceiver::Config config = receiving.receiver->config();
-    config.lowLatency = true;
+    config.lowLatency = lowLatency;
     receiving.receiver->setConfig(config);
 
     QVERIFY(receiving.startStreaming());
@@ -184,6 +184,40 @@ void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 
-#endif
+void GstVideoReceiverStatsTest::_testStatsCountNoLossWhenTheSenderStartsOver_data()
+{
+    _testStatsCountLostPackets_data();
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountNoLossWhenTheSenderStartsOver()
+{
+    QFETCH(bool, lowLatency);
+    // Few enough for a jitter buffer to count them as packets lost on the way.
+    constexpr quint16 kSequenceNumbersSkipped = 300;
+
+    Receiver receiving;
+    QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
+    VideoReceiver::Config config = receiving.receiver->config();
+    config.lowLatency = lowLatency;
+    receiving.receiver->setConfig(config);
+
+    QVERIFY(receiving.startStreaming());
+    QVERIFY_TRUE_WAIT(receiving.receiver->stats().hasRtpStats(), TestTimeout::mediumMs());
+
+    // A camera whose encoder starts over, as for another resolution, soon enough for the receiver to keep listening.
+    QVERIFY(receiving.sender.restartAfterSkipping(receiving.udpPort(), kSequenceNumbersSkipped));
+    QVERIFY(receiving.framesSent(GstReceiverTest::kFrameRate));
+    // Two samples from here, the new sender's packets are in the statistics.
+    QSignalSpy statsSpy(receiving.receiver.get(), &VideoReceiver::statsChanged);
+    QVERIFY_TRUE_WAIT(statsSpy.count() >= 2, TestTimeout::mediumMs());
+
+    const VideoStreamStats stats = receiving.receiver->stats();
+    QVERIFY(stats.valid);
+    QCOMPARE(stats.reconnects, 0);
+    // None of the sequence numbers skipped. On a busy host the sender can fall behind and catch up in a burst, of
+    // which a jitter buffer drops what its latency doesn't hold.
+    QVERIFY2(stats.packetsLost < (kSequenceNumbersSkipped / 2), qPrintable(QString::number(stats.packetsLost)));
+    QVERIFY(receiving.errorSpy.isEmpty());
+}
 
 UT_REGISTER_TEST(GstVideoReceiverStatsTest, TestLabel::Integration)

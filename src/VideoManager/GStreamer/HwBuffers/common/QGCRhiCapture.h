@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 
 #include <QtCore/QObject>
@@ -23,12 +22,6 @@ struct DeviceSnapshot
     /// The Direct3D 11 device Qt renders with opens a Direct3D 12 device's resources as textures, as the D3D12 path
     /// found on the render thread; false for any other backend.
     std::atomic<bool> d3d11OpensD3D12{false};
-    /// The Vulkan physical device Qt renders on, as its VkPhysicalDeviceProperties name it: the VkPhysicalDevice handle
-    /// belongs to Qt's VkInstance and matches nothing in another one, such as GStreamer's. Zero unless the backend is
-    /// Vulkan and the gst-vulkan path is compiled.
-    std::atomic<quint32> vkVendorId{0};                         ///< vendorID
-    std::atomic<quint32> vkDeviceId{0};                         ///< deviceID
-    std::array<std::atomic<quint64>, 2> vkPipelineCacheUuid{};  ///< pipelineCacheUUID, 8 bytes each in memory order
 };
 
 /// Returns the global snapshot. Atomic fields make individual reads thread-safe.
@@ -44,13 +37,23 @@ void publishDeviceSnapshotForTest(QRhi* rhi);
 /// snapshot.
 void connectWindow(QQuickWindow* window);
 
-/// Has @p handler called after each publication of a device in deviceSnapshot(), on the thread that publishes it
-/// (the render thread); null for none.
+#ifdef QGC_UNITTEST_BUILD
+/// connectWindow(@p window), its scene graph counting as Qt Quick's QRhi one whatever this process renders with (the
+/// unit tests' is the software one).
+void connectQRhiWindowForTest(QQuickWindow* window);
+#endif
+
+/// Has @p handler called each time the connected window's scene graph comes up, once its device, if any, is in
+/// deviceSnapshot(), on the render thread; null for none.
 void setPublishedHandler(void (*handler)()) noexcept;
 
+/// HwBuffers::graphicsDeviceSettled(): no window is connected, its scene graph doesn't render through a QRhi, or it is
+/// up. Any thread.
+bool deviceSettled() noexcept;
+
 /// The EGLDisplay (as void*) Qt's OpenGL renders with; null when Qt's OpenGL doesn't run on EGL (GLX, WGL, CGL, no
-/// OpenGL) or that isn't known yet. Taken from Qt's global share context, else from the platform integration (asked on
-/// the GUI thread only), else from the scene graph's OpenGL context once it runs. Any thread.
+/// OpenGL) or that isn't known yet. Taken from Qt's global share context, else from the scene graph's OpenGL context
+/// once it runs. Any thread.
 void* qtEglDisplay();
 
 }  // namespace QGCRhiCapture

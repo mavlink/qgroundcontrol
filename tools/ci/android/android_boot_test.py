@@ -149,18 +149,11 @@ def print_log_group(content: str, pattern: re.Pattern[str], max_lines: int = 80)
 
 _GSTREAMER_LOG_PATTERN = re.compile(
     r"gst|GStreamer|gstreamer|gst_init|gst_plugin|GST_PLUGIN|libgst|"
-    r"GstVideoReceiver|videostreaming|qml6glsink|qgcvideosinkbin",
+    r"GstVideoReceiver|videostreaming|qgcvideosinkbin",
     re.IGNORECASE,
 )
 
-_GSTREAMER_FAILURE_PATTERN = re.compile(
-    r"GStreamer library not found|"
-    r"Failed to initialize GStreamer|"
-    r"nativeInit failed; skipping GStreamer initialization|"
-    r"GStreamer Java-side init result:\s*failed|"
-    r"GStreamer initialization failed",
-    re.IGNORECASE,
-)
+_GSTREAMER_FAILURE_PATTERN = re.compile(r"Failed to initialize GStreamer", re.IGNORECASE)
 
 
 def boot_test_report(content: str) -> list[str]:

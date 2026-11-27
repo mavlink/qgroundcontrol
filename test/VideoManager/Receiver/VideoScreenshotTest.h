@@ -11,6 +11,8 @@ private slots:
     void _testJpegCarriesExif();
     void _testPositionWithoutAltitude();
     void _testDisplayedImageAsQtPresentsIt();
+    void _testStretchedLosesNoPixel_data();
+    void _testStretchedLosesNoPixel();
     void _testNoExifWithoutValues();
     void _testOtherFormatsWithoutExif();
 };
