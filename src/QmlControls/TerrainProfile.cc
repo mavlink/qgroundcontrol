@@ -8,6 +8,27 @@
 
 QGC_LOGGING_CATEGORY(TerrainProfileLog, "Terrain.TerrainProfile")
 
+namespace {
+
+// QtGraphs keeps drawing a LineSeries that is emptied after showing a line, in another series' style
+// (the collision line going from a hit to none left a second flight line). A single point draws no
+// line, so a series is never handed zero points.
+void setSeriesPoints(QXYSeries* series, QList<QPointF> points)
+{
+    if (!series) {
+        return;
+    }
+    if (points.isEmpty()) {
+        points.append(QPointF(0, 0));
+    }
+    // Using clear/append instead of replace works around bugs in QtGraphs where you end up with parts of old
+    // series data showing.
+    series->clear();
+    series->append(points);
+}
+
+}  // namespace
+
 TerrainProfile::TerrainProfile(QQuickItem* parent)
     : QQuickItem(parent)
 {
@@ -201,23 +222,10 @@ void TerrainProfile::updateSeries(QXYSeries* terrainSeries, QXYSeries* flightSer
         }
     }
 
-    // Using clear/append instead of replace works around bugs in QtGraphs where you end up with parts of old series data showing.
-    if (terrainSeries) {
-        terrainSeries->clear();
-        terrainSeries->append(terrainPoints);
-    }
-    if (flightSeries) {
-        flightSeries->clear();
-        flightSeries->append(flightPoints);
-    }
-    if (missingSeries) {
-        missingSeries->clear();
-        missingSeries->append(missingPoints);
-    }
-    if (collisionSeries) {
-        collisionSeries->clear();
-        collisionSeries->append(collisionPoints);
-    }
+    setSeriesPoints(terrainSeries, terrainPoints);
+    setSeriesPoints(flightSeries, flightPoints);
+    setSeriesPoints(missingSeries, missingPoints);
+    setSeriesPoints(collisionSeries, collisionPoints);
 
     qCDebug(TerrainProfileLog).noquote() << QStringLiteral("updateSeries terrainPoints:%1 flightPoints:%2 missingPoints:%3 collisionPoints:%4")
         .arg(terrainPoints.count()).arg(flightPoints.count()).arg(missingPoints.count()).arg(collisionPoints.count());
