@@ -25,7 +25,8 @@ enum class Error
     UnsupportedFormat,  ///< Input in a format that the build does not enable: a single stream of legacy lzma,
                         ///< Zstandard, bzip2 or LZ4, or an archive whose name or signature shows that it is 7z or
                         ///< TAR, or a TAR compressed with Zstandard, bzip2 or LZ4. Also a ZIP entry to extract that
-                        ///< is compressed with another method than deflate, which no build extracts
+                        ///< is compressed with another method than deflate, which no build extracts, and a gzip
+                        ///< stream inside another stream, which no build reads
     SizeLimitExceeded,  ///< Decompressed size exceeds the limit
     Cancelled,          ///< Operation cancelled by progress callback
     IoError,            ///< Output cannot be written, or is the input file
@@ -41,7 +42,8 @@ struct [[nodiscard]] Outcome
     /// What failed and why, translated for the user. Empty on success
     QString message = {};
     /// What libarchive or the system reported about an input that cannot be read or an output that cannot be
-    /// written, in English: "Truncated input file", "No space left on device". Empty if the message says it all
+    /// written, in English: "Truncated input file", "No space left on device", or the text of the exception that
+    /// ended a CompressionJob. Empty if the message says it all
     QString detail = {};
     /// Compression filter libarchive detected ("gzip", "xz", "zstd", ...), or "none" for input that is not
     /// compressed. Empty if the operation ended before it read the first header of its input

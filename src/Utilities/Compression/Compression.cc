@@ -197,7 +197,7 @@ Outcome extractArchive(const QString& archivePath, const QString& outputDirector
                                                               "Ends a message that tells what failed"),
                 .detail = extracted.detail};
     }
-    if (extracted.error == Error::UnsupportedFormat) {
+    if ((extracted.error == Error::UnsupportedFormat) && !extracted.nestedGzip) {
         return {
             .error = Error::UnsupportedFormat,
             .message = what + QCoreApplication::translate(

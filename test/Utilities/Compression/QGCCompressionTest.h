@@ -42,6 +42,7 @@ private slots:
     UT_PARAMETERIZED_TEST(_testEveryPrefixOfAStream);
     UT_PARAMETERIZED_TEST(_testDamagedStreamHeader);
     UT_PARAMETERIZED_TEST(_testGzipChecksums);
+    UT_PARAMETERIZED_TEST(_testGzipInsideStream);
     void _testDecompressDataToMemoryInPlace();
     void _testPlainDataIsShared();
     void _testDecompressFileToMemory();

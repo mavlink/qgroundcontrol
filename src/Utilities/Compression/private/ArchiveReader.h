@@ -40,6 +40,9 @@ struct [[nodiscard]] Result
     /// Set by ArchiveReader::open() for an input that could be read but that no registered format recognized, or
     /// whose start a filter found damaged: libarchive has no public error code that tells the two apart
     bool unrecognized = false;
+    /// Set by ArchiveReader::open() for an input that holds a gzip stream inside another stream, which no operation
+    /// reads (UnsupportedFormat)
+    bool nestedGzip = false;
     /// Compression filter that the reader of an operation detected (ArchiveReader::filterName()). Set by the
     /// operation, also when it fails
     QString filterName = {};
@@ -82,7 +85,8 @@ struct FileSource
 ///
 /// An operation creates its own reader and opens it once. The open functions create the libarchive reader and
 /// register the filters and formats that this build reads (configureReader()). For a single stream they refuse a
-/// compression that this build cannot decode.
+/// compression that this build cannot decode. They refuse a gzip stream inside another stream, for a single stream
+/// and an archive alike: its checksums cannot be checked (verifyInput()).
 class ArchiveReader
 {
 public:
@@ -95,8 +99,8 @@ public:
     /// Open a file or a Qt resource (:/...) for reading
     /// The reader opens the file with QFile and reads it through its own callbacks. A file that cannot seek, such
     /// as a pipe, is read in order.
-    /// @return Success, UnsupportedFormat for a single stream whose compression this build cannot decode, or
-    ///         InvalidArchive
+    /// @return Success, UnsupportedFormat for a single stream whose compression this build cannot decode or for a
+    ///         gzip stream inside another stream, or InvalidArchive
     Result open(const QString& path, Input input);
 
     /// Open data in memory for reading
@@ -116,8 +120,9 @@ public:
 
     /// Check what libarchive does not: the checksums of an input that is a gzip stream
     /// libarchive reads the checksum and the length that end a gzip member without comparing them, so data that
-    /// was changed and still inflates is not found by it. Call this once the input has been read with success,
-    /// and before the result is committed. Any other input is sound.
+    /// was changed and still inflates is not found by it. This check reads the bytes of the input, so it sees only
+    /// a gzip stream that the input itself is: open() refuses one inside another stream. Call this once the input
+    /// has been read with success, and before the result is committed. Any other input is sound.
     /// @return Success, or InvalidArchive if the data does not match its checksums
     Result verifyInput();
 
@@ -138,6 +143,9 @@ private:
     /// Create the libarchive reader
     /// @param signature Start of the input, which shows whether this build can decode a single stream
     Result _create(Input input, const QByteArray& signature);
+
+    /// Refuse a gzip stream that another filter decodes, once the reader has chosen its filters
+    Result _refuseNestedGzip();
 
     // Declared before _archive, which reads from them, so that _archive is destroyed first
     QByteArray _memoryData;            // The bytes given to open()
@@ -168,7 +176,8 @@ QString libarchiveError(struct archive* a);
 //   None               Everything requested was read to its end, and written if it was to be written
 //   UnsupportedFormat  Single stream: this build cannot decode the compression of the input. Extraction: an entry
 //                      of a ZIP archive is compressed with another method than store or deflate. An archive
-//                      whose format this build lacks fails with InvalidArchive, and Result::unrecognized set
+//                      whose format this build lacks fails with InvalidArchive, and Result::unrecognized set.
+//                      Both: a gzip stream inside another stream, with Result::nestedGzip set
 //   IoError            The output directory or a file in it could not be written
 //   PermissionDenied   As IoError, because writing to the output is not permitted
 //   Cancelled          The progress callback returned false

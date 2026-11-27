@@ -467,7 +467,8 @@ file. The extraction target writes the input as files: it checks the kind of the
 stream from a file and to a file, and extracts it as an archive. They abort if a file is detected as both kinds, if
 the ways of reading the input disagree, if input that is not compressed comes back changed, if data that is given
 starts with the signature of a stream (input whose header no decoder took, or what a decoder gave), if a gzip or
-xz stream does not succeed or fail as zlib or liblzma, used directly, do, or gives other data, if a refused
+xz stream does not succeed or fail as zlib or liblzma, used directly, do, or gives other data (where that data is a
+stream itself: other than the module gives for it on its own, and a gzip stream inside must fail), if a refused
 input or a failed extraction leaves data, a file or a directory behind, if a size limit is exceeded, or if an
 extraction writes outside its output directory, creates a link, or writes a name that is not portable or that
 differs from another only in case or Unicode normalisation. In a build with the optional decoders (`QGC_ENABLE_LZMA`, `QGC_ENABLE_BZIP2`,
@@ -476,8 +477,8 @@ streams disagree with libarchive's own bidders (`Fuzz/BidAgreement.h`), which `Q
 at the edges of those rules. The test build runs both targets on fixed inputs as `QGCCompressionFuzzSmoke` (label
 `Fuzz`), and a portable test build as `Portable.QGCCompressionFuzzSmoke`. That program also checks what some of the
 inputs give: entry names beyond ASCII, entries of the same name, an output path that names the input, a ZIP entry
-compressed with xz, gzip streams of several members, with a wrong checksum or with a header that is cut, damaged or
-has its own checksum, and an xz stream whose block header, behind its CRC, declares a dictionary of 1.5 GiB. A ZIP
+compressed with xz, gzip streams of several members, with a wrong checksum, inside another stream or with a header
+that is cut, damaged or has its own checksum, and an xz stream whose block header, behind its CRC, declares a dictionary of 1.5 GiB. A ZIP
 archive of a thousand central records that name one entry is a seed too: the fuzzer reaches none of these by itself.
 
 With Clang, `-DQGC_COMPRESSION_LIBFUZZER=ON` adds the `qgc_compression_stream_fuzzer` and

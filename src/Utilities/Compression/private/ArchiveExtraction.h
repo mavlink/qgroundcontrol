@@ -15,7 +15,7 @@ namespace LibArchive {
 /// gives its path absolute and without "." and "..".
 /// Return values: see the end of ArchiveReader.h. An archive whose format this build lacks fails with
 /// InvalidArchive here, with Result::unrecognized set. UnsupportedFormat is a ZIP entry that the filter accepts and
-/// that is neither stored nor deflated
+/// that is neither stored nor deflated, or a gzip stream inside another stream (Result::nestedGzip)
 Result extractArchive(const QString& archivePath, const QString& outputDirectoryPath,
                       const Compression::ExtractOptions& options);
 

@@ -3,7 +3,6 @@
 #include <utility>
 
 #include <QtConcurrent/QtConcurrentRun>
-#include <QtCore/QPointer>
 #include <QtCore/QPromise>
 #include <QtCore/QThreadPool>
 
@@ -112,15 +111,9 @@ void CompressionJob::_onFutureFinished()
     qCDebug(CompressionJobLog) << "Operation finished:" << outcome.error << outcome.message;
 
     deleteLater();
-    if (outcome && !_cancelRequested->load()) {
-        const QPointer<CompressionJob> self(this);
-        _setProgress(1.0);
-        // A handler of the signal may have deleted the job, whose destructor then ended it
-        if (!self) {
-            return;
-        }
-    }
 
+    // An operation that succeeded has reported progress 1.0 by now: the worker sets the value that ends the range,
+    // which a future always passes on, before its result
     _ended = true;
     if (_cancelRequested->load()) {
         return;
@@ -169,7 +162,9 @@ void CompressionJob::_start(Work work)
         } catch (const std::exception& e) {
             // An exception thrown by an entry filter ends its extraction
             qCDebug(CompressionJobLog) << "Exception during compression operation:" << e.what();
-            outcome = {.error = Error::InternalError, .message = QString::fromUtf8(e.what())};
+            outcome = {.error = Error::InternalError,
+                       .message = Compression::errorName(Error::InternalError),
+                       .detail = QString::fromUtf8(e.what())};
         } catch (...) {
             // Also what is no std::exception: an exception that leaves this function is thrown again where the
             // result is read, on the thread of the job

@@ -77,6 +77,7 @@ void configureReader(struct archive* a, Input input);
 /// A signature is the whole magic number of a format: 1F 8B (gzip), FD 37 7A 58 5A 00 (xz), 28 B5 2F FD (Zstandard),
 /// 04 22 4D 18 or 02 21 4C 18 (LZ4), 50 to 5F 2A 4D 18 (a skippable frame, which Zstandard and LZ4 share), and "BZh"
 /// with a block size from 1 to 9 (bzip2). They are known in every build. A legacy lzma stream has none.
+/// The one rule by which both the decompression and the kind of a file (kindOfFile()) tell a stream from data
 QString streamSignatureFormat(QByteArrayView start);
 
 /// Why this build cannot decode a single compressed stream

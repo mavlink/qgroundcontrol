@@ -4,23 +4,13 @@ Decompresses a single compressed stream, from a file or from memory, into memory
 archive into a directory. Every operation reads its input with [libarchive](https://libarchive.org). The module
 only decompresses: QGC does not create compressed files.
 
-The application uses it for:
+The application uses it in:
 
-- the files that a vehicle sends or points to, which may be compressed and are decompressed where they are read.
-  Its component metadata, their translations and its events metadata are downloaded and cached as they are sent,
-  and read so (`JsonParsing::isJsonFile()` reads the JSON among them). A camera definition is downloaded as it is
-  sent, and cached decompressed once it has loaded;
-- the ArduPilot firmware list, 92 MiB decompressed, which `decompressFileToSink()` gives to its reader a chunk at a
-  time, so that it is never held whole;
-- offline map tile sets imported from an archive (`QGCMapEngineManager`).
-
-Everything else is read as it is. Settings, plans, parameter metadata, QGC's own JSON files and terrain tiles never
-arrive compressed, and `JsonParsing::readJsonFile()` refuses a file that is.
-
-QGC decompresses a file where it reads it, and keeps no decompressed copy of a download but the camera definitions
-it caches. `QGCFileDownload` can also decompress a download into a file (`autoDecompress`, also through
-`QGCCachedFileDownload`) for a caller that needs the decompressed file on disk. It is off by default, and nothing in
-QGC turns it on.
+- the readers of the files that a vehicle sends or points to: component metadata and their translations (also
+  through `JsonParsing::isJsonFile()`), events metadata and camera definitions, with `decompressFileToMemory()`;
+- the reader of the ArduPilot firmware list, with `decompressFileToSink()`;
+- the import of offline map tile sets (`QGCMapEngineManager`), with `CompressionJob::startExtraction()`;
+- `QGCFileDownload` when its `autoDecompress` is set, with `CompressionJob::startDecompression()`.
 
 ## What it reads
 
@@ -29,8 +19,7 @@ QGC turns it on.
 | Single stream | gzip and xz. Legacy lzma, Zstandard, bzip2 and LZ4 if the build enables them |
 | Archive | ZIP. 7z and TAR, the last also compressed as a whole (`.tar.gz`, `.tar.xz`, ...), if the build enables them |
 
-Everything PX4, ArduPilot and MAVLink give QGC is a gzip or xz stream, and offline map tile sets are imported from
-ZIP archives; the other formats are kept for later use.
+gzip, xz and ZIP are what QGC receives; the other formats are kept for later use.
 
 ## Using it
 
@@ -38,10 +27,9 @@ ZIP archives; the other formats are kept for later use.
 the module: what each function reads and writes, its limits, what it leaves after a failure, and on which thread it
 runs. Read them before you use it; this file does not repeat them.
 
-The functions block, and QGC calls them by one rule. A file that a vehicle sends or points to, and the ArduPilot
-firmware list, are read on a worker thread (`QGC::runOnWorker()`): their size is not QGC's to choose. Work that can
-take minutes, or that the user follows and can cancel, such as the import of a tile set, runs as a `CompressionJob`.
-Nothing in QGC decompresses or extracts on the GUI thread.
+The functions block. Call them on a worker thread (`QGC::runOnWorker()`) for input whose size QGC does not choose,
+and run work that can take minutes, or that the user follows, as a `CompressionJob`. A job can be cancelled
+(`CompressionJob::cancel()`); the tile set import does not offer that to the user.
 
 ## Layout
 

@@ -13,7 +13,7 @@ namespace Compression {
 
 namespace {
 
-// Content shorter than this is not recognized
+// Content shorter than this is not recognized as an archive
 constexpr qsizetype kMinMagicBytes = 6;
 
 // Offset of the "ustar" magic in a TAR header
@@ -55,8 +55,8 @@ constexpr std::initializer_list<OptionalReader> kOptionalReaders = {
 #endif
 };
 
-// Bytes that streams start with, which kFormats, LibArchive::undecodableStreamReason() and
-// LibArchive::streamSignatureFormat() look for
+// Bytes that streams start with, which LibArchive::streamSignatureFormat() and LibArchive::undecodableStreamReason()
+// look for
 constexpr QByteArrayView kGzipSignature = "\x1F\x8B";
 // "\xFD7zXZ" and a zero byte. The size is explicit because a view of a literal stops at its first zero
 constexpr QByteArrayView kXzSignature = {"\xFD\x37\x7A\x58\x5A\x00", 6};
@@ -69,9 +69,11 @@ constexpr QByteArrayView kLz4LegacySignature = "\x02\x21\x4C\x18";  // The frame
 struct FormatInfo
 {
     Kind kind;
-    QByteArrayView suffixes[3];    ///< In lower case
-    QByteArrayView signatures[3];  ///< Bytes a file of the format starts with (TAR: see kTarUstarOffset)
-    OptionalFormats needs = {};    ///< The formats a build needs to read it, of those it may leave out
+    QByteArrayView suffixes[3];  ///< In lower case
+    /// Bytes an archive of the format starts with (TAR: see kTarUstarOffset). The content of a single stream is told
+    /// by LibArchive::streamSignatureFormat(), the rule by which it is decompressed
+    QByteArrayView signatures[3];
+    OptionalFormats needs = {};  ///< The formats a build needs to read it, of those it may leave out
 };
 
 // Searched in this order. The compressed TAR formats come before the compressions, because their suffixes end
@@ -86,13 +88,12 @@ constexpr FormatInfo kFormats[] = {
     // ZIP: local file header, empty archive, spanned archive
     {Kind::Archive, {".zip"}, {"PK\x03", "PK\x05", "PK\x07"}},
     {Kind::Archive, {".7z"}, {"7z\xBC\xAF\x27\x1C"}, OptionalFormat::SevenZip},
-    {Kind::Stream, {".gz", ".gzip"}, {kGzipSignature}},
-    {Kind::Stream, {".xz"}, {kXzSignature}},
-    // A legacy lzma stream starts with no signature
+    {Kind::Stream, {".gz", ".gzip"}, {}},
+    {Kind::Stream, {".xz"}, {}},
     {Kind::Stream, {".lzma"}, {}, OptionalFormat::Lzma},
-    {Kind::Stream, {".zst", ".zstd"}, {kZstdSignature}, OptionalFormat::Zstd},
-    {Kind::Stream, {".bz2", ".bzip2"}, {kBzip2Signature}, OptionalFormat::Bzip2},
-    {Kind::Stream, {".lz4"}, {kLz4Signature, kLz4LegacySignature}, OptionalFormat::Lz4},
+    {Kind::Stream, {".zst", ".zstd"}, {}, OptionalFormat::Zstd},
+    {Kind::Stream, {".bz2", ".bzip2"}, {}, OptionalFormat::Bzip2},
+    {Kind::Stream, {".lz4"}, {}, OptionalFormat::Lz4},
     {Kind::Archive, {".tar"}, {}, OptionalFormat::Tar},
 };
 
@@ -126,8 +127,8 @@ const FormatInfo* formatOfName(const QString& filePath)
 
 // The functions below are given the start of a file's content: its first kHeaderBytes, or all of it if it is shorter
 
-/// Format whose signature the content starts with, or nullptr if it starts with none
-const FormatInfo* formatOfData(const QByteArray& data)
+/// Archive format whose signature the content starts with, or nullptr if it starts with none
+const FormatInfo* archiveFormatOfData(const QByteArray& data)
 {
     if (data.size() < kMinMagicBytes) {
         return nullptr;
@@ -152,10 +153,12 @@ bool isTarData(const QByteArray& data)
 /// Kind of a file from the start of its content
 Kind kindOfData(const QByteArray& data)
 {
-    if (const FormatInfo* const format = formatOfData(data)) {
-        return format->kind;
+    // A single stream by the rule by which it is decompressed: content that the decompression takes as it is is no
+    // stream, and content that it decompresses or refuses as a damaged stream is one
+    if (!LibArchive::streamSignatureFormat(data).isEmpty()) {
+        return Kind::Stream;
     }
-    return isTarData(data) ? Kind::Archive : Kind::Unknown;
+    return ((archiveFormatOfData(data) != nullptr) || isTarData(data)) ? Kind::Archive : Kind::Unknown;
 }
 
 /// The start of the content of a file, or nothing if it is not a regular file or cannot be read
@@ -211,7 +214,10 @@ bool isFormatNotBuilt(const QString& filePath)
         return true;
     }
     const QByteArray header = headerOfFile(filePath);
-    if (const FormatInfo* const format = formatOfData(header)) {
+    if (!LibArchive::streamSignatureFormat(header).isEmpty()) {
+        return !LibArchive::undecodableStreamReason(header).isEmpty();
+    }
+    if (const FormatInfo* const format = archiveFormatOfData(header)) {
         return !isBuilt(*format);
     }
     return !readFormats().testFlag(OptionalFormat::Tar) && isTarData(header);

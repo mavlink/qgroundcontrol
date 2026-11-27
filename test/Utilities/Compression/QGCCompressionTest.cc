@@ -1,6 +1,7 @@
 #include "QGCCompressionTest.h"
 
 #include <initializer_list>
+#include <iterator>
 #include <limits>
 #include <utility>
 
@@ -161,9 +162,15 @@ void QGCCompressionTest::_testKindFromContent_data()
     archive("7z signature", QByteArray::fromHex("377abcaf271c0004") + padding);
     // The signature of TAR is not at the start of the file
     archive("tar", ArchiveFixtures::makeTar({{.name = "good.txt", .data = "good"}}));
+    // A stream by the signatures that its decompression decides by: also one whose header no decoder takes, which
+    // the decompression refuses as a damaged stream, or that starts with a skippable frame
+    stream("gzip, cut in its header", QByteArray("\x1F\x8B\x08", 3));
+    stream("skippable frame and Zstandard", QByteArray::fromHex("502a4d1804000000736b697028b52ffd200319000068690a"));
     QTest::newRow("text") << QByteArray("neither compressed nor an archive") << false << false;
-    // Too short to identify: the first two bytes of a gzip stream are not enough
-    QTest::newRow("short") << QByteArray("\x1F\x8B\x08", 3) << false << false;
+    // The decompression takes these as they are: text that starts as bzip2 does, without its block size, and a byte
+    // too short to be told from data
+    QTest::newRow("text like bzip2") << QByteArray("BZhello, this is text\n") << false << false;
+    QTest::newRow("one byte of gzip") << QByteArray("\x1F") << false << false;
     QTest::newRow("no bytes") << QByteArray() << false << false;
 }
 
@@ -1215,6 +1222,22 @@ QByteArray withByte(QByteArray bytes, qsizetype index, quint8 value)
     return bytes;
 }
 
+/// A gzip member whose deflate block is stored, not compressed: a byte of its data can be changed and it still
+/// inflates, so that nothing but the checksum tells
+QByteArray storedGzipMember(const QByteArray& payload)
+{
+    const QByteArray stored = qCompress(payload, 0);
+    return QByteArray::fromHex("1f8b08000000000000ff") + stored.mid(6, stored.size() - 10) +
+           TestFixtures::gzipMember(payload).last(8);
+}
+
+/// @a bytes with one bit of the byte at @a index changed
+QByteArray withBitChanged(QByteArray bytes, qsizetype index)
+{
+    bytes[index] = static_cast<char>(bytes.at(index) ^ 0x01);
+    return bytes;
+}
+
 }  // namespace
 
 void QGCCompressionTest::_testEveryPrefixOfAStream_data()
@@ -1388,14 +1411,7 @@ void QGCCompressionTest::_testGzipChecksums_data()
     const QByteArray first(3000, 'a');
     const QByteArray second(2000, 'b');
     const QByteArray member = TestFixtures::gzipMember(first);
-    const auto changed = [](QByteArray bytes, qsizetype index) {
-        bytes[index] = static_cast<char>(bytes.at(index) ^ 0x01);
-        return bytes;
-    };
-    // The data of a member whose deflate block is stored, not compressed, can be changed and still inflates:
-    // nothing but the checksum tells
-    const QByteArray stored = QByteArray::fromHex("1f8b08000000000000ff") +
-                              qCompress(first, 0).mid(6, qCompress(first, 0).size() - 10) + member.last(8);
+    const QByteArray stored = storedGzipMember(first);
 
     QTest::newRow("one member") << member << first << true;
     QTest::newRow("two members") << (member + TestFixtures::gzipMember(second)) << (first + second) << true;
@@ -1403,12 +1419,12 @@ void QGCCompressionTest::_testGzipChecksums_data()
     // What follows the last member is not gzip data, and is left alone
     QTest::newRow("data after the stream") << (member + QByteArray("not a member")) << first << true;
 
-    QTest::newRow("checksum") << changed(member, member.size() - 8) << QByteArray() << false;
-    QTest::newRow("length") << changed(member, member.size() - 1) << QByteArray() << false;
+    QTest::newRow("checksum") << withBitChanged(member, member.size() - 8) << QByteArray() << false;
+    QTest::newRow("length") << withBitChanged(member, member.size() - 1) << QByteArray() << false;
     QTest::newRow("checksum of the second member")
-        << (member + changed(TestFixtures::gzipMember(second), TestFixtures::gzipMember(second).size() - 8))
+        << (member + withBitChanged(TestFixtures::gzipMember(second), TestFixtures::gzipMember(second).size() - 8))
         << QByteArray() << false;
-    QTest::newRow("stored data, changed") << changed(stored, 100) << QByteArray() << false;
+    QTest::newRow("stored data, changed") << withBitChanged(stored, 100) << QByteArray() << false;
     // The stream a compressor writes for an empty file, whose checksum is zero
     QTest::newRow("checksum of an empty stream")
         << QByteArray::fromHex("1f8b080000000000000303000100000000000000") << QByteArray() << false;
@@ -1439,6 +1455,78 @@ void QGCCompressionTest::_testGzipChecksums()
             QVERIFY2(results.isEmpty(), api);
         }
     }
+}
+
+void QGCCompressionTest::_testGzipInsideStream_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QByteArray>("stream");
+    // What the stream decompresses to, or the file that the archive in it holds
+    QTest::addColumn<QByteArray>("content");
+    // The filter the outcome names, or empty if the input is refused
+    QTest::addColumn<QString>("filterName");
+
+    const QByteArray content = QByteArray("{\"name\": \"gzip\"}\n").repeated(50);
+    const std::pair<const char*, QByteArray (*)(const QByteArray&)> outers[] = {
+        {"gzip", &TestFixtures::gzipMember},
+        {"xz", &ArchiveFixtures::xzStream},
+    };
+    const QStringList entryPoints = QStringList{std::begin(kStreamEntryPoints), std::end(kStreamEntryPoints)}
+                                    << QStringLiteral("extractArchive");
+    for (const QString& api : entryPoints) {
+        // An extraction is given an archive that holds the content, compressed as a whole
+        const QByteArray payload =
+            _isStreamEntryPoint(api) ? content : ArchiveFixtures::makeZip({{.name = "inner.json", .data = content}});
+        const QByteArray inner = storedGzipMember(payload);
+        const std::pair<const char*, QByteArray> inners[] = {
+            {"sound", inner},
+            {"data changed", withBitChanged(inner, inner.size() - 100)},
+            {"wrong checksum", withBitChanged(inner, inner.size() - 8)},
+            {"wrong length", withBitChanged(inner, inner.size() - 1)},
+        };
+        // The checksums of a gzip stream that another stream holds cannot be checked: it is refused, also when sound
+        for (const auto& [innerName, innerStream] : inners) {
+            for (const auto& [outerName, wrap] : outers) {
+                QTest::addRow("gzip, %s, in %s, %s", innerName, outerName, qPrintable(api))
+                    << api << wrap(innerStream) << content << QString();
+            }
+        }
+        // Members one after another are one stream, and another stream can be inside a gzip stream
+        const qsizetype half = payload.size() / 2;
+        QTest::addRow("two gzip members, %s", qPrintable(api))
+            << api << (TestFixtures::gzipMember(payload.first(half)) + TestFixtures::gzipMember(payload.sliced(half)))
+            << content << QStringLiteral("gzip");
+        QTest::addRow("xz in gzip, %s", qPrintable(api))
+            << api << TestFixtures::gzipMember(ArchiveFixtures::xzStream(payload)) << content << QStringLiteral("xz");
+    }
+}
+
+void QGCCompressionTest::_testGzipInsideStream()
+{
+    QFETCH(QString, api);
+    QFETCH(QByteArray, stream);
+    QFETCH(QByteArray, content);
+    QFETCH(QString, filterName);
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("nested.gz");
+    QVERIFY(TestFixtures::writeFile(inputPath, stream));
+    const QString outputPath = tempDir.filePath("output");
+
+    Results results;
+    const Compression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
+    if (filterName.isEmpty()) {
+        QCOMPARE(outcome.error, Compression::Error::UnsupportedFormat);
+        QVERIFY2(outcome.message.endsWith(": a gzip stream inside another stream is not read"),
+                 qPrintable(outcome.message));
+        // Not the inner stream's data, whether or not it matches its checksums, and nothing written
+        QVERIFY(results.isEmpty());
+        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("nested.gz")});
+        return;
+    }
+    QVERIFY2(outcome, qPrintable(outcome.description()));
+    QCOMPARE(outcome.filterName, filterName);
+    QCOMPARE(_isStreamEntryPoint(api) ? results.data : TestFixtures::readFile(outputPath + "/inner.json"), content);
 }
 
 void QGCCompressionTest::_testDecompressFileToSink()

@@ -31,6 +31,10 @@
 /// decides whether the input is read as a single stream or as an archive. No external program is ever run to
 /// decompress, and an encrypted archive fails with Error::InvalidArchive. The functions block until they are done:
 /// CompressionJob runs an extraction or the decompression of a file on a thread of its own pool.
+///
+/// Every function may be called from any thread, also from several at once, and again from a callback of an
+/// operation that runs: each call reads with a reader of its own, and the module shares no state that changes. The
+/// callbacks of an operation (progress, entry filter, sink) run on the thread that called it.
 namespace Compression {
 
 // ============================================================================
@@ -58,7 +62,10 @@ namespace Compression {
 
 /// Whether a file is a single compressed stream (.gz, .gzip, .xz, .lzma, .zst, .zstd, .bz2, .bzip2, .lz4)
 /// The name and the content are checked as isArchiveFile() checks them, so a compressed archive (.tar.gz) is no
-/// compressed file. A legacy lzma stream has no signature: only its name tells it.
+/// compressed file. The content is compressed if it starts with a signature that the rules of the single-stream
+/// functions below list, by which they decide too: content that they take as it is is not compressed, and content
+/// that starts with a signature is, also if its header is too short or damaged to decompress. A legacy lzma stream
+/// has no signature: only its name tells it.
 [[nodiscard]] bool isCompressedFile(const QString& filePath);
 
 /// Path a compressed file decompresses to: the path without its compression extension, or with ".decompressed"
@@ -81,9 +88,12 @@ namespace Compression {
 // - Compressed input that is truncated or corrupt fails. So does a legacy lzma, Zstandard, bzip2 or LZ4 stream in
 //   a build without that decoder (Error::UnsupportedFormat), also one inside a gzip or xz stream (data.lzma.gz),
 //   which a build with the decoder decodes. That includes a gzip stream whose data does not match the checksum and
-//   the length it ends with, which libarchive does not compare: the module checks them itself. After a failure
-//   nothing is written and no data is returned, but by decompressFileToSink(), whose caller must discard the chunks
-//   it was given.
+//   the length it ends with, which libarchive does not compare: the module checks them itself, in the bytes it
+//   reads. So a gzip stream inside another stream (data.gz.gz, data.gz.xz), which only the decoder of the outer
+//   stream sees, fails with Error::UnsupportedFormat in every build, also a sound one. Members one after another are
+//   one stream, and a stream of another format inside a gzip stream (data.xz.gz) is read. After a failure nothing is
+//   written and no data is returned, but by decompressFileToSink(), whose caller must discard the chunks it was
+//   given.
 // - Input that starts with the signature of a stream format is compressed. A signature is the whole magic number:
 //   1F 8B (gzip), FD 37 7A 58 5A 00 (xz), 28 B5 2F FD (Zstandard), 04 22 4D 18 or 02 21 4C 18 (LZ4), 50 to 5F
 //   2A 4D 18 (a skippable frame of Zstandard or LZ4), "BZh" and a digit from 1 to 9 (bzip2). If no decoder takes
@@ -170,7 +180,8 @@ Outcome decompressDataToMemory(const QByteArray& data, QByteArray& decompressed,
 /// limit, and the dictionary of an xz or LZMA entry, up to 4 GiB, takes as much memory as the data written from it.
 /// An entry that the filter refuses is not decoded. A 7z archive is compressed with LZMA or LZMA2 by nature, which
 /// libarchive decodes in the same way, without a memory limit: its decoder can take as much memory as the archive
-/// declares. A TAR archive compressed as a whole is a single stream.
+/// declares. A TAR archive compressed as a whole is a single stream, read by the rules of the functions above: a gzip
+/// stream inside another stream (a.tar.gz.xz) fails with Error::UnsupportedFormat.
 ///
 /// The name of an entry is read as UTF-8 unless the archive declares another charset for it. A backslash in it is
 /// a separator, as archivers on Windows write it, on every system: "Tiles\a.db" is "Tiles/a.db", and "..\a" leads

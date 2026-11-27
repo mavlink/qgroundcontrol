@@ -179,6 +179,24 @@ Result ArchiveReader::_create(Input input, const QByteArray& signature)
     return {};
 }
 
+Result ArchiveReader::_refuseNestedGzip()
+{
+    // Filter 0 is the one the format reads from, and the last one the input itself. GzipCheck sees the bytes of the
+    // input, which only the last but one decodes: a gzip stream that another filter gives could be checked only by
+    // decoding that filter a second time. Members one after another are one filter
+    const int filterCount = archive_filter_count(_archive.get());
+    for (int filter = 0; filter < (filterCount - 2); ++filter) {
+        if (archive_filter_code(_archive.get(), filter) == ARCHIVE_FILTER_GZIP) {
+            Result refused = failure(Error::UnsupportedFormat,
+                                     QStringLiteral("A gzip stream inside another stream is not read: its checksum "
+                                                    "cannot be checked"));
+            refused.nestedGzip = true;
+            return refused;
+        }
+    }
+    return {};
+}
+
 Result ArchiveReader::open(const QString& path, Input input)
 {
     // QFile handles Qt paths on every platform, and reads a Qt resource like a file
@@ -213,7 +231,7 @@ Result ArchiveReader::open(const QString& path, Input input)
         return opened;
     }
 
-    return {};
+    return _refuseNestedGzip();
 }
 
 Result ArchiveReader::open(const QByteArray& data, Input input)
@@ -232,7 +250,7 @@ Result ArchiveReader::open(const QByteArray& data, Input input)
         return opened;
     }
 
-    return {};
+    return _refuseNestedGzip();
 }
 
 }  // namespace LibArchive

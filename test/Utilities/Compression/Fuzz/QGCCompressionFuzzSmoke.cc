@@ -78,6 +78,13 @@ QList<Seed> seeds(const QDir& resourceDirectory, bool& resourcesRead)
         // A header with its checksum (FHCRC), which zlib checks and libarchive skips, right and wrong
         {"gzip-header-crc", QByteArray::fromHex("1f8b08020000000000ff90c94bcb2c2a2ee102002ab34ac706000000")},
         {"gzip-header-crc-wrong", QByteArray::fromHex("1f8b08020000000000ff91c94bcb2c2a2ee102002ab34ac706000000")},
+        // A gzip stream inside another stream, refused also when it is sound: its checksum is seen only by the decoder
+        // of the outer stream. "gzip-stored" in gzip, and "gzip-changed-checksum" in xz
+        {"gzip-in-gzip", QByteArray::fromHex("1f8b080000000000020393efe6600003664676861fff8b4bf28b5253b81ecd095eca0e14"
+                                             "04000d2b9d581e000000")},
+        {"gzip-in-xz", QByteArray::fromHex("fd377a585a0000016922de360200210116000000742fe5a30100191f8b0800000000000003"
+                                           "4bcb2c2a2ee102007fb34ac70600000000000044c4ac5a00012e1a7d45e3d69042990d0100"
+                                           "00000001595a")},
         {"xz-signature", QByteArray::fromHex("fd377a585a00") + QByteArray(32, 'x')},
         // A block header behind its CRC-32, which mutation does not reach: it declares a dictionary of 1.5 GiB, which
         // liblzma allocates and fills only as far as data is decoded. More than libarchive lets a legacy lzma stream
@@ -351,6 +358,8 @@ int main(int argc, char* argv[])
         {"gzip-second-member-cut", nullptr},
         {"gzip-header-crc", "first\n"},
         {"gzip-header-crc-wrong", nullptr},
+        {"gzip-in-gzip", nullptr},
+        {"gzip-in-xz", nullptr},
         {"xz-large-dictionary", "{\"name\": \"large dictionary\"}\n"}};
     for (const auto& [name, content] : streamSeeds) {
         if (!decompressesTo(seedBytes(name), content)) {

@@ -135,11 +135,9 @@ void QGCCompressionJobTest::_testExtractionFilterThrows()
 
     QCOMPARE(outcomes.size(), 1);
     QCOMPARE(outcomes.first().error, Compression::Error::InternalError);
-    if (standardException) {
-        QCOMPARE(outcomes.first().message, QStringLiteral("refused"));
-    } else {
-        QVERIFY(!outcomes.first().message.isEmpty());
-    }
+    // The message is for the user, the exception's own text is the detail
+    QCOMPARE(outcomes.first().message, Compression::errorName(Compression::Error::InternalError));
+    QCOMPARE(outcomes.first().detail, standardException ? QStringLiteral("refused") : QString());
     QVERIFY(!QFileInfo::exists(outputDir));
 }
 

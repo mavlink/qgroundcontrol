@@ -33,10 +33,14 @@ bool isSameFile(const QString& path, const QString& otherPath)
            !error;
 }
 
-/// End of the failure message of a LibArchive operation, for an error code that adds to what the message says
-static QString failureReason(Error error)
+/// End of the failure message of a LibArchive operation, for a failure whose cause adds to what the message says
+static QString failureReason(const LibArchive::Result& result)
 {
-    switch (error) {
+    if (result.nestedGzip) {
+        return QCoreApplication::translate("Compression", ": a gzip stream inside another stream is not read",
+                                           "Ends a message that tells what failed");
+    }
+    switch (result.error) {
         case Error::SizeLimitExceeded:
             return QCoreApplication::translate("Compression", ": size limit exceeded",
                                                "Ends a message that tells what failed");
@@ -68,7 +72,7 @@ Outcome operationOutcome(const LibArchive::Result& result, const QString& what)
         return {.filterName = result.filterName, .skippedEntries = result.skippedEntries};
     }
     return {.error = result.error,
-            .message = what + failureReason(result.error),
+            .message = what + failureReason(result),
             .detail = result.detail,
             .filterName = result.filterName,
             .skippedEntries = result.skippedEntries};

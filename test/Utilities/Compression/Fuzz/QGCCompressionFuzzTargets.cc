@@ -157,7 +157,8 @@ std::optional<ReferenceDecode> decodeXz(const QByteArray& input)
 }
 
 /// The module decodes a gzip or xz stream as zlib or liblzma do: it fails where they fail, and gives what they give,
-/// or what it gives for that data when it is itself a stream that the module decodes
+/// or what it gives for that data on its own when it is itself a stream. It refuses a gzip stream inside the stream,
+/// whose checksums it cannot check
 void compareWithReference(const QByteArray& input, const Compression::Outcome& outcome, const QByteArray& data)
 {
     std::optional<ReferenceDecode> reference = inflateGzip(input);
@@ -171,14 +172,16 @@ void compareWithReference(const QByteArray& input, const Compression::Outcome& o
         require(!outcome);
         return;
     }
+    // A gzip stream inside the stream is refused, and so is data that only starts like one
+    if (reference->data.startsWith(QByteArrayView("\x1F\x8B"))) {
+        require(!outcome);
+        return;
+    }
     QByteArray inner;
     const Compression::Outcome innerOutcome =
         Compression::decompressDataToMemory(reference->data, inner, MAX_OUTPUT_BYTES);
-    // A stream inside the stream is decoded by the module's own rules, which the other checks cover
-    if (innerOutcome.filterName.isEmpty() || (innerOutcome.filterName == QLatin1String("none"))) {
-        require(static_cast<bool>(outcome) == static_cast<bool>(innerOutcome));
-        require(data == inner);
-    }
+    require(static_cast<bool>(outcome) == static_cast<bool>(innerOutcome));
+    require(data == inner);
 }
 
 /// The input as a single stream in memory: a refused input gives no data, the output stays within the limit, an
