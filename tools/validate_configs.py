@@ -17,6 +17,9 @@ from setup.install_uv import required_version
 if TYPE_CHECKING:
     from pathlib import Path
 
+# The first SDK whose iOS package is the xcframework tarball the build downloads (cmake/GStreamer/platform/IOS.cmake);
+# earlier ones were a .pkg.
+GSTREAMER_IOS_XCFRAMEWORK_SINCE = Version("1.28.8")
 UV_IMAGE_RE = re.compile(r"^COPY --from=ghcr\.io/astral-sh/uv:(\S+) ", re.MULTILINE)
 UV_IMAGE_DOCKERFILES = ("deploy/docker/Dockerfile", ".clusterfuzzlite/Dockerfile")
 
@@ -36,6 +39,10 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     gst = config["gstreamer"]
     if Version(gst["version"]["sdk"]) < Version(gst["version"]["minimum"]):
         errors.append("gstreamer.version.sdk must meet the minimum")
+    if Version(gst["version"]["sdk"]) < GSTREAMER_IOS_XCFRAMEWORK_SINCE:
+        errors.append(
+            f"gstreamer.version.sdk must be at least {GSTREAMER_IOS_XCFRAMEWORK_SINCE}, for its iOS package"
+        )
     pinned = gst["checksums"].get(gst["version"]["sdk"], {})
     for package in gst["packages"]:
         if not pinned.get(package):

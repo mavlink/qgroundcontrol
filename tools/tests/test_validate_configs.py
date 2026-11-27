@@ -76,6 +76,17 @@ def test_gstreamer_sdk_version_below_the_minimum_is_rejected():
     assert "gstreamer.version.sdk must meet the minimum" in validate_build_config(config, schema)
 
 
+def test_gstreamer_sdk_version_without_the_ios_xcframework_is_rejected():
+    config, schema = configuration()
+    config = copy.deepcopy(config)
+    checksums = config["gstreamer"]["checksums"]
+    checksums["1.28.7"] = checksums[config["gstreamer"]["version"]["sdk"]]
+    config["gstreamer"]["version"]["sdk"] = "1.28.7"
+    assert validate_build_config(config, schema) == [
+        "gstreamer.version.sdk must be at least 1.28.8, for its iOS package"
+    ]
+
+
 def test_archive_preserves_build_and_license_inputs(git_repo: Path):
     paths = [
         ".github/build-config.json",
