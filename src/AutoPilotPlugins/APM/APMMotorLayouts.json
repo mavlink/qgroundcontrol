@@ -1,0 +1,893 @@
+{
+    "source": "ArduPilot libraries/AP_Motors/examples/AP_Motors_test, print all layouts (p)",
+    "layouts": [
+        {
+            "class": 1,
+            "type": 0,
+            "motors": [
+                { "number": 3, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 4, "roll": 0.5000, "pitch": 0.0000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 2,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 3,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 4,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.2660 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.2660 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 5,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.2660 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.2660 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 6,
+            "motors": [
+                { "number": 3, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 4, "roll": 0.5000, "pitch": 0.0000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 12,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 13,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 16,
+            "motors": [
+                { "number": 3, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 4, "roll": 0.5000, "pitch": 0.0000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 17,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 1,
+            "type": 18,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 3, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 2,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 6, "testOrder": 3, "roll": -0.5000, "pitch": -0.2500 },
+                { "number": 2, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.2500 },
+                { "number": 5, "testOrder": 6, "roll": 0.5000, "pitch": 0.2500 }
+            ]
+        },
+        {
+            "class": 2,
+            "type": 1,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.2500, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 3, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 4, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 3, "testOrder": 6, "roll": 0.2500, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 2,
+            "type": 3,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 4, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 2,
+            "type": 13,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2500, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 5, "testOrder": 3, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 6, "roll": 0.2500, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 2,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2500, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 3, "testOrder": 3, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 5, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 6, "testOrder": 6, "roll": 0.2500, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 2, "roll": -0.3536, "pitch": 0.3536 },
+                { "number": 8, "testOrder": 3, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 4, "roll": -0.3536, "pitch": -0.3536 },
+                { "number": 2, "testOrder": 5, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.3536, "pitch": -0.3536 },
+                { "number": 7, "testOrder": 7, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 5, "testOrder": 8, "roll": 0.3536, "pitch": 0.3536 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2071, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 2, "roll": -0.5000, "pitch": 0.2071 },
+                { "number": 8, "testOrder": 3, "roll": -0.5000, "pitch": -0.2071 },
+                { "number": 4, "testOrder": 4, "roll": -0.2071, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.2071, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": -0.2071 },
+                { "number": 7, "testOrder": 7, "roll": 0.5000, "pitch": 0.2071 },
+                { "number": 5, "testOrder": 8, "roll": 0.2071, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 2,
+            "motors": [
+                { "number": 7, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.4150, "pitch": 0.1700 },
+                { "number": 2, "testOrder": 3, "roll": -0.3350, "pitch": -0.1600 },
+                { "number": 4, "testOrder": 4, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 5, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 6, "roll": 0.3350, "pitch": -0.1600 },
+                { "number": 1, "testOrder": 7, "roll": 0.4150, "pitch": 0.1700 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 3,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 2, "roll": -0.5000, "pitch": 0.1665 },
+                { "number": 8, "testOrder": 3, "roll": -0.5000, "pitch": -0.1665 },
+                { "number": 4, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": -0.1665 },
+                { "number": 7, "testOrder": 7, "roll": 0.5000, "pitch": 0.1665 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 13,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2071, "pitch": 0.5000 },
+                { "number": 8, "testOrder": 2, "roll": -0.5000, "pitch": 0.2071 },
+                { "number": 7, "testOrder": 3, "roll": -0.5000, "pitch": -0.2071 },
+                { "number": 6, "testOrder": 4, "roll": -0.2071, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 5, "roll": 0.2071, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 6, "roll": 0.5000, "pitch": -0.2071 },
+                { "number": 3, "testOrder": 7, "roll": 0.5000, "pitch": 0.2071 },
+                { "number": 2, "testOrder": 8, "roll": 0.2071, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2071, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.5000, "pitch": 0.2071 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": -0.2071 },
+                { "number": 4, "testOrder": 4, "roll": -0.2071, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 5, "roll": 0.2071, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": -0.2071 },
+                { "number": 7, "testOrder": 7, "roll": 0.5000, "pitch": 0.2071 },
+                { "number": 8, "testOrder": 8, "roll": 0.2071, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 3,
+            "type": 15,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.1665, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 7, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 4, "roll": -0.1665, "pitch": -0.5000 },
+                { "number": 1, "testOrder": 5, "roll": 0.1665, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 8, "roll": 0.1665, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 3, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 7, "testOrder": 4, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 3, "testOrder": 5, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 6, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 7, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.0000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 2,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 3,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 5, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 12,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 4,
+            "type": 18,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 6, "testOrder": 2, "roll": -0.5000, "pitch": 0.5000 },
+                { "number": 1, "testOrder": 3, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 4, "roll": -0.5000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 6, "roll": 0.5000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 7, "roll": 0.5000, "pitch": 0.5000 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 0,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 1,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 2,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 3,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 4,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 5,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 6,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 7,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 8,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 9,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 10,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 2, "testOrder": 2, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 3, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 5, "testOrder": 5, "roll": 0.5000, "pitch": 0.2500 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": 0.2500 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 11,
+            "motors": [
+                { "number": 2, "testOrder": 1, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 5, "testOrder": 2, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 1, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 3, "testOrder": 5, "roll": 0.5000, "pitch": 0.2500 },
+                { "number": 6, "testOrder": 6, "roll": 0.5000, "pitch": 0.2500 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 12,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 13,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 14,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 15,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 16,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 17,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 5,
+            "type": 18,
+            "motors": [
+                { "number": 5, "testOrder": 1, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 1, "testOrder": 2, "roll": -0.5000, "pitch": 0.2498 },
+                { "number": 6, "testOrder": 3, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 4, "testOrder": 4, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 5, "roll": 0.5000, "pitch": 0.2498 },
+                { "number": 3, "testOrder": 6, "roll": 0.5000, "pitch": 0.2498 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 2,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 3,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 4,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 5,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 6,
+            "motors": [
+                { "number": 4, "testOrder": 1, "roll": 0.0000, "pitch": 1.0000 },
+                { "number": 7, "testOrder": 2, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 1, "testOrder": 3, "roll": -1.0000, "pitch": -0.5000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": -0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 7,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 8,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 9,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 10,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 11,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 12,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 13,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 15,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 16,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 17,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 7,
+            "type": 18,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -1.0000, "pitch": 0.5000 },
+                { "number": 4, "testOrder": 2, "roll": 0.0000, "pitch": -1.0000 },
+                { "number": 7, "testOrder": 3, "roll": 0.0000, "pitch": 0.0000 },
+                { "number": 2, "testOrder": 4, "roll": 1.0000, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 12,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 4, "testOrder": 4, "roll": -0.5000, "pitch": 0.2500 },
+                { "number": 5, "testOrder": 5, "roll": -0.5000, "pitch": -0.2500 },
+                { "number": 6, "testOrder": 6, "roll": -0.5000, "pitch": -0.2500 },
+                { "number": 7, "testOrder": 7, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 8, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 9, "testOrder": 9, "roll": 0.5000, "pitch": -0.2500 },
+                { "number": 10, "testOrder": 10, "roll": 0.5000, "pitch": -0.2500 },
+                { "number": 11, "testOrder": 11, "roll": 0.5000, "pitch": 0.2500 },
+                { "number": 12, "testOrder": 12, "roll": 0.5000, "pitch": 0.2500 }
+            ]
+        },
+        {
+            "class": 12,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.2500, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.2500, "pitch": 0.5000 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 4, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 5, "testOrder": 5, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": -0.2500, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 7, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 8, "testOrder": 8, "roll": 0.2500, "pitch": -0.5000 },
+                { "number": 9, "testOrder": 9, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 10, "testOrder": 10, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 11, "testOrder": 11, "roll": 0.2500, "pitch": 0.5000 },
+                { "number": 12, "testOrder": 12, "roll": 0.2500, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 14,
+            "type": 0,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": 0.0000, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.3090, "pitch": 0.4045 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": 0.1545 },
+                { "number": 4, "testOrder": 4, "roll": -0.5000, "pitch": -0.1545 },
+                { "number": 5, "testOrder": 5, "roll": -0.3090, "pitch": -0.4045 },
+                { "number": 6, "testOrder": 6, "roll": 0.0000, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 7, "roll": 0.3090, "pitch": -0.4045 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": -0.1545 },
+                { "number": 9, "testOrder": 9, "roll": 0.5000, "pitch": 0.1545 },
+                { "number": 10, "testOrder": 10, "roll": 0.3090, "pitch": 0.4045 }
+            ]
+        },
+        {
+            "class": 14,
+            "type": 1,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.1545, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.4045, "pitch": 0.3090 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 4, "roll": -0.4045, "pitch": -0.3090 },
+                { "number": 5, "testOrder": 5, "roll": -0.1545, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.1545, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 7, "roll": 0.4045, "pitch": -0.3090 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 9, "testOrder": 9, "roll": 0.4045, "pitch": 0.3090 },
+                { "number": 10, "testOrder": 10, "roll": 0.1545, "pitch": 0.5000 }
+            ]
+        },
+        {
+            "class": 14,
+            "type": 14,
+            "motors": [
+                { "number": 1, "testOrder": 1, "roll": -0.1545, "pitch": 0.5000 },
+                { "number": 2, "testOrder": 2, "roll": -0.4045, "pitch": 0.3090 },
+                { "number": 3, "testOrder": 3, "roll": -0.5000, "pitch": 0.0000 },
+                { "number": 4, "testOrder": 4, "roll": -0.4045, "pitch": -0.3090 },
+                { "number": 5, "testOrder": 5, "roll": -0.1545, "pitch": -0.5000 },
+                { "number": 6, "testOrder": 6, "roll": 0.1545, "pitch": -0.5000 },
+                { "number": 7, "testOrder": 7, "roll": 0.4045, "pitch": -0.3090 },
+                { "number": 8, "testOrder": 8, "roll": 0.5000, "pitch": 0.0000 },
+                { "number": 9, "testOrder": 9, "roll": 0.4045, "pitch": 0.3090 },
+                { "number": 10, "testOrder": 10, "roll": 0.1545, "pitch": 0.5000 }
+            ]
+        }
+    ]
+}
