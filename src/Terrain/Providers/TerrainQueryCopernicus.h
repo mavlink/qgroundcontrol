@@ -6,6 +6,8 @@
 
 class QGeoCoordinate;
 
+/// Asks https://terrain-ce.suite.auterion.com/api/v1/ itself, without the tile cache. The server answers the query
+/// for a carpet only: the two other queries fail without a request.
 class TerrainQueryCopernicus : public TerrainOnlineQuery
 {
     Q_OBJECT
@@ -23,8 +25,6 @@ private slots:
 
 private:
     void _sendQuery(const QString &path, const QUrlQuery &urlQuery);
-    void _parseCoordinateData(const QJsonValue &coordinateJson);
-    void _parsePathData(const QJsonValue &pathJson);
     void _parseCarpetData(const QJsonValue &carpetJson);
 
     bool _carpetStatsOnly = false;

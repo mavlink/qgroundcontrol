@@ -6,6 +6,8 @@
 target_sources(
     QGCUnitTests
     PRIVATE
+        TerrainQueryCopernicusTest.cc
+        TerrainQueryCopernicusTest.h
         TerrainQueryTest.cc
         TerrainQueryTest.h
         TerrainTileManagerTest.cc
@@ -16,6 +18,7 @@ target_sources(
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_qgc_test(TerrainQueryCopernicusTest LABELS Unit Terrain)
 add_qgc_test(TerrainQueryTest LABELS Integration Terrain)
 add_qgc_test(TerrainTileManagerTest LABELS Unit Terrain)
 add_qgc_test(TerrainTileTest LABELS Unit Terrain)
