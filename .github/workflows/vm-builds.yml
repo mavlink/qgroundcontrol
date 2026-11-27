@@ -74,7 +74,7 @@ jobs:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
+        uses: runs-on/action@4a3bfc79f21a9b97e972e2ba75a2b0b1e9688670 # v2.7.1
         with:
           show_costs: summary
 
@@ -135,7 +135,7 @@ jobs:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
+        uses: runs-on/action@4a3bfc79f21a9b97e972e2ba75a2b0b1e9688670 # v2.7.1
         with:
           show_costs: summary
 

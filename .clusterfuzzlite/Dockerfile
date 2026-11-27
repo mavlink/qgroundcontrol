@@ -2,7 +2,7 @@ FROM gcr.io/oss-fuzz-base/base-builder:v1
 
 # The base image's own Python serves OSS-Fuzz's tooling. QGC's scripts run on the Python named in
 # tools/.python-version: uv installs it under /opt and finds the pin from any directory below $SRC.
-COPY --from=ghcr.io/astral-sh/uv:0.12.8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /usr/local/bin/uv
 COPY tools/.python-version $SRC/.python-version
 ENV UV_PYTHON_INSTALL_DIR=/opt/qgc-python
 RUN uv python install --no-bin "$(cat "$SRC/.python-version")"
