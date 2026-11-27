@@ -620,6 +620,7 @@ if(TEST_CASE MATCHES "^helpers-")
 endif()
 
 if(TEST_CASE STREQUAL "python-venv-stale-cache")
+    set(ENV{QGC_PYTHON_ENV} "${CMAKE_CURRENT_BINARY_DIR}/missing-venv")
     set(QGC_AUTO_PYTHON_VENV
         OFF
         CACHE BOOL "" FORCE
