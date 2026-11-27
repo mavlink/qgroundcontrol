@@ -648,6 +648,11 @@ bool APMFirmwarePlugin::supportsSplineWaypoints(const Vehicle* vehicle) const
     return vehicle && vehicle->multiRotor();
 }
 
+bool APMFirmwarePlugin::supportsFenceHomeCircle(const Vehicle* vehicle) const
+{
+    return vehicle && (vehicle->versionCompare(4, 8, 0) >= 0);
+}
+
 const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
 {
     if (_toolIndicatorList.isEmpty()) {

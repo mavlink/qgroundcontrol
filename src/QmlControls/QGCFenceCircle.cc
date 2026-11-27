@@ -16,8 +16,9 @@ QGCFenceCircle::QGCFenceCircle(const QGeoCoordinate& center, double radius, bool
 }
 
 QGCFenceCircle::QGCFenceCircle(const QGCFenceCircle& other, QObject* parent)
-    : QGCMapCircle  (other, parent)
-    , _inclusion    (other._inclusion)
+    : QGCMapCircle(other, parent)
+    , _inclusion(other._inclusion)
+    , _homeCentered(other._homeCentered)
 {
     _init();
 }
@@ -25,12 +26,14 @@ QGCFenceCircle::QGCFenceCircle(const QGCFenceCircle& other, QObject* parent)
 void QGCFenceCircle::_init(void)
 {
     connect(this, &QGCFenceCircle::inclusionChanged, this, &QGCFenceCircle::_setDirty);
+    connect(this, &QGCFenceCircle::homeCenteredChanged, this, &QGCFenceCircle::_setDirty);
 }
 
 const QGCFenceCircle& QGCFenceCircle::operator=(const QGCFenceCircle& other)
 {
     QGCMapCircle::operator=(other);
 
+    setHomeCentered(other._homeCentered);
     setInclusion(other._inclusion);
 
     return *this;
@@ -43,8 +46,11 @@ void QGCFenceCircle::_setDirty(void)
 
 void QGCFenceCircle::saveToJson(QJsonObject& json)
 {
-    json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
+    json[JsonParsing::jsonVersionKey] = _homeCentered ? _jsonHomeCenteredVersion : _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
+    if (_homeCentered) {
+        json[_jsonHomeCenteredKey] = true;
+    }
     QGCMapCircle::saveToJson(json);
 }
 
@@ -53,15 +59,25 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     errorString.clear();
 
     QList<JsonParsing::KeyValidateInfo> keyInfoList = {
-        { JsonParsing::jsonVersionKey,   QJsonValue::Double, true },
-        { _jsonInclusionKey,            QJsonValue::Bool,   true },
+        {JsonParsing::jsonVersionKey, QJsonValue::Double, true},
+        {_jsonInclusionKey, QJsonValue::Bool, true},
+        {_jsonHomeCenteredKey, QJsonValue::Bool, false},
     };
     if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
-        errorString = tr("GeoFence Circle only supports version %1").arg(_jsonCurrentVersion);
+    const int version = json[JsonParsing::jsonVersionKey].toInt();
+    if (version != _jsonCurrentVersion && version != _jsonHomeCenteredVersion) {
+        errorString = tr("GeoFence Circle only supports versions %1 and %2")
+                          .arg(_jsonCurrentVersion)
+                          .arg(_jsonHomeCenteredVersion);
+        return false;
+    }
+
+    const bool homeCentered = json[_jsonHomeCenteredKey].toBool(false);
+    if (homeCentered != (version == _jsonHomeCenteredVersion)) {
+        errorString = tr("GeoFence Circle version %1 does not match its home-centered setting").arg(version);
         return false;
     }
 
@@ -69,6 +85,7 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
         return false;
     }
 
+    setHomeCentered(homeCentered);
     setInclusion(json[_jsonInclusionKey].toBool());
 
     return true;
@@ -76,8 +93,25 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
 
 void QGCFenceCircle::setInclusion(bool inclusion)
 {
+    if (_homeCentered && !inclusion) {
+        // Home circles are inclusion-only
+        return;
+    }
+
     if (inclusion != _inclusion) {
         _inclusion = inclusion;
         emit inclusionChanged(inclusion);
+    }
+}
+
+void QGCFenceCircle::setHomeCentered(bool homeCentered)
+{
+    if (homeCentered != _homeCentered) {
+        _homeCentered = homeCentered;
+        if (_homeCentered) {
+            // Home circles are inclusion-only
+            setInclusion(true);
+        }
+        emit homeCenteredChanged(homeCentered);
     }
 }

@@ -2396,6 +2396,30 @@ void PlanPanelUITest::_testFenceTabAddsSelectsAndEditsFences()
     if (QTest::currentTestFailed())
         return;
 
+    // Home is not offered on firmware without home circles, but an existing home circle can be turned off
+    QVERIFY(!fence->homeCircleSupported());
+    verifyVisibility(QStringLiteral("planPanel_fenceHomeCentered"), false,
+                     QStringLiteral("Home hidden when unsupported"));
+    circle->setProperty("inclusion", false);
+    circle->setProperty("homeCentered", true);
+    verifyVisibility(QStringLiteral("planPanel_fenceHomeCentered"), true,
+                     QStringLiteral("Home shown for a home circle"));
+    verifyProperty(QStringLiteral("planPanel_fenceHomeCentered"), "checked", true, QStringLiteral("Home checked"));
+    verifyProperty(QStringLiteral("planPanel_fenceInclusion"), "currentIndex", 0,
+                   QStringLiteral("home circles include"));
+    verifyEnabled(QStringLiteral("planPanel_fenceInclusion"), false, QStringLiteral("home circles are include only"));
+    if (QTest::currentTestFailed())
+        return;
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceHomeCentered")), "Failed to click Home");
+    QVERIFY2(waitForCondition([&] { return !circle->property("homeCentered").toBool(); }, 2000,
+                              QStringLiteral("Home turned off")),
+             "Unticking Home did not turn the home circle off");
+    verifyEnabled(QStringLiteral("planPanel_fenceInclusion"), true, QStringLiteral("inclusion editable again"));
+    verifyVisibility(QStringLiteral("planPanel_fenceHomeCentered"), false,
+                     QStringLiteral("Home hidden again when unsupported"));
+    if (QTest::currentTestFailed())
+        return;
+
     // An invalid radius blocks selecting another fence until it is corrected
     QQuickItem* const radiusField = findItem(_rootItem, QStringLiteral("planPanel_fenceRadius"));
     QVERIFY(radiusField);

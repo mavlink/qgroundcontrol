@@ -18,6 +18,7 @@ Item {
     readonly property string _kind:     page.selectedKind
     readonly property var   _fence:     page.selectedObject
     readonly property var   _controller: page.controller
+    readonly property bool  _homeCentered: _kind === "circle" && _fence !== null && _fence.homeCentered === true
 
     QGCPalette { id: qgcPal }
 
@@ -76,11 +77,28 @@ Item {
                     model:          [ qsTr("Include"), qsTr("Exclude") ]
                     currentIndex:   root._fence && root._fence.inclusion ? 0 : 1
                     visible:        root._kind === "polygon" || root._kind === "circle"
+                    enabled:        !root._homeCentered
 
                     onActivated: (index) => {
                         if (root._fence) {
                             root._fence.inclusion = index === 0
                         }
+                    }
+                }
+
+                QGCCheckBox {
+                    objectName: "planPanel_fenceHomeCentered"
+                    text:       qsTr("Center on home")
+                    checked:    root._homeCentered
+                    // Unsupported firmware: an existing home circle can only be turned off
+                    visible:    root._kind === "circle" && (root._controller.homeCircleSupported || root._homeCentered)
+
+                    onClicked: {
+                        if (root._fence) {
+                            root._fence.homeCentered = checked
+                        }
+                        // The click replaced the binding, and this checkbox is reused for the next circle selected
+                        checked = Qt.binding(() => root._homeCentered)
                     }
                 }
 
@@ -91,9 +109,15 @@ Item {
                     wrapMode:           Text.WordWrap
                     color:              qgcPal.textSecondary
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               root._kind === "polygon" ?
-                                            qsTr("Drag the vertices on the map to reshape the fence.") :
-                                            qsTr("Drag the center on the map to move the fence.")
+                    text: {
+                        if (root._kind === "polygon") {
+                            return qsTr("Drag the vertices on the map to reshape the fence.")
+                        }
+                        if (root._homeCentered) {
+                            return qsTr("The vehicle centers this fence on its home position.")
+                        }
+                        return qsTr("Drag the center on the map to move the fence.")
+                    }
                 }
 
                 Loader {

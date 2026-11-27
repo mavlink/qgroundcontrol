@@ -69,7 +69,8 @@ QGCListView {
                 }
                 const inclusion = row.fence.inclusion ? qsTr("Include") : qsTr("Exclude")
                 if (row.modelData.kind === "circle") {
-                    return qsTr("%1 %2, %3").arg(row.fence.radius.valueString).arg(row.fence.radius.units).arg(inclusion)
+                    const kind = row.fence.homeCentered ? qsTr("Home") : inclusion
+                    return qsTr("%1 %2, %3").arg(row.fence.radius.valueString).arg(row.fence.radius.units).arg(kind)
                 }
                 return inclusion
             }
