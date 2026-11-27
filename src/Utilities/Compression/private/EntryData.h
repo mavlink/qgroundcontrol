@@ -74,8 +74,8 @@ Result writeFailure(const QString& path, const QString& detail);
 /// @param outputPath Output file path (parent directory must exist)
 /// @param transfer Limit and progress of the operation the entry is part of
 /// @param modified Modification time of the file (invalid = the time it is written)
-/// @param wholeStream Whether the entry is all of a single stream (decompressFile()), whose data is then copied and
-///        checked by copyStreamData(). Such a file is written atomically with QSaveFile: nothing appears at
+/// @param wholeStream Whether the entry is all of a single stream (decompressFileToFile()), whose data is then copied
+///        and checked by copyStreamData(). Such a file is written atomically with QSaveFile: nothing appears at
 ///        @a outputPath until it is complete, and a file that was there is unchanged if it fails. An entry of an
 ///        archive is written at its path, without a temporary file and its sync to disk: a failed extraction removes
 ///        all it wrote anyway

@@ -57,11 +57,11 @@ public:
                                            const QString& outputDirectoryPath, Compression::ExtractOptions options,
                                            Callback done);
 
-    /// Decompress a file, or copy it if it is not compressed, as Compression::decompressFile() does
-    /// A failed or cancelled decompression writes nothing, as Compression::decompressFile() documents. A job that ends
-    /// without calling @a done after its worker has completed leaves the output. Decompress to a path of your own,
+    /// Decompress a file, or copy it if it is not compressed, as Compression::decompressFileToFile() does
+    /// A failed or cancelled decompression writes nothing, as Compression::decompressFileToFile() documents. A job that
+    /// ends without calling @a done after its worker has completed leaves the output. Decompress to a path of your own,
     /// and remove it when the job ends without calling back.
-    /// @param outputPath Path of the decompressed file, empty for the default of Compression::decompressFile()
+    /// @param outputPath Path of the decompressed file, empty for the default of Compression::decompressFileToFile()
     /// @param maxBytes Largest size the decompressed file may have. Choose it for what is done with the file
     /// @return The job, already running. Hold it in a QPointer to cancel it
     static CompressionJob* startDecompression(QObject* context, const QString& inputPath, const QString& outputPath,

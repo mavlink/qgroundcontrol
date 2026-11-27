@@ -113,7 +113,7 @@ bool readJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& erro
 bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
 {
     QByteArray json;
-    if (const Compression::Outcome read = Compression::readFile(fileName, json, maxBytes); !read) {
+    if (const Compression::Outcome read = Compression::decompressFileToMemory(fileName, json, maxBytes); !read) {
         jsonDoc = {};
         errorString = read.description();
         return false;

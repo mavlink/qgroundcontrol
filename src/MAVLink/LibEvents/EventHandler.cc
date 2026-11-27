@@ -137,7 +137,7 @@ EventMetadata EventHandler::loadMetadata(const QString& metadataJsonFileName)
 {
     QByteArray json;
     if (const Compression::Outcome read =
-            Compression::readFile(metadataJsonFileName, json, VehicleFileFetch::kMaxSmallFileBytes);
+            Compression::decompressFileToMemory(metadataJsonFileName, json, VehicleFileFetch::kMaxSmallFileBytes);
         !read) {
         qCWarning(EventHandlerLog) << "Failed to load events JSON metadata file:" << read.description();
         return nullptr;

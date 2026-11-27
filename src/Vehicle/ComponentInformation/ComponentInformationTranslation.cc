@@ -186,7 +186,8 @@ ComponentInformationTranslation::Translation ComponentInformationTranslation::tr
     // Open and parse TS file into a hash table
     QHash<QString, QString> translations;
     QByteArray tsBytes;
-    if (const Compression::Outcome read = Compression::readFile(tsFile, tsBytes, VehicleFileFetch::kMaxSmallFileBytes);
+    if (const Compression::Outcome read =
+            Compression::decompressFileToMemory(tsFile, tsBytes, VehicleFileFetch::kMaxSmallFileBytes);
         !read) {
         result.warnings.append(QStringLiteral("Failed reading TS file: %1").arg(read.description()));
         return result;

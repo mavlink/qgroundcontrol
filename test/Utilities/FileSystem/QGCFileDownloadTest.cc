@@ -339,7 +339,8 @@ void QGCFileDownloadTest::_testAutoDecompress_data()
     // The test manifest is a few bytes
     constexpr qint64 maxManifestBytes = 1024;
     QByteArray manifest;
-    QVERIFY(Compression::readFile(QStringLiteral(":/unittest/manifest.json.gz"), manifest, maxManifestBytes));
+    QVERIFY(
+        Compression::decompressFileToMemory(QStringLiteral(":/unittest/manifest.json.gz"), manifest, maxManifestBytes));
     QTest::newRow("compressed") << ":/unittest/manifest.json.gz" << manifest << "manifest.json";
     // As when the HTTP client has taken a content encoding off: the content is kept under the name without the
     // extension

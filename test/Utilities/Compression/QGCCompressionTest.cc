@@ -32,7 +32,8 @@ namespace {
 constexpr qint64 kMemoryLimit = qint64{256} * 1024 * 1024;
 
 /// The entry points that decompress a single stream, as _call() names them
-constexpr const char* kStreamEntryPoints[] = {"decompressFile", "decompressData", "readFile", "readFileChunks"};
+constexpr const char* kStreamEntryPoints[] = {"decompressFileToFile", "decompressDataToMemory",
+                                              "decompressFileToMemory", "decompressFileToSink"};
 }  // namespace
 
 Compression::Outcome QGCCompressionTest::_call(const QString& api, const Inputs& inputs, Results* results)
@@ -44,28 +45,28 @@ Compression::Outcome QGCCompressionTest::_call(const QString& api, const Inputs&
     if (api == "extractArchive") {
         return extractArchive(inputs.path, inputs.output);
     }
-    if (api == "decompressFile") {
+    if (api == "decompressFileToFile") {
         if (inputs.output.isEmpty()) {
-            QTest::qFail("decompressFile needs an output path", __FILE__, __LINE__);
+            QTest::qFail("decompressFileToFile needs an output path", __FILE__, __LINE__);
             return {.error = Error::InternalError};
         }
-        const Outcome outcome = decompressFile(inputs.path, inputs.output);
+        const Outcome outcome = decompressFileToFile(inputs.path, inputs.output);
         out.wroteFile = QFileInfo::exists(inputs.output);
         out.data = out.wroteFile ? TestFixtures::readFile(inputs.output) : QByteArray();
         return outcome;
     }
-    if (api == "decompressData") {
+    if (api == "decompressDataToMemory") {
         out.data = "to be replaced";
-        return decompressData(TestFixtures::readFile(inputs.path), out.data, kMemoryLimit);
+        return decompressDataToMemory(TestFixtures::readFile(inputs.path), out.data, kMemoryLimit);
     }
-    if (api == "readFile") {
+    if (api == "decompressFileToMemory") {
         out.data = "to be replaced";
-        return readFile(inputs.path, out.data, kMemoryLimit);
+        return decompressFileToMemory(inputs.path, out.data, kMemoryLimit);
     }
-    if (api == "readFileChunks") {
+    if (api == "decompressFileToSink") {
         out.data = "to be replaced";
         QByteArray chunks;
-        const Outcome outcome = readFileChunks(inputs.path, kMemoryLimit, [&chunks](QByteArrayView chunk) {
+        const Outcome outcome = decompressFileToSink(inputs.path, kMemoryLimit, [&chunks](QByteArrayView chunk) {
             chunks.append(chunk);
             return true;
         });
@@ -227,7 +228,7 @@ void QGCCompressionTest::_testNameDoesNotChooseTheReader()
     for (const char* name : {"manifest.json.gz", "stream.bin"}) {
         QVERIFY(TestFixtures::writeFile(tempDir.filePath(name), xzData));
         QByteArray read;
-        const Outcome renamed = Compression::readFile(tempDir.filePath(name), read, kMemoryLimit);
+        const Outcome renamed = Compression::decompressFileToMemory(tempDir.filePath(name), read, kMemoryLimit);
         QVERIFY2(renamed, qPrintable(renamed.description()));
         QCOMPARE(renamed.filterName, QStringLiteral("xz"));
         QVERIFY(read.contains("\"name\""));
@@ -238,7 +239,7 @@ void QGCCompressionTest::_testNameDoesNotChooseTheReader()
     const QString tarGzPath = tempDir.filePath("whole.tar.gz");
     QVERIFY(TestFixtures::writeFile(tarGzPath, tarGz));
     QByteArray untarredGz;
-    QVERIFY(Compression::readFile(tarGzPath, untarredGz, kMemoryLimit));
+    QVERIFY(Compression::decompressFileToMemory(tarGzPath, untarredGz, kMemoryLimit));
     QCOMPARE(untarredGz, tar);
 #ifdef QGC_ENABLE_TAR
     QVERIFY(TestFixtures::writeFile(tempDir.filePath("whole.tar"), untarredGz));
@@ -252,9 +253,9 @@ void QGCCompressionTest::_testNameDoesNotChooseTheReader()
     QVERIFY2(noArchive.detail.contains("Unrecognized archive format"), qPrintable(noArchive.detail));
     QVERIFY(!QFileInfo::exists(tempDir.filePath("no_archive")));
 
-    // A ZIP archive is not a compressed stream, so readFile() gives it unchanged
+    // A ZIP archive is not a compressed stream, so decompressFileToMemory() gives it unchanged
     QByteArray zip;
-    const Outcome notCompressed = Compression::readFile(ArchiveFixtures::zipResource, zip, kMemoryLimit);
+    const Outcome notCompressed = Compression::decompressFileToMemory(ArchiveFixtures::zipResource, zip, kMemoryLimit);
     QVERIFY2(notCompressed, qPrintable(notCompressed.description()));
     QCOMPARE(notCompressed.filterName, QStringLiteral("none"));
     QCOMPARE(zip, TestFixtures::readFile(ArchiveFixtures::zipResource));
@@ -360,7 +361,7 @@ void QGCCompressionTest::_testDecompressEmptyStream()
     QCOMPARE(outcome.filterName, filterName);
     // The output is an empty file, or empty data
     QVERIFY(results.data.isEmpty());
-    QCOMPARE(results.wroteFile, api == "decompressFile");
+    QCOMPARE(results.wroteFile, api == "decompressFileToFile");
 }
 
 void QGCCompressionTest::_testDecompressRejectsCutEmptyStream()
@@ -419,18 +420,18 @@ void QGCCompressionTest::_testDecompressPlainInput()
     QVERIFY2(outcome, qPrintable(outcome.description()));
     QCOMPARE(outcome.filterName, QStringLiteral("none"));
     QCOMPARE(results.data, content);
-    QCOMPARE(results.wroteFile, api == "decompressFile");
+    QCOMPARE(results.wroteFile, api == "decompressFileToFile");
     QCOMPARE(TestFixtures::readFile(inputPath), content);
 }
 
 namespace {
 
-/// Value of the limitOffset column of _testDecompressFileCopiesPlainInput for a row without a limit
+/// Value of the limitOffset column of _testDecompressFileToFileCopiesPlainInput for a row without a limit
 constexpr int kNoLimitOffset = std::numeric_limits<int>::min();
 
 }  // namespace
 
-void QGCCompressionTest::_testDecompressFileCopiesPlainInput_data()
+void QGCCompressionTest::_testDecompressFileToFileCopiesPlainInput_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<int>("limitOffset");  // Limit: content size + this, or none
@@ -451,7 +452,7 @@ void QGCCompressionTest::_testDecompressFileCopiesPlainInput_data()
     QTest::newRow("compressed and truncated") << "truncated" << noLimit << false << Error::InvalidArchive;
 }
 
-void QGCCompressionTest::_testDecompressFileCopiesPlainInput()
+void QGCCompressionTest::_testDecompressFileToFileCopiesPlainInput()
 {
     QFETCH(QString, input);
     QFETCH(int, limitOffset);
@@ -477,7 +478,7 @@ void QGCCompressionTest::_testDecompressFileCopiesPlainInput()
         progress = [](qint64, qint64) { return false; };
     }
 
-    const Compression::Outcome outcome = Compression::decompressFile(inputPath, outputPath, progress, limit);
+    const Compression::Outcome outcome = Compression::decompressFileToFile(inputPath, outputPath, progress, limit);
 
     QCOMPARE(outcome.error, expectedError);
     const bool written = (expectedError == Error::None);
@@ -494,7 +495,7 @@ void QGCCompressionTest::_testDecompressFileCopiesPlainInput()
     }
 }
 
-void QGCCompressionTest::_testDecompressFileDefaultOutput_data()
+void QGCCompressionTest::_testDecompressFileToFileDefaultOutput_data()
 {
     QTest::addColumn<QString>("resource");
     QTest::addColumn<QString>("inputName");
@@ -529,7 +530,7 @@ void QGCCompressionTest::_testDecompressFileDefaultOutput_data()
         << ArchiveFixtures::gzResource << "manifest.bin" << "manifest.bin.decompressed";
 }
 
-void QGCCompressionTest::_testDecompressFileDefaultOutput()
+void QGCCompressionTest::_testDecompressFileToFileDefaultOutput()
 {
     QFETCH(QString, resource);
     QFETCH(QString, inputName);
@@ -543,7 +544,7 @@ void QGCCompressionTest::_testDecompressFileDefaultOutput()
     QVERIFY(TestFixtures::writeFile(inputPath, compressed));
 
     // Without an output path, the output is written beside the input, which stays
-    const Compression::Outcome outcome = Compression::decompressFile(inputPath);
+    const Compression::Outcome outcome = Compression::decompressFileToFile(inputPath);
     QVERIFY2(outcome, qPrintable(outcome.description()));
     QStringList expectedEntries{inputName, expectedOutputName};
     expectedEntries.sort();
@@ -561,10 +562,10 @@ void QGCCompressionTest::_testDetectedFilter_data()
     QTest::addColumn<QString>("resource");
     QTest::addColumn<QString>("filter");
 
-    QTest::newRow("decompressFile") << "decompressFile" << ArchiveFixtures::gzResource << "gzip";
-    QTest::newRow("decompressData") << "decompressData" << ArchiveFixtures::xzResource << "xz";
-    QTest::newRow("readFile, gzip") << "readFile" << ArchiveFixtures::gzResource << "gzip";
-    QTest::newRow("readFile, xz") << "readFile" << ArchiveFixtures::xzResource << "xz";
+    QTest::newRow("decompressFileToFile") << "decompressFileToFile" << ArchiveFixtures::gzResource << "gzip";
+    QTest::newRow("decompressDataToMemory") << "decompressDataToMemory" << ArchiveFixtures::xzResource << "xz";
+    QTest::newRow("decompressFileToMemory, gzip") << "decompressFileToMemory" << ArchiveFixtures::gzResource << "gzip";
+    QTest::newRow("decompressFileToMemory, xz") << "decompressFileToMemory" << ArchiveFixtures::xzResource << "xz";
     QTest::newRow("extractArchive") << "extractArchive" << ArchiveFixtures::zipResource << "none";
 }
 
@@ -591,7 +592,8 @@ void QGCCompressionTest::_testDetectedFilterAfterFailure_data()
 {
     QTest::addColumn<QString>("api");
 
-    for (const char* api : {"decompressFile", "readFile", "decompressData", "extractArchive"}) {
+    for (const char* api :
+         {"decompressFileToFile", "decompressFileToMemory", "decompressDataToMemory", "extractArchive"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
@@ -611,7 +613,8 @@ void QGCCompressionTest::_testDetectedFilterAfterFailure()
     QVERIFY(TestFixtures::writeFile(inputPath, data));
 
     // The detail says what could not be opened and why: the stream is truncated, the text is not an archive
-    const QString source = (api == "decompressData") ? QStringLiteral("compressed data") : QStringLiteral("file");
+    const QString source =
+        (api == "decompressDataToMemory") ? QStringLiteral("compressed data") : QStringLiteral("file");
     const QRegularExpression report(QStringLiteral("Failed to open %1.*%2")
                                         .arg(source, isStream ? QStringLiteral("truncated gzip input")
                                                               : QStringLiteral("Unrecognized archive format")));
@@ -633,8 +636,8 @@ void QGCCompressionTest::_testMissingInput_data()
 {
     QTest::addColumn<QString>("api");
 
-    // readFile() is tested in _testReadFile
-    for (const char* api : {"decompressFile", "extractArchive"}) {
+    // decompressFileToMemory() is tested in _testDecompressFileToMemory
+    for (const char* api : {"decompressFileToFile", "extractArchive"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
@@ -662,7 +665,7 @@ void QGCCompressionTest::_testInputThatCannotBeRead_data()
     QTest::addColumn<QString>("api");
     QTest::addColumn<bool>("directory");
 
-    for (const char* api : {"decompressFile", "readFile", "extractArchive"}) {
+    for (const char* api : {"decompressFileToFile", "decompressFileToMemory", "extractArchive"}) {
         QTest::addRow("%s, a directory", api) << QString::fromLatin1(api) << true;
 #ifdef Q_OS_LINUX
         // /proc/self/mem can be opened, and reading its first byte fails
@@ -808,7 +811,7 @@ void QGCCompressionTest::_testInputThatCannotSeek()
             archive ? Compression::extractArchive(
                           pipePath, outputPath,
                           {.filter = [](const Compression::ArchiveEntry& entry) { return entry.name == "readme.txt"; }})
-                    : Compression::readFile(pipePath, data, kMemoryLimit);
+                    : Compression::decompressFileToMemory(pipePath, data, kMemoryLimit);
     }
 
     if (!readable) {
@@ -952,7 +955,7 @@ void QGCCompressionTest::_testNoExternalDecompressors()
 #endif
     for (const Undecodable& input : std::as_const(undecodable)) {
         QByteArray decoded("to be replaced");
-        const Compression::Outcome outcome = Compression::decompressData(input.stream, decoded, kMemoryLimit);
+        const Compression::Outcome outcome = Compression::decompressDataToMemory(input.stream, decoded, kMemoryLimit);
         QCOMPARE(outcome.error, Compression::Error::UnsupportedFormat);
         QVERIFY2(outcome.detail.contains(QRegularExpression(input.detail)), qPrintable(outcome.detail));
         QVERIFY(decoded.isEmpty());
@@ -1028,7 +1031,7 @@ void QGCCompressionTest::_testDataThatIsNotLzma()
 
     // A legacy lzma stream has no magic number. The data is not taken for one in any build: it comes back as it is
     QByteArray decompressed;
-    const Compression::Outcome outcome = Compression::decompressData(data, decompressed, kMemoryLimit);
+    const Compression::Outcome outcome = Compression::decompressDataToMemory(data, decompressed, kMemoryLimit);
     QVERIFY2(outcome, qPrintable(outcome.description()));
     QCOMPARE(outcome.filterName, QStringLiteral("none"));
     QCOMPARE(decompressed, data);
@@ -1188,8 +1191,8 @@ void QGCCompressionTest::_testTruncatedStream()
         _call(api, {.path = inputPath, .output = tempDir.filePath("cut.bin")}, &results);
     QCOMPARE(outcome.error, Compression::Error::InvalidArchive);
     // What libarchive said about the damage is passed on, after words that tell a file from data
-    const QRegularExpression damage((api == "decompressFile") ? QStringLiteral("Decompression error.*truncated")
-                                                              : QStringLiteral("Read error.*truncated"));
+    const QRegularExpression damage((api == "decompressFileToFile") ? QStringLiteral("Decompression error.*truncated")
+                                                                    : QStringLiteral("Read error.*truncated"));
     QVERIFY2(outcome.detail.contains(damage), qPrintable(outcome.detail));
     // The members before the cut are not returned as data, and nothing of them is kept on disk
     QVERIFY(results.isEmpty());
@@ -1438,7 +1441,7 @@ void QGCCompressionTest::_testGzipChecksums()
     }
 }
 
-void QGCCompressionTest::_testReadFileChunks()
+void QGCCompressionTest::_testDecompressFileToSink()
 {
     using Compression::Error;
 
@@ -1458,7 +1461,7 @@ void QGCCompressionTest::_testReadFileChunks()
 
     const auto read = [](const QString& path, qint64 limit, int cancelAt = -1) {
         Read result;
-        result.outcome = Compression::readFileChunks(path, limit, [&result, cancelAt](QByteArrayView chunk) {
+        result.outcome = Compression::decompressFileToSink(path, limit, [&result, cancelAt](QByteArrayView chunk) {
             result.data.append(chunk);
             return ++result.chunks != cancelAt;
         });
@@ -1506,7 +1509,7 @@ void QGCCompressionTest::_testPlainDataIsShared()
 {
     const QByteArray plain("{\"name\": \"not compressed\"}\n");
     QByteArray decompressed;
-    const Compression::Outcome outcome = Compression::decompressData(plain, decompressed, kMemoryLimit);
+    const Compression::Outcome outcome = Compression::decompressDataToMemory(plain, decompressed, kMemoryLimit);
     QVERIFY2(outcome, qPrintable(outcome.description()));
     QCOMPARE(outcome.filterName, QStringLiteral("none"));
     // The same bytes, not a copy of them
@@ -1516,34 +1519,34 @@ void QGCCompressionTest::_testPlainDataIsShared()
     static const char raw[] = "{\"name\": \"raw\"}\n";
     const QByteArray rawInput = QByteArray::fromRawData(raw, sizeof(raw) - 1);
     QByteArray fromRaw;
-    QVERIFY(Compression::decompressData(rawInput, fromRaw, kMemoryLimit));
+    QVERIFY(Compression::decompressDataToMemory(rawInput, fromRaw, kMemoryLimit));
     QCOMPARE(fromRaw, rawInput);
     QVERIFY(fromRaw.constData() != raw);
 
     // Still held to the limit
     QByteArray limited("stale");
-    const Compression::Outcome tooLarge = Compression::decompressData(plain, limited, plain.size() - 1);
+    const Compression::Outcome tooLarge = Compression::decompressDataToMemory(plain, limited, plain.size() - 1);
     QCOMPARE(tooLarge.error, Compression::Error::SizeLimitExceeded);
     QVERIFY(limited.isEmpty());
 }
 
-void QGCCompressionTest::_testDecompressDataInPlace()
+void QGCCompressionTest::_testDecompressDataToMemoryInPlace()
 {
     const QByteArray compressed = TestFixtures::readFile(ArchiveFixtures::gzResource);
     QByteArray data;
-    QVERIFY(Compression::decompressData(compressed, data, kMemoryLimit));
+    QVERIFY(Compression::decompressDataToMemory(compressed, data, kMemoryLimit));
     QVERIFY(!data.isEmpty());
 
     // The output array can be the input array, for compressed and uncompressed data
     QByteArray inPlace = compressed;
-    QVERIFY(Compression::decompressData(inPlace, inPlace, kMemoryLimit));
+    QVERIFY(Compression::decompressDataToMemory(inPlace, inPlace, kMemoryLimit));
     QCOMPARE(inPlace, data);
     QByteArray plain("not compressed");
-    QVERIFY(Compression::decompressData(plain, plain, kMemoryLimit));
+    QVERIFY(Compression::decompressDataToMemory(plain, plain, kMemoryLimit));
     QCOMPARE(plain, QByteArray("not compressed"));
 }
 
-void QGCCompressionTest::_testReadFile()
+void QGCCompressionTest::_testDecompressFileToMemory()
 {
     using Compression::Error;
 
@@ -1552,7 +1555,7 @@ void QGCCompressionTest::_testReadFile()
     const QString renamedPath = tempDir.filePath("manifest.tar.gz");
     QVERIFY(TestFixtures::writeFile(renamedPath, TestFixtures::readFile(ArchiveFixtures::xzResource)));
     QByteArray data("to be replaced");
-    const Compression::Outcome decompressed = Compression::readFile(renamedPath, data, kMemoryLimit);
+    const Compression::Outcome decompressed = Compression::decompressFileToMemory(renamedPath, data, kMemoryLimit);
     QVERIFY2(decompressed, qPrintable(decompressed.description()));
     QCOMPARE(decompressed.filterName, QStringLiteral("xz"));
     QVERIFY(data.contains("\"name\""));
@@ -1561,16 +1564,17 @@ void QGCCompressionTest::_testReadFile()
     const QString plainPath = tempDir.filePath("plain.json");
     const QByteArray content(100, 'x');
     QVERIFY(TestFixtures::writeFile(plainPath, content));
-    const Compression::Outcome plain = Compression::readFile(plainPath, data, content.size());
+    const Compression::Outcome plain = Compression::decompressFileToMemory(plainPath, data, content.size());
     QVERIFY2(plain, qPrintable(plain.description()));
     QCOMPARE(plain.filterName, QStringLiteral("none"));
     QCOMPARE(data, content);
-    QCOMPARE(Compression::readFile(plainPath, data, content.size() - 1).error, Error::SizeLimitExceeded);
+    QCOMPARE(Compression::decompressFileToMemory(plainPath, data, content.size() - 1).error, Error::SizeLimitExceeded);
     QVERIFY(data.isEmpty());
 
     for (const char* name : {"absent.json", "absent.json.gz"}) {
         data = "to be replaced";
-        const Compression::Outcome missing = Compression::readFile(tempDir.filePath(name), data, kMemoryLimit);
+        const Compression::Outcome missing =
+            Compression::decompressFileToMemory(tempDir.filePath(name), data, kMemoryLimit);
         QCOMPARE(missing.error, Error::FileNotFound);
         QVERIFY2(missing.message.endsWith(QLatin1String(name)), qPrintable(missing.message));
         QVERIFY(data.isEmpty());
@@ -1587,15 +1591,15 @@ void QGCCompressionTest::_testUnwritableOutput_data()
 
     const char* const noFile = "Failed to open output file";
     QTest::newRow("extractArchive, locked") << "extractArchive" << "locked" << noFile;
-    QTest::newRow("decompressFile, locked") << "decompressFile" << "locked" << noFile;
-    QTest::newRow("decompressFile of an empty stream, locked")
-        << "decompressFile-empty" << "locked" << "Failed to write output file";
+    QTest::newRow("decompressFileToFile, locked") << "decompressFileToFile" << "locked" << noFile;
+    QTest::newRow("decompressFileToFile of an empty stream, locked")
+        << "decompressFileToFile-empty" << "locked" << "Failed to write output file";
     for (const char* obstacle : {"in locked", "below a file"}) {
         // A directory can be created neither where that is not permitted nor below a file
         QTest::addRow("extractArchive, %s", obstacle)
             << "extractArchive" << obstacle << "Failed to create output directory";
         // A function that is given a file path fails when it opens the file
-        QTest::addRow("decompressFile, %s", obstacle) << "decompressFile" << obstacle << noFile;
+        QTest::addRow("decompressFileToFile, %s", obstacle) << "decompressFileToFile" << obstacle << noFile;
     }
 }
 
@@ -1684,7 +1688,7 @@ void QGCCompressionTest::_testOutputIsTheInput()
         QVERIFY(linked);
     }
 
-    const Compression::Outcome outcome = Compression::decompressFile(inputPath, outputPath);
+    const Compression::Outcome outcome = Compression::decompressFileToFile(inputPath, outputPath);
 
     QCOMPARE(outcome.error, Compression::Error::IoError);
     QCOMPARE(outcome.message, QStringLiteral("Cannot decompress a file onto itself: ") + inputPath);
@@ -1699,7 +1703,7 @@ void QGCCompressionTest::_testInputWithoutPermission_data()
     QTest::addColumn<QString>("fileName");
 
     QTest::newRow("extractArchive") << "extractArchive" << "archive.zip";
-    QTest::newRow("decompressFile") << "decompressFile" << "stream.gz";
+    QTest::newRow("decompressFileToFile") << "decompressFileToFile" << "stream.gz";
     // The content, which would have to identify the format, cannot be read either
     QTest::newRow("name without a format") << "extractArchive" << "archive";
 }
@@ -1747,13 +1751,14 @@ void QGCCompressionTest::_testDecompressToFileSizeLimit()
     constexpr qint64 wholeSize = 64 * 1024;
 
     // Over the limit nothing is written, not even a temporary file
-    const Compression::Outcome overLimit = Compression::decompressFile(inputPath, outputPath, nullptr, wholeSize - 1);
+    const Compression::Outcome overLimit =
+        Compression::decompressFileToFile(inputPath, outputPath, nullptr, wholeSize - 1);
     QCOMPARE(overLimit.error, Compression::Error::SizeLimitExceeded);
     QVERIFY2(overLimit.message.endsWith(": size limit exceeded"), qPrintable(overLimit.message));
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{QStringLiteral("zeros.gz")});
 
     // The limit is on the output: a file that decompresses to exactly the limit is written whole
-    QVERIFY(Compression::decompressFile(inputPath, outputPath, nullptr, wholeSize));
+    QVERIFY(Compression::decompressFileToFile(inputPath, outputPath, nullptr, wholeSize));
     QCOMPARE(TestFixtures::readFile(outputPath), QByteArray(wholeSize, '\0'));
 }
 
@@ -1763,32 +1768,34 @@ void QGCCompressionTest::_testDecompressToMemorySizeLimit()
     constexpr qint64 limit = 10;
 
     QByteArray refused("to be replaced");
-    QCOMPARE(Compression::decompressData(compressed, refused, limit).error, Compression::Error::SizeLimitExceeded);
+    QCOMPARE(Compression::decompressDataToMemory(compressed, refused, limit).error,
+             Compression::Error::SizeLimitExceeded);
     QVERIFY(refused.isEmpty());
 
     // A limit equal to the size of the data lets it through, and so does a larger one
     QByteArray whole;
-    QVERIFY(Compression::decompressData(compressed, whole, kMemoryLimit));
+    QVERIFY(Compression::decompressDataToMemory(compressed, whole, kMemoryLimit));
     QVERIFY(whole.size() > limit);
     for (const qint64 enough : {qint64(whole.size()), qint64(2 * whole.size())}) {
         QByteArray limited;
-        QVERIFY(Compression::decompressData(compressed, limited, enough));
+        QVERIFY(Compression::decompressDataToMemory(compressed, limited, enough));
         QCOMPARE(limited, whole);
     }
 
     // Data that is not compressed is held to the limit too
     QByteArray plain("to be replaced");
-    QCOMPARE(Compression::decompressData(QByteArray(100, 'x'), plain, limit).error,
+    QCOMPARE(Compression::decompressDataToMemory(QByteArray(100, 'x'), plain, limit).error,
              Compression::Error::SizeLimitExceeded);
     QVERIFY(plain.isEmpty());
 
     QByteArray read("to be replaced");
-    const Compression::Outcome overLimit = Compression::readFile(ArchiveFixtures::gzResource, read, limit);
+    const Compression::Outcome overLimit =
+        Compression::decompressFileToMemory(ArchiveFixtures::gzResource, read, limit);
     QCOMPARE(overLimit.error, Compression::Error::SizeLimitExceeded);
     QVERIFY2(overLimit.message.endsWith(": size limit exceeded"), qPrintable(overLimit.message));
     QVERIFY(read.isEmpty());
     // The limit is on the output: a file that decompresses to exactly the limit is read whole
-    QVERIFY(Compression::readFile(ArchiveFixtures::gzResource, read, whole.size()));
+    QVERIFY(Compression::decompressFileToMemory(ArchiveFixtures::gzResource, read, whole.size()));
     QCOMPARE(read, whole);
 }
 
@@ -1803,7 +1810,8 @@ void QGCCompressionTest::_testDecompressionCancelled()
         ++progressCalls;
         return false;
     };
-    const Compression::Outcome outcome = Compression::decompressFile(inputPath, tempDir.filePath("zeros.bin"), cancel);
+    const Compression::Outcome outcome =
+        Compression::decompressFileToFile(inputPath, tempDir.filePath("zeros.bin"), cancel);
 
     // The outcome reports the cancellation, not a failure of the input or the output
     QCOMPARE(progressCalls, 1);

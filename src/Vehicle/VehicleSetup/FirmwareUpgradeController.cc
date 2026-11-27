@@ -1135,7 +1135,7 @@ FirmwareUpgradeController::ArduPilotManifest FirmwareUpgradeController::_parseAr
     });
 
     // Compressed with gzip. A manifest that is cut or damaged fails here, after entries were taken: they are dropped
-    const Compression::Outcome read = Compression::readFileChunks(
+    const Compression::Outcome read = Compression::decompressFileToSink(
         localFile, kMaxArduPilotManifestBytes, [&splitter](QByteArrayView chunk) { return splitter.feed(chunk); });
     if (!read || !splitter.finish()) {
         if (!entryError.isEmpty()) {

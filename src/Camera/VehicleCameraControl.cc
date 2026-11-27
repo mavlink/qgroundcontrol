@@ -993,7 +993,7 @@ VehicleCameraControl::DefinitionFile VehicleCameraControl::_readDefinitionFile(c
                                                                                bool checkWellFormed)
 {
     DefinitionFile file;
-    file.read = Compression::readFile(fileName, file.bytes, maxBytes);
+    file.read = Compression::decompressFileToMemory(fileName, file.bytes, maxBytes);
     if (!file.read) {
         return file;
     }

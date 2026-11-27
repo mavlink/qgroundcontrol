@@ -79,7 +79,7 @@ CompressionJob* CompressionJob::startDecompression(QObject* context, const QStri
 
     auto* const job = new CompressionJob(context, std::move(done));
     job->_start([inputPath, outputPath, maxBytes](const Compression::ProgressCallback& progress) {
-        return Compression::decompressFile(inputPath, outputPath, progress, maxBytes);
+        return Compression::decompressFileToFile(inputPath, outputPath, progress, maxBytes);
     });
     return job;
 }

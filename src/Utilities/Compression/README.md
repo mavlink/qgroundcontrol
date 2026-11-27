@@ -10,8 +10,8 @@ The application uses it for:
   Its component metadata, their translations and its events metadata are downloaded and cached as they are sent,
   and read so (`JsonParsing::isJsonFile()` reads the JSON among them). A camera definition is downloaded as it is
   sent, and cached decompressed once it has loaded;
-- the ArduPilot firmware list, 92 MiB decompressed, which `readFileChunks()` gives to its reader a chunk at a time,
-  so that it is never held whole;
+- the ArduPilot firmware list, 92 MiB decompressed, which `decompressFileToSink()` gives to its reader a chunk at a
+  time, so that it is never held whole;
 - offline map tile sets imported from an archive (`QGCMapEngineManager`).
 
 Everything else is read as it is. Settings, plans, parameter metadata, QGC's own JSON files and terrain tiles never

@@ -172,7 +172,8 @@ void compareWithReference(const QByteArray& input, const Compression::Outcome& o
         return;
     }
     QByteArray inner;
-    const Compression::Outcome innerOutcome = Compression::decompressData(reference->data, inner, MAX_OUTPUT_BYTES);
+    const Compression::Outcome innerOutcome =
+        Compression::decompressDataToMemory(reference->data, inner, MAX_OUTPUT_BYTES);
     // A stream inside the stream is decoded by the module's own rules, which the other checks cover
     if (innerOutcome.filterName.isEmpty() || (innerOutcome.filterName == QLatin1String("none"))) {
         require(static_cast<bool>(outcome) == static_cast<bool>(innerOutcome));
@@ -193,7 +194,7 @@ QByteArray decompressStream(const QByteArray& input, bool& decompressed)
     }
 
     QByteArray data("stale");
-    const Compression::Outcome outcome = Compression::decompressData(input, data, MAX_OUTPUT_BYTES);
+    const Compression::Outcome outcome = Compression::decompressDataToMemory(input, data, MAX_OUTPUT_BYTES);
     require(outcome || data.isEmpty());
     require(data.size() <= MAX_OUTPUT_BYTES);
     require(!outcome || (outcome.filterName != QLatin1String("none")) || (data == input));
@@ -205,14 +206,15 @@ QByteArray decompressStream(const QByteArray& input, bool& decompressed)
 }
 
 /// The input as a compressed file: decompressed to a file, it gives the same data as in memory, and a refused
-/// input leaves no file. readFile() gives the same data too.
-void decompressFile(const QByteArray& input, const QByteArray& stream, bool decompressed)
+/// input leaves no file. decompressFileToMemory() gives the same data too.
+void decompressFileToFile(const QByteArray& input, const QByteArray& stream, bool decompressed)
 {
     const QString inputPath = workDirectory().filePath(QStringLiteral("input.gz"));
     const QString outputPath = workDirectory().filePath(QStringLiteral("output.bin"));
     writeInput(inputPath, input);
 
-    const Compression::Outcome outcome = Compression::decompressFile(inputPath, outputPath, nullptr, MAX_OUTPUT_BYTES);
+    const Compression::Outcome outcome =
+        Compression::decompressFileToFile(inputPath, outputPath, nullptr, MAX_OUTPUT_BYTES);
     require(static_cast<bool>(outcome) == decompressed);
     QFile output(outputPath);
     if (outcome) {
@@ -224,7 +226,7 @@ void decompressFile(const QByteArray& input, const QByteArray& stream, bool deco
     }
 
     QByteArray read("stale");
-    const Compression::Outcome readOutcome = Compression::readFile(inputPath, read, MAX_OUTPUT_BYTES);
+    const Compression::Outcome readOutcome = Compression::decompressFileToMemory(inputPath, read, MAX_OUTPUT_BYTES);
     require(static_cast<bool>(readOutcome) == decompressed);
     require(read == stream);
     require(QFile::remove(inputPath));
@@ -302,7 +304,7 @@ int fuzzFiles(const uint8_t* data, size_t size)
 
     bool decompressed = false;
     const QByteArray stream = decompressStream(*input, decompressed);
-    decompressFile(*input, stream, decompressed);
+    decompressFileToFile(*input, stream, decompressed);
     extractArchive(*input);
     return 0;
 }

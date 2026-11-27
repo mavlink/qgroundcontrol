@@ -235,14 +235,15 @@ bool replacesEarlierEntry(const QByteArray& archive)
            (output.entryList(QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot).size() == 1);
 }
 
-/// Whether decompressFile() refuses to write its output onto its input, also under another spelling of the path
+/// Whether decompressFileToFile() refuses to write its output onto its input, also under another spelling of the path
 /// How two paths are told to name one file depends on the platform.
 bool refusesInputAsOutput(const QByteArray& stream)
 {
     const QTemporaryDir directory;
     const QString path = directory.filePath(QStringLiteral("stream.gz"));
-    return writeFile(path, stream) && (Compression::decompressFile(path, path).error == Compression::Error::IoError) &&
-           (Compression::decompressFile(path, directory.filePath(QStringLiteral("./stream.gz"))).error ==
+    return writeFile(path, stream) &&
+           (Compression::decompressFileToFile(path, path).error == Compression::Error::IoError) &&
+           (Compression::decompressFileToFile(path, directory.filePath(QStringLiteral("./stream.gz"))).error ==
             Compression::Error::IoError) &&
            (readFile(path) == stream);
 }
@@ -264,7 +265,7 @@ bool decompressesTo(const QByteArray& stream, const char* content)
 {
     QByteArray data;
     constexpr qint64 kMemoryLimit = qint64{1024} * 1024;
-    const Compression::Outcome outcome = Compression::decompressData(stream, data, kMemoryLimit);
+    const Compression::Outcome outcome = Compression::decompressDataToMemory(stream, data, kMemoryLimit);
     return (content != nullptr) ? (outcome && (data == content)) : (!outcome && data.isEmpty());
 }
 }  // namespace

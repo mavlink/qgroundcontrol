@@ -209,7 +209,7 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
 
     // The limit is on the decompressed content: a file of exactly the limit is parsed, a larger one is not
     QByteArray content;
-    QVERIFY(Compression::readFile(path, content, kJsonParsingTestMaxBytes));
+    QVERIFY(Compression::decompressFileToMemory(path, content, kJsonParsingTestMaxBytes));
     QVERIFY(JsonParsing::isJsonFile(path, document, errorString, content.size()));
     QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());

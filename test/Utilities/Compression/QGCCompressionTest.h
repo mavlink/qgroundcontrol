@@ -20,8 +20,8 @@ private slots:
     UT_PARAMETERIZED_TEST(_testDecompressEmptyStream);
     void _testDecompressRejectsCutEmptyStream();
     UT_PARAMETERIZED_TEST(_testDecompressPlainInput);
-    UT_PARAMETERIZED_TEST(_testDecompressFileCopiesPlainInput);
-    UT_PARAMETERIZED_TEST(_testDecompressFileDefaultOutput);
+    UT_PARAMETERIZED_TEST(_testDecompressFileToFileCopiesPlainInput);
+    UT_PARAMETERIZED_TEST(_testDecompressFileToFileDefaultOutput);
 
     // Detected compression filter
     UT_PARAMETERIZED_TEST(_testDetectedFilter);
@@ -42,10 +42,10 @@ private slots:
     UT_PARAMETERIZED_TEST(_testEveryPrefixOfAStream);
     UT_PARAMETERIZED_TEST(_testDamagedStreamHeader);
     UT_PARAMETERIZED_TEST(_testGzipChecksums);
-    void _testDecompressDataInPlace();
+    void _testDecompressDataToMemoryInPlace();
     void _testPlainDataIsShared();
-    void _testReadFile();
-    void _testReadFileChunks();
+    void _testDecompressFileToMemory();
+    void _testDecompressFileToSink();
     UT_PARAMETERIZED_TEST(_testUnwritableOutput);
     UT_PARAMETERIZED_TEST(_testOutputIsTheInput);
     UT_PARAMETERIZED_TEST(_testInputWithoutPermission);
@@ -59,7 +59,7 @@ private:
     /// Arguments for an entry point of Compression. Each entry point takes those it has parameters for
     struct Inputs
     {
-        /// The archive or the compressed file. decompressData() is given its content
+        /// The archive or the compressed file. decompressDataToMemory() is given its content
         QString path = {};
         /// The directory to extract into, or the file to decompress to
         QString output = {};
@@ -68,15 +68,17 @@ private:
     /// What an entry point of Compression returns besides its outcome
     struct Results
     {
-        QByteArray data = {};    ///< From decompressData() and readFile(), or what decompressFile() wrote
-        bool wroteFile = false;  ///< Whether decompressFile() left a file at its output path
+        /// From decompressDataToMemory() and decompressFileToMemory(), or what decompressFileToFile() wrote
+        QByteArray data = {};
+        bool wroteFile = false;  ///< Whether decompressFileToFile() left a file at its output path
 
         /// Whether nothing was returned or written, which is always so for an entry point that returns nothing else
         bool isEmpty() const { return data.isEmpty() && !wroteFile; }
     };
 
-    /// Calls the entry point of Compression that a row of test data names: extractArchive, decompressFile,
-    /// decompressData, readFile or readFileChunks. decompressFile needs Inputs::output
+    /// Calls the entry point of Compression that a row of test data names: extractArchive, decompressFileToFile,
+    /// decompressDataToMemory, decompressFileToMemory or decompressFileToSink. decompressFileToFile needs
+    /// Inputs::output
     /// @param results If not null, receives what the entry point returned. Output parameters are filled before the
     ///        call, so that a failure must empty them
     /// @return What the entry point returned
