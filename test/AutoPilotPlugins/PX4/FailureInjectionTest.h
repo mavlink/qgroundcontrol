@@ -18,5 +18,4 @@ private slots:
     void _markUnitResetRemovesTrackedUnit();
     void _resolvePendingInterruptedResolvesStragglers();
     void _activeVehicleSwitchClearsSession();
-    void _detailParamsMapCombos();
 };
