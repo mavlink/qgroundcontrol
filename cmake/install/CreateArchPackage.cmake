@@ -30,7 +30,8 @@ set(_qgc_arch_depends
 )
 # The GStreamer plugins the install bundles (cmake/GStreamer/Install.cmake) also load the codec parser, MPEG-TS, VA and
 # CUDA libraries of gst-plugins-bad-libs, FFmpeg (libav), libvpx (vpx), libjpeg-turbo (jpeg) and OpenH264 (openh264).
-# The DEB and RPM dependency scans find these in the bundled plugins.
+# The GIO modules it bundles with them (cmake/GStreamer/platform/Linux.cmake) load GnuTLS (giognutls) and libproxy
+# (giolibproxy). The DEB and RPM dependency scans find these in the bundled plugins and modules.
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
     list(
         APPEND
@@ -40,6 +41,8 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         libvpx
         libjpeg-turbo
         openh264
+        gnutls
+        libproxy
     )
 endif()
 set(QGC_ARCH_DEPENDS "")
