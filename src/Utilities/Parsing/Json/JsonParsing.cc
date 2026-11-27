@@ -11,6 +11,7 @@
 #include <QtCore/QTranslator>
 
 #include "Compression.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(JsonParsingLog, "Utilities.Parsing.Json")
@@ -68,8 +69,8 @@ bool readJsonText(const QString& fileName, QByteArray& text, QString& errorStrin
 
     if (!file.isSequential()) {
         if (file.size() > maxBytes) {
-            errorString = QObject::tr("Failed to read %1: it has %2 bytes, more than the limit of %3 bytes")
-                              .arg(fileName, QString::number(file.size()), QString::number(maxBytes));
+            errorString =
+                QObject::tr("The file is larger than %1").arg(QGC::bigSizeToString(static_cast<quint64>(maxBytes)));
             return false;
         }
         text.reserve(file.size());
@@ -91,8 +92,8 @@ bool readJsonText(const QString& fileName, QByteArray& text, QString& errorStrin
     }
     if (text.size() > maxBytes) {
         text.clear();
-        errorString = QObject::tr("Failed to read %1: it has more than the limit of %2 bytes")
-                          .arg(fileName, QString::number(maxBytes));
+        errorString =
+            QObject::tr("The file is larger than %1").arg(QGC::bigSizeToString(static_cast<quint64>(maxBytes)));
         return false;
     }
 

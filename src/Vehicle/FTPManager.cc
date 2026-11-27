@@ -12,6 +12,7 @@
 #include "AppMessages.h"
 #include "MAVLinkProtocol.h"
 #include "QGCFileHelper.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -320,7 +321,9 @@ void FTPManager::_startUpload()
     const qint64 fileSize = _uploadState.file.size();
     if (fileSize > std::numeric_limits<uint32_t>::max()) {
         qCWarning(FTPManagerLog) << "Cannot upload. File too large" << _uploadState.localFilePath << fileSize;
-        _uploadComplete(tr("Upload failed for: %1 - file too large").arg(_uploadState.fullPathOnVehicle));
+        _uploadComplete(
+            tr("Upload failed for: %1 - the file is larger than %2")
+                .arg(_uploadState.fullPathOnVehicle, QGC::bigSizeToString(std::numeric_limits<uint32_t>::max())));
         return;
     }
     _uploadState.fileSize = static_cast<uint32_t>(fileSize);
@@ -1032,8 +1035,8 @@ bool FTPManager::_writeDownloadData(const MavlinkFTP::Request* ackOrNak)
 
 void FTPManager::_downloadTooLarge(void)
 {
-    _downloadComplete(
-        tr("Download failed: the file is larger than %1").arg(QLocale().formattedDataSize(_downloadState.maxBytes)));
+    _downloadComplete(tr("Download failed: the file is larger than %1")
+                          .arg(QGC::bigSizeToString(static_cast<quint64>(_downloadState.maxBytes))));
 }
 
 bool FTPManager::_claimMissingRange(uint32_t offset, uint32_t cBytes)

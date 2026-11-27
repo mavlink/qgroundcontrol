@@ -170,7 +170,7 @@ void VehicleFileFetchTest::_testFileOverTheLimit()
         }
         uri = server.url(QStringLiteral("/file.bin"));
         expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("File is larger than")));
+                         QRegularExpression(QStringLiteral("The file is larger than")));
     }
     QTemporaryDir directory;
     QVERIFY(directory.isValid());

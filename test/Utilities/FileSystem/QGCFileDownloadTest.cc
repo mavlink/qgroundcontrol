@@ -307,7 +307,7 @@ void QGCFileDownloadTest::_testFileDownloadSizeLimit()
     downloader.setMaxBytes(maxBytes);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
     if (refused) {
-        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("File is larger than"));
+        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("The file is larger than"));
     }
     QVERIFY(downloader.start(url));
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
@@ -319,7 +319,7 @@ void QGCFileDownloadTest::_testFileDownloadSizeLimit()
         verifyExpectedLogMessage();
         QVERIFY(!args.at(0).toBool());
         QVERIFY(args.at(1).toString().isEmpty());
-        QVERIFY2(args.at(2).toString().startsWith(QStringLiteral("File is larger than")),
+        QVERIFY2(args.at(2).toString().startsWith(QStringLiteral("The file is larger than")),
                  qPrintable(args.at(2).toString()));
         QCOMPARE(downloads.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot), QStringList());
     } else {
@@ -394,7 +394,7 @@ void QGCFileDownloadTest::_testAutoDecompressFailure_data()
     const QByteArray compressed = TestFixtures::gzipMember(QByteArray(4096, 'x'));
     QTest::newRow("truncated") << compressed.first(compressed.size() / 2)
                                << Compression::kDefaultMaxDecompressedFileBytes << " \\(.*truncated gzip input";
-    QTest::newRow("over the limit") << compressed << qint64{1024} << ": size limit exceeded$";
+    QTest::newRow("over the limit") << compressed << qint64{1024} << ": the data is larger than the size limit$";
 }
 
 // A download that cannot be decompressed, also one over the limit, fails with the reason and leaves no file. The
@@ -626,7 +626,7 @@ void QGCFileDownloadTest::_testAutoDecompressReplacesExistingFile_data()
     QTest::addColumn<QString>("warning");
 
     QTest::newRow("nothing") << QString() << QString();
-    QTest::newRow("transfer") << QStringLiteral("transfer") << QStringLiteral("File is larger than");
+    QTest::newRow("transfer") << QStringLiteral("transfer") << QStringLiteral("The file is larger than");
     QTest::newRow("decompression") << QStringLiteral("decompression") << QStringLiteral("Decompression failed");
     QTest::newRow("move into place") << QStringLiteral("move") << QStringLiteral("Cannot write the downloaded file");
 }

@@ -261,10 +261,9 @@ void QGCMapEngineManagerArchiveTest::_importArchiveStopsAtSizeLimit()
                               TestTimeout::longMs());
     // The archive is small, so its limit is the least one: the message names the archive, the limit and the rule
     const QString limit = QGC::bigSizeToString(Q_UINT64_C(64) * 1024 * 1024);
-    QCOMPARE(manager.errorMessage(),
-             QStringLiteral("zeros%2C%1.zip unpacks to more than ") + limit +
-                 QStringLiteral(", the most a tile set archive may unpack to: 20 times its size, ") + limit +
-                 QStringLiteral(" at least"));
+    QCOMPARE(manager.errorMessage(), QStringLiteral("The tile set in zeros%2C%1.zip is larger than ") + limit +
+                                         QStringLiteral(": a tile set archive may unpack to 20 times its size, ") +
+                                         limit + QStringLiteral(" at least"));
     QCOMPARE(unpackDirectories(), unpackedBefore);
 }
 

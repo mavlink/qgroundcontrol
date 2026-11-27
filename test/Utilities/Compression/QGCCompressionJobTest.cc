@@ -190,7 +190,8 @@ void QGCCompressionJobTest::_testDecompression()
     const Compression::Outcome& outcome = outcomes.first();
     QVERIFY2(outcome.error == expectedError, qPrintable(outcome.description()));
     if (fails) {
-        QCOMPARE(outcome.message, QStringLiteral("Decompression failed: %1: size limit exceeded").arg(inputPath));
+        QCOMPARE(outcome.message,
+                 QStringLiteral("Decompression failed: %1: the data is larger than the size limit").arg(inputPath));
         QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("data.bin.gz")});
     } else {
         QCOMPARE(outcome.filterName, expectedFilter);

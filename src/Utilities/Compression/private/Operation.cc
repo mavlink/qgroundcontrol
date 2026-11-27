@@ -42,7 +42,7 @@ static QString failureReason(const LibArchive::Result& result)
     }
     switch (result.error) {
         case Error::SizeLimitExceeded:
-            return QCoreApplication::translate("Compression", ": size limit exceeded",
+            return QCoreApplication::translate("Compression", ": the data is larger than the size limit",
                                                "Ends a message that tells what failed");
         case Error::Cancelled:
             return QCoreApplication::translate("Compression", ": cancelled", "Ends a message that tells what failed");

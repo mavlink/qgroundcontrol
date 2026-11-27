@@ -15,6 +15,7 @@
 #include "PX4FirmwareUpgradeThread.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
 #include "SettingsManager.h"
@@ -857,8 +858,8 @@ bool FirmwareUpgradeController::ManifestSplitter::feed(QByteArrayView chunk)
     if (_capturing) {
         _object.append(chunk.sliced(_captureFrom));
         if (_object.size() > kMaxManifestEntryBytes) {
-            return _fail(
-                QStringLiteral("An entry of the firmware list is larger than %1 bytes").arg(kMaxManifestEntryBytes));
+            return _fail(QStringLiteral("An entry of the firmware list is larger than %1")
+                             .arg(QGC::bigSizeToString(static_cast<quint64>(kMaxManifestEntryBytes))));
         }
     }
     _captureFrom = 0;

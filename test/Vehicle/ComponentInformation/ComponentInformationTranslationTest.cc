@@ -94,7 +94,7 @@ void ComponentInformationTranslationTest::_basic_test()
     if (overLimit) {
         QVERIFY(translation.fileName.isEmpty());
         QCOMPARE(translation.warnings.size(), 1);
-        QVERIFY2(translation.warnings.first().contains(QStringLiteral("size limit exceeded")),
+        QVERIFY2(translation.warnings.first().contains(QStringLiteral("larger than the size limit")),
                  qPrintable(translation.warnings.first()));
         QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files), QStringList());
         return;

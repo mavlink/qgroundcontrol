@@ -10,6 +10,7 @@
 #include "Compression.h"
 #include "FileFixtures.h"
 #include "JsonParsing.h"
+#include "QGCFormat.h"
 
 namespace {
 
@@ -189,11 +190,10 @@ void JsonParsingTest::_testReadJsonFileSizeLimit()
     QVERIFY(JsonParsing::readJsonText(path, text, errorString, content.size()));
     QCOMPARE(text, content);
 
-    // The size of the file decides before it is read: the message gives the size that the file system reports
+    // The size of the file decides before it is read. The caller names the file
     QVERIFY(!JsonParsing::readJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());
-    QVERIFY2(errorString.contains(QStringLiteral("has %1 bytes").arg(content.size())), qPrintable(errorString));
-    QVERIFY2(errorString.contains(path), qPrintable(errorString));
+    QCOMPARE(errorString, QStringLiteral("The file is larger than %1").arg(QGC::bigSizeToString(content.size() - 1)));
     QVERIFY(!JsonParsing::readJsonText(path, text, errorString, content.size() - 1));
     QVERIFY(text.isEmpty());
 }
@@ -213,7 +213,7 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
     QVERIFY(JsonParsing::isJsonFile(path, document, errorString, content.size()));
     QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());
-    QVERIFY2(errorString.contains(QStringLiteral("size limit exceeded")), qPrintable(errorString));
+    QVERIFY2(errorString.contains(QStringLiteral("larger than the size limit")), qPrintable(errorString));
 
     // Damaged compression is reported as that, not as a syntax error in bytes that are no text
     QTemporaryDir tempDir;

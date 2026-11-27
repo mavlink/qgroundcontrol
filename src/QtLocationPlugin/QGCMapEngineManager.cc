@@ -640,7 +640,7 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
     const auto tileSetEntries = std::make_shared<std::atomic_int>(0);
     const qint64 maxBytes = std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes);
     const QString sizeLimitMessage =
-        tr("%1 unpacks to more than %2, the most a tile set archive may unpack to: %3 times its size, %4 at least")
+        tr("The tile set in %1 is larger than %2: a tile set archive may unpack to %3 times its size, %4 at least")
             .arg(QFileInfo(archivePath).fileName(), QGC::bigSizeToString(static_cast<quint64>(maxBytes)),
                  QString::number(kMaxTileSetExpansion),
                  QGC::bigSizeToString(static_cast<quint64>(kMinTileSetLimitBytes)));

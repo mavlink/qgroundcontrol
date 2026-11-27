@@ -947,7 +947,7 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
         QVERIFY(ArchiveFixtures::writeGzipOfZeros(metadataFile, 1025));
     }
     if (!readable) {
-        const QString reason = (file == QStringLiteral("truncated")) ? "truncated" : "size limit exceeded";
+        const QString reason = (file == QStringLiteral("truncated")) ? "truncated" : "larger than the size limit";
         if (events) {
             expectLogMessage("MAVLink.LibEvents.EventHandler", QtWarningMsg,
                              QRegularExpression("Failed to load events JSON metadata file.*" + reason));

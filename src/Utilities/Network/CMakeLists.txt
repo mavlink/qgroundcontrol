@@ -26,6 +26,7 @@ target_link_libraries(
         Qt6::HttpServer
         QGCCompression
         QGCFileSystem
+        QGCFormat
         QGCLogging
 )
 

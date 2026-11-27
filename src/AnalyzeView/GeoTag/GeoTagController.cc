@@ -15,6 +15,7 @@
 #include "ExifParser.h"
 #include "GeoTagImageModel.h"
 #include "QGCFileHelper.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "ULogParser.h"
 
@@ -1012,7 +1013,7 @@ QByteArray GeoTagController::_readImageCached(const QString &path, QString *erro
     if (!file.open(QIODevice::ReadOnly)) {
         error = tr("Cannot read the file: %1").arg(file.errorString());
     } else if (file.size() > kMaxImageBytes) {
-        error = tr("The file is larger than %1").arg(QLocale().formattedDataSize(kMaxImageBytes));
+        error = tr("The file is larger than %1").arg(QGC::bigSizeToString(static_cast<quint64>(kMaxImageBytes)));
     } else {
         // One byte more than its size tells a file that grows while it is read
         const qint64 size = file.size();

@@ -883,9 +883,9 @@ void QGCCompressionTest::_testMessagesAreTranslated()
     const Compression::Outcome outcome =
         Compression::extractArchive(ArchiveFixtures::zipResource, tempDir.filePath("output"), {.maxBytes = 1});
     QCOMPARE(outcome.error, Compression::Error::SizeLimitExceeded);
-    QCOMPARE(
-        outcome.message,
-        QStringLiteral("[Failed to extract archive: %1][: size limit exceeded]").arg(ArchiveFixtures::zipResource));
+    QCOMPARE(outcome.message,
+             QStringLiteral("[Failed to extract archive: %1][: the data is larger than the size limit]")
+                 .arg(ArchiveFixtures::zipResource));
     QCOMPARE(Compression::errorName(outcome.error), QStringLiteral("[Size limit exceeded]"));
 }
 
@@ -1842,7 +1842,7 @@ void QGCCompressionTest::_testDecompressToFileSizeLimit()
     const Compression::Outcome overLimit =
         Compression::decompressFileToFile(inputPath, outputPath, nullptr, wholeSize - 1);
     QCOMPARE(overLimit.error, Compression::Error::SizeLimitExceeded);
-    QVERIFY2(overLimit.message.endsWith(": size limit exceeded"), qPrintable(overLimit.message));
+    QVERIFY2(overLimit.message.endsWith(": the data is larger than the size limit"), qPrintable(overLimit.message));
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{QStringLiteral("zeros.gz")});
 
     // The limit is on the output: a file that decompresses to exactly the limit is written whole
@@ -1880,7 +1880,7 @@ void QGCCompressionTest::_testDecompressToMemorySizeLimit()
     const Compression::Outcome overLimit =
         Compression::decompressFileToMemory(ArchiveFixtures::gzResource, read, limit);
     QCOMPARE(overLimit.error, Compression::Error::SizeLimitExceeded);
-    QVERIFY2(overLimit.message.endsWith(": size limit exceeded"), qPrintable(overLimit.message));
+    QVERIFY2(overLimit.message.endsWith(": the data is larger than the size limit"), qPrintable(overLimit.message));
     QVERIFY(read.isEmpty());
     // The limit is on the output: a file that decompresses to exactly the limit is read whole
     QVERIFY(Compression::decompressFileToMemory(ArchiveFixtures::gzResource, read, whole.size()));

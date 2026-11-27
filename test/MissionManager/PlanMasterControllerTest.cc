@@ -17,6 +17,7 @@
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
 #include "PlanMasterController.h"
+#include "QGCFormat.h"
 #include "QGCMapCircle.h"
 #include "QGCMapPolygon.h"
 #include "QGroundControlQmlGlobal.h"
@@ -418,8 +419,10 @@ void PlanMasterControllerTest::_testPlanFileReadAsIs_data()
     const QByteArray plan = TestFixtures::readFile(QStringLiteral(":/unittest/SectionTest.plan"));
     QTest::newRow("plain") << plan << false << QString();
     QTest::newRow("gzip") << TestFixtures::gzipMember(plan) << false << QStringLiteral("compressed");
+    // The file is named once, by the plan loader
     QTest::newRow("over-limit") << plan << true
-                                << QStringLiteral("has %1 bytes").arg(PlanMasterController::kMaxPlanFileBytes + 1);
+                                << QStringLiteral("ReadAsIs.plan). The file is larger than %1")
+                                       .arg(QGC::bigSizeToString(PlanMasterController::kMaxPlanFileBytes));
 }
 
 void PlanMasterControllerTest::_testPlanFileReadAsIs()

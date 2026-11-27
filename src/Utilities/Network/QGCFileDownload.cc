@@ -15,6 +15,7 @@
 #include "Compression.h"
 #include "CompressionJob.h"
 #include "QGCFileHelper.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCWorkDirectory.h"
 
@@ -566,7 +567,7 @@ bool QGCFileDownload::_withinMaxBytes(const QNetworkReply* reply, qint64 incomin
 
 void QGCFileDownload::_failForSize()
 {
-    const QString error = tr("File is larger than %1").arg(QLocale().formattedDataSize(_maxBytes));
+    const QString error = tr("The file is larger than %1").arg(QGC::bigSizeToString(static_cast<quint64>(_maxBytes)));
     qCWarning(QGCFileDownloadLog) << error << "url:"
                                   << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery |
                                                           QUrl::RemoveFragment);
