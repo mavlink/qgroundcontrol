@@ -146,7 +146,7 @@ void ADSBTCPLink::_parseAndEmitCallsign(ADSB::VehicleInfo_t &adsbInfo, const QSt
 
 void ADSBTCPLink::_parseAndEmitLocation(ADSB::VehicleInfo_t &adsbInfo, const QStringList &values)
 {
-    if (values.size() <= 19) {
+    if (values.size() <= 18) {
         return;
     }
 
@@ -164,7 +164,7 @@ void ADSBTCPLink::_parseAndEmitLocation(ADSB::VehicleInfo_t &adsbInfo, const QSt
     const int modeCAltitude = altitudeStr.toInt(&altOk);
     const double lat = values.at(14).toDouble(&latOk);
     const double lon = values.at(15).toDouble(&lonOk);
-    const int alert = values.at(19).toInt(&alertOk);
+    const int alert = values.at(18).toInt(&alertOk);
 
     if (!altOk || !latOk || !lonOk || !alertOk) {
         return;
