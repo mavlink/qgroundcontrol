@@ -82,6 +82,8 @@ else()
     qgc_disable_dependency_warnings(expat)
     get_directory_property(_qgc_expat_version DIRECTORY "${EXPAT_SOURCE_DIR}/expat" DEFINITION PACKAGE_VERSION)
     message(STATUS "QGC: EXPAT: the bundled ${_qgc_expat_version}")
+    # The MIT licence asks a copy to carry the notice. A system copy is not shipped
+    qgc_install_license(expat "${EXPAT_SOURCE_DIR}/expat/COPYING")
 endif()
 
 target_link_libraries(Osm3D PRIVATE expat)
@@ -149,6 +151,12 @@ CPMAddPackage(
         "EARCUT_BUILD_VIZ OFF"
     SYSTEM YES
 )
+
+# Its ISC licence asks every copy to carry the notice. libosmium's Boost licence does not ask it of compiled code, and
+# nothing of protozero is compiled: the XML reader that OsmParserThread.cc includes does not include it
+if(earcut_hpp_ADDED)
+    qgc_install_license(earcut.hpp "${earcut_hpp_SOURCE_DIR}/LICENSE")
+endif()
 
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
