@@ -51,7 +51,8 @@ public:
     /// Set offline editing vehicle type
     void setOfflineVehicleType(MAV_TYPE vehicleType);
 
-    /// Set a Fact value (will be restored on destruction)
+    /// Set a Fact value (will be restored on destruction). A Fact set more than once gets back the value it had
+    /// before the first of these calls.
     void setFactValue(Fact* fact, const QVariant& value);
 
 private:
