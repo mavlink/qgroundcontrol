@@ -15,11 +15,13 @@ from common.net import fetch_bytes
 from rasterio.windows import Window
 
 from . import terrarium
+from .check import east_of, edge_findings, own_findings, south_of
 from .copernicus import MIN_VALID_HEIGHT, wrap_lon
 from .generate import GDAL_ENV, JOB_PIXELS
 from .jobs import IN_FLIGHT_PER_WORKER, bounded_completion, tile_path
 from .tilemath import (
     MAX_ZOOM,
+    MERCATOR_HALF_EXTENT,
     TILE_SIZE,
     TileKey,
     lonlat_bounds,
@@ -53,6 +55,13 @@ GROSSLY_LOW_MARGIN = 50.0
 GROSSLY_LOW_MAX_SLOPE = 0.5
 # Coastline and cliff-edge mismatches between the datasets stay well below this share of land.
 MAX_LAND_AS_SEA_FRACTION = 0.01
+# A check finding is in the source when the tile's pixels behind it are this close to the
+# heights the source gives those pixels. Rounding to 0.25 m steps at each averaged zoom, and
+# the last source pixel beside a missing cell, stay well inside it; a generator fault is the
+# size of the finding itself.
+FINDING_TOLERANCE_M = 1.0
+# MAX_ZOOM pixels sampled per task: an overview pixel averages thousands of them.
+_POINTS_PER_TASK = 200_000
 # Raw Copernicus is >50 m below AW3D30 on up to ~3.3% of gentle land above 5000 m (Himalayan
 # snow and ice: radar penetration, glacier change, AW3D30 void fill) with none of this pipeline
 # involved. Real failures are far above this; smaller ones fail the source check.
@@ -169,6 +178,120 @@ class SourceSampler:
                 total += value * weight
                 weight_sum += weight
         return total / weight_sum if weight_sum > 0 else None
+
+
+def source_pixel_height(sampler: SourceSampler, z: int, px: int, py: int) -> float | None:
+    """The height the source gives world pixel (*px*, *py*) of zoom *z*.
+
+    At MAX_ZOOM that is the point-bilinear height at the pixel's center, as the generator
+    samples it. A coarser pixel is the mean of the MAX_ZOOM pixels it covers, as the pyramid
+    and the overviews average them. None where the source has a void.
+    """
+    scale = 1 << (MAX_ZOOM - z)
+    resolution = 2 * MERCATOR_HALF_EXTENT / (TILE_SIZE << MAX_ZOOM)
+    total = 0.0
+    for sy in range(py * scale, (py + 1) * scale):
+        for sx in range(px * scale, (px + 1) * scale):
+            lon, lat = mercator_to_lonlat(
+                (sx + 0.5) * resolution - MERCATOR_HALF_EXTENT,
+                MERCATOR_HALF_EXTENT - (sy + 0.5) * resolution,
+            )
+            height = sampler.height(lon, lat)
+            if height is None:
+                return None
+            total += height
+    return total / (scale * scale)
+
+
+@dataclass
+class FindingCheck:
+    """How far the tile's pixels behind one check finding are from the source."""
+
+    key: TileKey
+    text: str
+    pixels: int
+    # None when the source has a void under one of the pixels.
+    max_abs: float | None
+
+    @property
+    def in_source(self) -> bool:
+        return self.max_abs is not None and self.max_abs <= FINDING_TOLERANCE_M
+
+
+def _pixel_errors(
+    cells: Mapping[tuple[int, int], str], z: int, pixels: Sequence[tuple[int, int, float]]
+) -> float | None:
+    """The largest difference between tile heights and the source over world *pixels*."""
+    sampler = SourceSampler(cells)
+    worst = 0.0
+    with rasterio.Env(**GDAL_ENV):
+        try:
+            for px, py, ours in pixels:
+                expected = source_pixel_height(sampler, z, px, py)
+                if expected is None:
+                    return None
+                worst = max(worst, abs(ours - expected))
+        finally:
+            sampler.close()
+    return worst
+
+
+def tile_findings(out: Path, key: TileKey) -> list[tuple[str, list[tuple[int, int, float]]]]:
+    """Each check finding of a tile with its world pixels and their heights in the build."""
+    heights = terrarium.read_heights(tile_path(out, key))
+    east_path, south_key = tile_path(out, east_of(key)), south_of(key)
+    east = terrarium.read_heights(east_path) if east_path.is_file() else None
+    south_path = tile_path(out, south_key) if south_key else None
+    south = terrarium.read_heights(south_path) if south_path and south_path.is_file() else None
+    width = TILE_SIZE << key.z
+
+    def world(row: int, col: int) -> tuple[int, int, float]:
+        if col >= TILE_SIZE and east is not None:
+            ours = east[row, col - TILE_SIZE]
+        elif row >= TILE_SIZE and south is not None:
+            ours = south[row - TILE_SIZE, col]
+        else:
+            ours = heights[row, col]
+        return (key.x * TILE_SIZE + col) % width, key.y * TILE_SIZE + row, float(ours)
+
+    findings = own_findings(key, heights) + edge_findings(key, heights, east, south)
+    return [(finding.text, [world(*pixel) for pixel in finding.pixels]) for finding in findings]
+
+
+def check_findings(
+    out: Path,
+    keys: Sequence[TileKey],
+    cells: Mapping[tuple[int, int], str],
+    workers: int,
+    executor_factory: Callable[..., Executor] = ProcessPoolExecutor,
+) -> list[FindingCheck]:
+    """Compare the pixels behind every check finding of the tiles *keys* with the source.
+
+    ``validate`` samples a job's pixels, so a passing job says nothing about a few pixels of
+    it, or about a coarser tile. This compares the very pixels of a finding, at its zoom.
+    """
+    checks: list[FindingCheck] = []
+    tasks: list[tuple[int, int, list[tuple[int, int, float]]]] = []
+    for key in keys:
+        per_task = max(1, _POINTS_PER_TASK >> (2 * (MAX_ZOOM - key.z)))
+        for text, pixels in tile_findings(out, key):
+            checks.append(FindingCheck(key, text, len(pixels), 0.0))
+            tasks += [
+                (len(checks) - 1, key.z, pixels[start : start + per_task])
+                for start in range(0, len(pixels), per_task)
+            ]
+    with executor_factory(max_workers=workers) as pool:
+        results = bounded_completion(
+            lambda task: pool.submit(_pixel_errors, cells, task[1], task[2]),
+            tasks,
+            limit=workers * IN_FLIGHT_PER_WORKER,
+        )
+        for (index, _, _), future in results:
+            check, worst = checks[index], future.result()
+            check.max_abs = (
+                None if worst is None or check.max_abs is None else max(check.max_abs, worst)
+            )
+    return checks
 
 
 @dataclass

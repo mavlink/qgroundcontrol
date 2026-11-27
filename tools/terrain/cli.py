@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .copernicus import load_cells
-from .jobs import completed_jobs, parse_job, select_jobs
+from .jobs import ACCEPTED_FINDINGS, completed_jobs, parse_job, select_jobs
 from .metadata import NOTICE_SEVERITIES
 from .tilemath import JOB_ZOOM, MAX_ZOOM, TileKey, all_tiles, tiles_in_bbox
 
@@ -91,12 +91,55 @@ def _cmd_overviews(args: argparse.Namespace) -> int:
     return 0
 
 
+def _parse_tile(text: str) -> TileKey:
+    try:
+        z, x, y = (int(part) for part in text.split("/"))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"must be Z/X/Y, got {text!r}") from None
+    if not (0 <= z <= MAX_ZOOM and 0 <= x < 1 << z and 0 <= y < 1 << z):
+        raise argparse.ArgumentTypeError(f"{text!r} is not a tile of z0..z{MAX_ZOOM}")
+    return TileKey(z, x, y)
+
+
+def _validate_findings(args: argparse.Namespace) -> int:
+    from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
+    from . import validate
+
+    try:
+        checks = validate.check_findings(
+            args.out,
+            args.tile,
+            load_cells(_source_cache(args.out)),
+            args.workers,
+            ProcessPoolExecutor if args.workers > 1 else ThreadPoolExecutor,
+        )
+    except FileNotFoundError as error:
+        raise SystemExit(f"Not in the build: {error.filename}") from None
+    print("Tile pixels behind each check finding vs the heights the source gives them (meters)")
+    print(f"{'tile':<16} {'pixels':>6} {'max diff':>9}  finding")
+    for check in checks:
+        diff = "void" if check.max_abs is None else f"{check.max_abs:.2f}"
+        print(f"{check.key!s:<16} {check.pixels:>6} {diff:>9}  {check.text}")
+    quiet = sorted(set(args.tile) - {check.key for check in checks})
+    if quiet:
+        print(f"No finding in: {' '.join(str(key) for key in quiet)}")
+    made = [check for check in checks if not check.in_source]
+    for check in made:
+        print(f"{check.key}: {check.text}: not in the source")
+    if not made:
+        print(f"Every finding is in the source, within {validate.FINDING_TOLERANCE_M} m")
+    return 1 if made else 0
+
+
 def _cmd_validate(args: argparse.Namespace) -> int:
     from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
     from . import validate
     from .ardupilot import HgtCells
 
+    if args.tile:
+        return _validate_findings(args)
     completed = completed_jobs(args.out)
     if not completed:
         raise SystemExit(f"No completed jobs under {args.out}")
@@ -197,9 +240,13 @@ def _cmd_stats(args: argparse.Namespace) -> int:
 
 
 def _cmd_check(args: argparse.Namespace) -> int:
-    from .check import check_build
+    from .check import check_build, load_accepted
 
-    problems = check_build(args.out, args.workers)
+    try:
+        accepted = load_accepted(args.accepted)
+    except (OSError, ValueError) as error:
+        raise SystemExit(str(error)) from None
+    problems = check_build(args.out, args.workers, accepted=accepted)
     for problem in problems[:MAX_PRINTED_PROBLEMS]:
         print(problem)
     if len(problems) > MAX_PRINTED_PROBLEMS:
@@ -317,6 +364,14 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help="Validate N random completed land jobs (seeded by --seed); default is every job",
     )
+    selection.add_argument(
+        "--tile",
+        action="append",
+        type=_parse_tile,
+        metavar="Z/X/Y",
+        help="Instead, compare the pixels behind this tile's check findings with the source "
+        "(repeatable): what tells a finding in the source from one the generator made",
+    )
     validate.add_argument(
         "--samples", type=_positive_int, default=400, help="Source samples per job"
     )
@@ -337,6 +392,14 @@ def build_parser() -> argparse.ArgumentParser:
         _cmd_check,
     )
     check.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
+    check.add_argument(
+        "--accepted",
+        type=Path,
+        default=ACCEPTED_FINDINGS,
+        metavar="PATH",
+        help="Findings reviewed and accepted, which do not fail the check "
+        f"(default: tools/terrain/{ACCEPTED_FINDINGS.name})",
+    )
 
     diff = add_command("diff", "Compare this build (--out) with another, tile by tile", _cmd_diff)
     diff.add_argument("--against", type=Path, required=True, help="The other (older) build")

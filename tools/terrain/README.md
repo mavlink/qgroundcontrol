@@ -189,7 +189,9 @@ globe and run in a process pool. Per job ([`generate.py`](generate.py)):
 3. **Fill voids.** Any node of a group inside one of its own cells (by whole 1° cells, not file
    extents) that still has no height is a void: source nodata. Voids within 100 source pixels
    (~3 km) of data are interpolated. A larger void **fails the job** rather than being written
-   as sea level. Ocean (no cell) is never filled.
+   as sea level. Ocean (no cell) is never filled. A node inside another group's cell that the
+   resampling left without a height is a void too: on the finer lattice, a GLO-90 cell has
+   such nodes below its last row, and at a corner the cell diagonally across reads them.
 4. **Warp** each group to the 4096×4096 Web Mercator grid with exact z13 pixel bounds, bilinear,
    and take every pixel from the group whose cell contains it. Each pixel is therefore
    interpolated once, from native data, whatever its neighbors read: resampling all cells onto
@@ -363,10 +365,39 @@ than the overviews. Modeled on the tools ArduPilot added after the terraingen bu
   shared sea PNG if it is all sea.
 - **Seams:** at every tile boundary, including between independently generated jobs and across
   the antimeridian, the mean jump across the boundary must stay within 3× the mean step beside it
-  (+0.5 m for rounding). Real terrain is as steep across a boundary as beside it; a misplaced,
+  (+0.5 m for rounding). A seam is reported with that mean jump. Real terrain is as steep across a boundary as beside it; a misplaced,
   stale or zeroed tile is not.
 - **Jumps:** neighboring pixels more than 1,000 m apart (or 2× the pixel's ground size at coarse
-  zooms, where pixels average large areas).
+  zooms, where pixels average large areas), inside a tile and across its east and south edges.
+  A jump is reported with the largest and the number of pixel pairs over the limit.
+- **Holes:** at z13, up to four sea-level pixels enclosed by land 25 m or higher: land the
+  generator gave no height. The jump limit only sees these above 1,000 m. Pixels within two
+  of a tile's edge are not judged.
+
+Findings that are in the source rather than made by the generator are listed in
+[`accepted_findings.txt`](accepted_findings.txt) (`--accepted`), each up to the size it was
+reviewed at: `check` prints them as `accepted:` and passes with them. Anything larger, new, or
+of another kind in the same tile still fails; so does one more pair over the jump limit in a
+tile whose jumps are listed, and a jump to a neighbor where only jumps inside the tile are.
+On a whole build that passes it also names the accepted findings that no longer occur, which
+should then leave the list.
+
+Add a finding only after `validate --tile Z/X/Y` reports it as in the source. That compares
+every pixel a finding was decided from (each pair of a jump, the two lines on each side of a
+seam, the 5×5 neighborhood of each pixel of a hole) with the height the source gives that very
+pixel: the bilinear sample at a z13 pixel's center, and for a coarser pixel the mean over the
+z13 pixels it covers. A finding within 1 m is in the source; a generator fault is off by the
+size of the finding. A passing `validate --job` is not enough: it samples 400 of a job's 16.7M
+z13 pixels, so it can miss a few of them, and it never reads a coarser tile.
+
+The first global build (November 2026) had 46: 38 jumps in the highest ranges and on steep
+islands, and 8 seams along field or forest edges in flat country and at island coasts. It also
+had the one fault the list must never hold: two pixels of land at 0 m at each corner where one
+GLO-90 cell meets three GLO-30 cells, fixed in the generator. `validate --tile` put the pixels
+behind all 46, the 330 pairs of the jumps included, within 0.19 m of the source, and those of
+the four corner tiles 1,523 to 2,725 m from it. A scan of that build's 27.8M land tiles with
+the hole rule found three of those four corners and nothing else; the fourth lies in the two
+pixels at a tile's edge that the rule does not judge.
 
 Overview tiles with missing children (a partial build, filled with sea level by design) get the
 structural checks only. Each job reads the edge tiles of its east and south neighbors, so memory
@@ -513,7 +544,8 @@ mosaic, lattice alignment, warp and Mercator math together, with no network. Cas
 - Cells in two longitude bands: exact across the band boundary, and a job's heights do not
   change when the cells it buffers include another lattice (checked on a nonlinear field, which
   a ramp cannot do).
-- GLO-90 beside GLO-30: the lattice gap is filled, never sea.
+- GLO-90 beside GLO-30: the lattice gap is filled, never sea, also at a corner where one
+  GLO-90 cell meets three GLO-30 cells.
 - Missing cells stay sea level, and void filling never spreads land into them.
 - Small voids are interpolated; unfillable voids fail the job.
 - Rounding: nearest 0.25 m step, error at most half a step, no bias; near-zero tiles become sea.
@@ -540,7 +572,11 @@ mosaic, lattice alignment, warp and Mercator math together, with no network. Cas
 - The whole-build check: each structural fault is reported; seams are flagged only when the jump
   dwarfs the steps beside it (not on steep real slopes); planted faults (missing tile, seam
   inside a job, seam between jobs, jump, missing parent) are found and block the passed marker;
-  partial-build overviews are not flagged. `diff` counts identical, changed, added, removed and
+  partial-build overviews are not flagged. Sea-level holes are found below the jump limit and
+  told from coasts, bays and channels; accepted findings pass up to their size and only for
+  their kind, a jump only with the pairs it was reviewed with. A finding the source has (a
+  cliff averaged into a z9 tile) is told from one the generator made (plateau pixels written
+  as sea level) by its own pixels. `diff` counts identical, changed, added, removed and
   unreadable tiles and streams the changed and added ones to the list file.
 - Encoding round trip, clamping, averaging heights not RGB, pyramid placement, overviews,
   TileJSON contents, offset fit recovery, and `.hgt` parsing.
@@ -556,6 +592,7 @@ TT="uv run --project tools --group terrain python tools/terrain_tiles.py"
 $TT generate --out build/terrain --area all
 $TT validate --out build/terrain
 $TT validate --out build/terrain --sample-jobs 200 --workers 16   # After a global run
+$TT validate --out build/terrain --tile 13/6033/3419 --workers 16 # Is this check finding in the source?
 $TT overviews --out build/terrain
 $TT stats --out build/terrain
 $TT check --out build/terrain                         # Every tile; required for production

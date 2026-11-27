@@ -8,6 +8,7 @@ import threading
 import time
 from concurrent.futures import FIRST_COMPLETED, wait
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .tilemath import JOB_ZOOM, TileKey
@@ -15,13 +16,14 @@ from .tilemath import JOB_ZOOM, TileKey
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
     from concurrent.futures import Future
-    from pathlib import Path
 
 # Tile tree under a build's output directory and the bucket; a new encoding gets a new root.
 TILES_DIR = "terrarium"
 OCEAN_STATUS = "ocean"
 # Tasks queued per pool worker: enough to keep every worker busy while results are collected.
 IN_FLIGHT_PER_WORKER = 4
+# Check findings reviewed against the source and accepted, so that a check can pass with them.
+ACCEPTED_FINDINGS = Path(__file__).with_name("accepted_findings.txt")
 # Seconds between the progress lines of a long generation or upload.
 PROGRESS_INTERVAL_S = 60.0
 
