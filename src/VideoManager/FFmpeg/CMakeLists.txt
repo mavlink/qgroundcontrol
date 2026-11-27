@@ -168,26 +168,34 @@ set(FFMPEG_DIR "${_ffmpeg_prefix}")
 # directory, and its AUTOMOC dependencies are resolved in its own.
 set(QT_PROMOTE_TO_GLOBAL_TARGETS TRUE)
 find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} REQUIRED COMPONENTS FFmpegMediaPluginImplPrivate)
-if(ANDROID)
-    # Qt's library defines an exported JNI_OnLoad() in an object file that comes along with everything the receiver uses
-    # of it, and QGroundControl has its own (src/Android/AndroidInit.cc): the link would fail on the duplicate. Linked
-    # in its place is a copy in which Qt's is local to that object file. Nothing calls it then, and nothing needs to:
-    # FFmpegStreamSession gives FFmpeg the Java VM, and the native methods it registers are the plugin's, which
-    # registers its own.
+# Linked in place of Qt's library is a copy without what must not come along with it:
+# - Its debug information. Qt builds the library with it and an archive keeps it, which put 43 MB into a Release
+#   executable that has none of its own.
+# - On Android, its JNI_OnLoad(). Qt's library defines an exported one in an object file that comes along with
+#   everything the receiver uses of it, and QGroundControl has its own (src/Android/AndroidInit.cc): the link would
+#   fail on the duplicate. In the copy Qt's is local to that object file. Nothing calls it then, and nothing needs to:
+#   FFmpegStreamSession gives FFmpeg the Java VM, and the native methods it registers are the plugin's, which
+#   registers its own.
+# Without an objcopy, off Android, Qt's library is linked as it is.
+if(CMAKE_OBJCOPY OR ANDROID)
     get_target_property(_ffmpeg_impl Qt6::FFmpegMediaPluginImplPrivate IMPORTED_LOCATION)
     cmake_path(GET _ffmpeg_impl FILENAME _ffmpeg_impl_name)
     set(_ffmpeg_impl_copy "${CMAKE_CURRENT_BINARY_DIR}/${_ffmpeg_impl_name}")
+    set(_ffmpeg_impl_copy_options --strip-debug)
+    if(ANDROID)
+        list(APPEND _ffmpeg_impl_copy_options --localize-symbol=JNI_OnLoad)
+    endif()
     add_custom_command(
         OUTPUT "${_ffmpeg_impl_copy}"
-        COMMAND "${CMAKE_OBJCOPY}" --localize-symbol=JNI_OnLoad "${_ffmpeg_impl}" "${_ffmpeg_impl_copy}"
+        COMMAND "${CMAKE_OBJCOPY}" ${_ffmpeg_impl_copy_options} "${_ffmpeg_impl}" "${_ffmpeg_impl_copy}"
         DEPENDS "${_ffmpeg_impl}"
-        COMMENT "Copying ${_ffmpeg_impl_name} without its JNI_OnLoad"
+        COMMENT "Copying ${_ffmpeg_impl_name} for the FFmpeg receiver"
         VERBATIM
     )
     add_custom_target(
         QGCFFmpegMediaPluginImpl
         DEPENDS "${_ffmpeg_impl_copy}"
-        COMMENT "Qt's FFmpeg plugin library without its JNI_OnLoad"
+        COMMENT "Qt's FFmpeg plugin library as the FFmpeg receiver links it"
     )
     # Qt gives the one library as the location for each configuration and for none.
     set_target_properties(
