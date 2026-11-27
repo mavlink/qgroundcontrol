@@ -18,13 +18,10 @@ private slots:
     // Single-file decompression
     UT_PARAMETERIZED_TEST(_testDecompressEveryFormat);
     UT_PARAMETERIZED_TEST(_testDecompressEmptyStream);
-    void _testDecompressRejectsCutEmptyStream();
     UT_PARAMETERIZED_TEST(_testDecompressPlainInput);
-    UT_PARAMETERIZED_TEST(_testDecompressFileToFileCopiesPlainInput);
     UT_PARAMETERIZED_TEST(_testDecompressFileToFileDefaultOutput);
 
     // Detected compression filter
-    UT_PARAMETERIZED_TEST(_testDetectedFilter);
     UT_PARAMETERIZED_TEST(_testDetectedFilterAfterFailure);
 
     // Edge cases and error handling
@@ -34,8 +31,8 @@ private slots:
     void _testErrorNames();
     void _testMessagesAreTranslated();
     void _testNoExternalDecompressors();
+    UT_PARAMETERIZED_TEST(_testStreamWithoutItsDecoder);
     UT_PARAMETERIZED_TEST(_testLegacyLzmaStream);
-    UT_PARAMETERIZED_TEST(_testDataThatIsNotLzma);
     UT_PARAMETERIZED_TEST(_testStreamInsideStream);
     void _testRefusalRulesAgreeWithLibarchive();
     UT_PARAMETERIZED_TEST(_testTruncatedStream);
@@ -45,16 +42,15 @@ private slots:
     UT_PARAMETERIZED_TEST(_testGzipInsideStream);
     void _testDecompressDataToMemoryInPlace();
     void _testPlainDataIsShared();
-    void _testDecompressFileToMemory();
     void _testDecompressFileToSink();
     UT_PARAMETERIZED_TEST(_testUnwritableOutput);
     UT_PARAMETERIZED_TEST(_testOutputIsTheInput);
+    UT_PARAMETERIZED_TEST(_testOutputIsReplacedOnlyWhenComplete);
     UT_PARAMETERIZED_TEST(_testInputWithoutPermission);
 
     // Boundary conditions
-    void _testDecompressToFileSizeLimit();
-    void _testDecompressToMemorySizeLimit();
-    void _testDecompressionCancelled();
+    UT_PARAMETERIZED_TEST(_testSizeLimit);
+    UT_PARAMETERIZED_TEST(_testDecompressionCancelled);
 
 private:
     /// Arguments for an entry point of Compression. Each entry point takes those it has parameters for
@@ -64,6 +60,8 @@ private:
         QString path = {};
         /// The directory to extract into, or the file to decompress to
         QString output = {};
+        /// Largest size of what a single stream decompresses to (0 = far more than any test gives)
+        qint64 maxBytes = 0;
     };
 
     /// What an entry point of Compression returns besides its outcome

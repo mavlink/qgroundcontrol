@@ -17,11 +17,13 @@
 
 #include "BulkRefreshJob.h"
 #include "FTPManager.h"
+#include "FileFixtures.h"
 #include "LogManager.h"
 #include "MAVLinkLib.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
+#include "ProcessFixtures.h"
 #include "QGCApplication.h"
 #include "QGCMath.h"
 #include "QGCStateMachine.h"
@@ -1071,10 +1073,7 @@ void ParameterManagerTest::_FTPDownloadsOfTwoVehiclesStayApart()
     QTemporaryDir servedDir;
     QVERIFY(servedDir.isValid());
     const QString largeFile = servedDir.filePath(QStringLiteral("param.pck"));
-    QFile file(largeFile);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    QVERIFY(file.resize(4 * 1024 * 1024));
-    file.close();
+    QVERIFY(TestFixtures::writeFile(largeFile, QByteArray(4 * 1024 * 1024, '\0')));
     QSignalSpy spyVehicles(vehicleMgr, &MultiVehicleManager::vehicleAdded);
     MockLink* const leavingLink = MockLink::startAPMArduPlaneMockLink();
     leavingLink->mockLinkFTP()->setServedFile(paramFilePath, largeFile);
@@ -1136,32 +1135,15 @@ void ParameterManagerTest::_FTPWithoutDownloadDirectoryLoadsOverStream()
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     const QString notADirectory = tempDir.filePath(QStringLiteral("file"));
-    QFile file(notADirectory);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.close();
+    QVERIFY(TestFixtures::writeFile(notADirectory, QByteArray()));
 
     // Unix reads TMPDIR for the temporary location, Windows TMP and then TEMP
-    struct SavedVariable
-    {
-        const char* name;
-        bool wasSet;
-        QByteArray value;
-    };
-
-    QList<SavedVariable> savedVariables;
+    const TestFixtures::EnvVarFixture restoreTmpdir("TMPDIR");
+    const TestFixtures::EnvVarFixture restoreTmp("TMP");
+    const TestFixtures::EnvVarFixture restoreTemp("TEMP");
     for (const char* name : {"TMPDIR", "TMP", "TEMP"}) {
-        savedVariables.append({name, qEnvironmentVariableIsSet(name), qgetenv(name)});
         qputenv(name, QFile::encodeName(QDir::toNativeSeparators(notADirectory + QStringLiteral("/tmp"))));
     }
-    const auto restoreVariables = qScopeGuard([&savedVariables]() {
-        for (const SavedVariable& variable : std::as_const(savedVariables)) {
-            if (variable.wasSet) {
-                qputenv(variable.name, variable.value);
-            } else {
-                qunsetenv(variable.name);
-            }
-        }
-    });
     QVERIFY2(
         QStandardPaths::writableLocation(QStandardPaths::TempLocation).startsWith(notADirectory, Qt::CaseInsensitive),
         qPrintable(QStandardPaths::writableLocation(QStandardPaths::TempLocation)));

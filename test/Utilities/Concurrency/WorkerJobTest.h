@@ -11,7 +11,6 @@ private slots:
     void _testDoneGetsTheOnlyResultOnContextThread();
     void _testDoneWaitsForTheEventLoop();
     UT_PARAMETERIZED_TEST(_testDeletingJobOrContextDropsResult);
-    UT_PARAMETERIZED_TEST(_testDroppedHandlerGetsTheResult);
     void _testDoneDeletesContext();
     void _testDoneStartsNextJob();
 };

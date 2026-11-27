@@ -1,9 +1,14 @@
 #include "QGCWorkDirectoryTest.h"
 
+#include <chrono>
+#include <filesystem>
 #include <memory>
+#include <system_error>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QLockFile>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 
 #include "FileFixtures.h"
@@ -76,6 +81,75 @@ void QGCWorkDirectoryTest::_testRemoveStale()
     QCOMPARE(QGCWorkDirectory::removeStale(parent.path(), kWorkDirectoryTestPrefix), 2);
     QCOMPARE(workDirectoriesIn(parent.path()), QStringList{QFileInfo(held->path()).fileName()});
     QVERIFY(QFileInfo(parentDir.filePath(otherName)).isDir());
+}
+
+// A link with the prefix is no work directory: what it leads to is neither locked nor emptied
+void QGCWorkDirectoryTest::_testRemoveStaleLeavesLinks()
+{
+    QTemporaryDir parent;
+    QTemporaryDir outside;
+    QVERIFY(parent.isValid());
+    QVERIFY(outside.isValid());
+    QVERIFY(TestFixtures::writeFile(outside.filePath(QStringLiteral("kept.bin")), "kept"));
+
+    const QString linkPath = QDir(parent.path()).filePath(kWorkDirectoryTestPrefix + QStringLiteral("link"));
+    if (!TestFixtures::createSymbolicLink(outside.path(), linkPath)) {
+        QSKIP("This system does not let the test create a symbolic link");
+    }
+    // QTemporaryDir cannot remove a link to a directory on Windows
+    const auto removeLink = qScopeGuard([&linkPath]() {
+        std::error_code error;
+        std::filesystem::remove(QFileInfo(linkPath).filesystemAbsoluteFilePath(), error);
+    });
+
+    QCOMPARE(QGCWorkDirectory::removeStale(parent.path(), kWorkDirectoryTestPrefix), 0);
+    QCOMPARE(QDir(outside.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("kept.bin")});
+    QVERIFY(QFileInfo(linkPath).isSymLink());
+}
+
+// Another QGC that creates a work directory, or looks for stale ones, holds the lock of the parent. While it does,
+// nothing is looked for, as a directory that is being created is not locked yet. A directory is created all the same
+void QGCWorkDirectoryTest::_testParentLocked()
+{
+    QTemporaryDir parent;
+    QVERIFY(parent.isValid());
+    const QDir parentDir(parent.path());
+    const QString stale = kWorkDirectoryTestPrefix + QStringLiteral("without-lock");
+    QVERIFY(parentDir.mkdir(stale));
+
+    // Held by this process, as by another: a lock is stale only once its process has ended
+    QLockFile parentLock(parentDir.filePath(kWorkDirectoryTestPrefix + QStringLiteral("lock")));
+    parentLock.setStaleLockTime(std::chrono::milliseconds::zero());
+    QVERIFY(parentLock.tryLock(std::chrono::milliseconds::zero()));
+
+    constexpr std::chrono::milliseconds noWait{0};
+    QCOMPARE(QGCWorkDirectory::removeStale(parent.path(), kWorkDirectoryTestPrefix, noWait), 0);
+    QCOMPARE(workDirectoriesIn(parent.path()), QStringList{stale});
+
+    const QGCWorkDirectory created(parent.path(), kWorkDirectoryTestPrefix, noWait);
+    QVERIFY2(created.isValid(), qPrintable(created.errorString()));
+    QVERIFY(QFileInfo(created.path()).isDir());
+
+    // Once the other has let go, what was left behind is removed, and the directory in use stays
+    parentLock.unlock();
+    QCOMPARE(QGCWorkDirectory::removeStale(parent.path(), kWorkDirectoryTestPrefix), 1);
+    QCOMPARE(workDirectoriesIn(parent.path()), QStringList{QFileInfo(created.path()).fileName()});
+}
+
+// A work directory that cannot be created is not valid and says why. It has no path, so nothing is removed with it
+void QGCWorkDirectoryTest::_testParentMissing()
+{
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    {
+        const QGCWorkDirectory workDirectory(root.filePath(QStringLiteral("missing")), kWorkDirectoryTestPrefix);
+        QVERIFY(!workDirectory.isValid());
+        QVERIFY(workDirectory.path().isEmpty());
+        QVERIFY(!workDirectory.errorString().isEmpty());
+        QCOMPARE(QGCWorkDirectory::removeStale(root.filePath(QStringLiteral("missing")), kWorkDirectoryTestPrefix), 0);
+    }
+    QVERIFY(QDir(root.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot));
 }
 
 UT_REGISTER_TEST(QGCWorkDirectoryTest, TestLabel::Unit, TestLabel::Utilities)

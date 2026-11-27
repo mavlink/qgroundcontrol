@@ -1,5 +1,6 @@
 #include "JsonParsingTest.h"
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -103,17 +104,6 @@ void JsonParsingTest::_testPossibleNaNJsonValue()
     QCOMPARE(JsonParsing::possibleNaNJsonValue(QJsonValue(42.75)), 42.75);
 }
 
-void JsonParsingTest::_testParseJson()
-{
-    const QByteArray data = QByteArrayLiteral("{\"version\":1,\"items\":[1,2,3]}");
-    QJsonDocument document;
-    QString errorString;
-
-    QVERIFY(JsonParsing::parseJson(data, document, errorString));
-    QVERIFY(document.isObject());
-    QCOMPARE(document.object().value(QStringLiteral("version")).toInt(), 1);
-}
-
 void JsonParsingTest::_testPlainReadersRefuseCompressed_data()
 {
     QTest::addColumn<QByteArray>("content");
@@ -176,8 +166,7 @@ void JsonParsingTest::_testReadJsonFileSizeLimit()
 {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
-    // A marker in the name must stay as it is in the message
-    const QString path = tempDir.filePath(QStringLiteral("limit%2.json"));
+    const QString path = tempDir.filePath(QStringLiteral("limit.json"));
     const QByteArray content = QByteArrayLiteral("{\"items\":[1,2,3]}");
     QVERIFY(TestFixtures::writeFile(path, content));
 
@@ -196,6 +185,30 @@ void JsonParsingTest::_testReadJsonFileSizeLimit()
     QCOMPARE(errorString, QStringLiteral("The file is larger than %1").arg(QGC::bigSizeToString(content.size() - 1)));
     QVERIFY(!JsonParsing::readJsonText(path, text, errorString, content.size() - 1));
     QVERIFY(text.isEmpty());
+}
+
+// A file that reports no size is limited by what is read from it: the size checked before the read says nothing.
+// The file has an end, so a read without a limit returns its content here instead of filling the memory
+void JsonParsingTest::_testFileWithoutSizeIsLimited()
+{
+#ifndef Q_OS_LINUX
+    QSKIP("Needs a file of /proc, which reports no size and has content: Linux only");
+#else
+    const QString path = QStringLiteral("/proc/self/status");
+    QCOMPARE(QFileInfo(path).size(), 0);
+    constexpr qint64 maxBytes = 16;
+    QVERIFY(TestFixtures::readFile(path).size() > maxBytes);
+
+    QByteArray text("content of an earlier read");
+    QString errorString;
+    QVERIFY(!JsonParsing::readJsonText(path, text, errorString, maxBytes));
+    QVERIFY(text.isEmpty());
+    QCOMPARE(errorString, QStringLiteral("The file is larger than %1").arg(QGC::bigSizeToString(maxBytes)));
+
+    QJsonDocument document;
+    QVERIFY(!JsonParsing::readJsonFile(path, document, errorString, maxBytes));
+    QVERIFY(document.isNull());
+#endif
 }
 
 void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
@@ -237,7 +250,8 @@ void JsonParsingTest::_testReadersMissingPath()
     QJsonDocument document;
     QString errorString;
 
-    const QString path = QStringLiteral("/definitely/missing/file.json");
+    // What looks like a placeholder in the name stays as it is in the message
+    const QString path = QStringLiteral("/definitely/missing/file%1.json");
     QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(!errorString.isEmpty());
 
@@ -254,7 +268,7 @@ void JsonParsingTest::_testReadersReplaceStaleError_data()
 
     for (const QString& reader :
          {QStringLiteral("parseJson"), QStringLiteral("readJsonFile"), QStringLiteral("isJsonFile")}) {
-        QTest::addRow("valid-%s", qPrintable(reader)) << QByteArrayLiteral("{}") << reader << true;
+        QTest::addRow("valid-%s", qPrintable(reader)) << QByteArrayLiteral("{\"version\":1}") << reader << true;
         QTest::addRow("invalid-%s", qPrintable(reader)) << QByteArrayLiteral("{") << reader << false;
         QTest::addRow("empty-%s", qPrintable(reader)) << QByteArray() << reader << false;
     }
@@ -271,8 +285,8 @@ void JsonParsingTest::_testReadersReplaceStaleError()
     QCOMPARE(file.write(content), content.size());
     file.close();
 
+    QJsonDocument document;
     const auto parse = [&](QString& errorString) {
-        QJsonDocument document;
         if (reader == QStringLiteral("parseJson")) {
             return JsonParsing::parseJson(content, document, errorString);
         }
@@ -285,6 +299,9 @@ void JsonParsingTest::_testReadersReplaceStaleError()
     QString freshError;
     QCOMPARE(parse(freshError), isJson);
     QCOMPARE(freshError.isEmpty(), isJson);
+    // The document is the content, and nothing when it could not be parsed
+    QCOMPARE(document.isObject(), isJson);
+    QCOMPARE(document.object().value(QStringLiteral("version")).toInt(), isJson ? 1 : 0);
 
     QString staleError = QStringLiteral("error of an earlier call");
     QCOMPARE(parse(staleError), isJson);

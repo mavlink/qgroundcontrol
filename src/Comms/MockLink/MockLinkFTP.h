@@ -92,6 +92,9 @@ public:
     /// hdr.size of the most recent ReadFile request, -1 if none received yet.
     int lastReadFileRequestSize() const { return _lastReadFileRequestSize; }
 
+    /// Component that the most recent request addressed, -1 if none received yet.
+    int lastRequestTargetComponent() const { return _lastRequestTargetComponent; }
+
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -233,6 +236,7 @@ private:
     int _readFileCount = 0;
     int _lastBurstReadRequestSize = -1;
     int _lastReadFileRequestSize = -1;
+    int _lastRequestTargetComponent = -1;
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;

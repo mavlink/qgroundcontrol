@@ -14,10 +14,10 @@ private slots:
     void _testValidateKeyTypesListSizeMismatch();
     void _testValidateKeyTypesNullAcceptsDouble();
     void _testPossibleNaNJsonValue();
-    void _testParseJson();
     UT_PARAMETERIZED_TEST(_testPlainReadersRefuseCompressed);
     void _testPlainReadersReadPlainFile();
     void _testReadJsonFileSizeLimit();
+    void _testFileWithoutSizeIsLimited();
     void _testIsJsonFileCompressedResourcePath();
     void _testReadersMissingPath();
     UT_PARAMETERIZED_TEST(_testReadersReplaceStaleError);

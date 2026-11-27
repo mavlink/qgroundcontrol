@@ -44,9 +44,8 @@ target_link_libraries(
         QGCLoggingCategory
 )
 
-# Register an executable that shares its test body with the application harness. Like the tests of the application,
-# each test gets a temporary directory of its own.
-function(qgc_add_portable_test name source)
+# Build a test executable on the portable harness
+function(qgc_add_portable_test_executable name source)
     add_executable(${name} ${source}.cc ${source}.h)
     set_target_properties(
         ${name}
@@ -58,22 +57,54 @@ function(qgc_add_portable_test name source)
     target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
     target_link_libraries(${name} PRIVATE QGCPortableTestHarness)
     add_dependencies(portable-tests ${name})
-    add_test(NAME Portable.${name} COMMAND ${name})
+endfunction()
 
-    set(_tmpdir "${CMAKE_BINARY_DIR}/test-tmp/Portable.${name}")
+# Give a portable test its labels, its timeout and, like the tests of the application, a temporary directory of its own
+function(qgc_set_portable_test_properties test)
+    set(_tmpdir "${CMAKE_BINARY_DIR}/test-tmp/${test}")
     file(MAKE_DIRECTORY "${_tmpdir}")
     set(_environment "QT_FATAL_CRITICALS=1" "TMPDIR=${_tmpdir}")
     if(WIN32)
         list(APPEND _environment "TMP=${_tmpdir}" "TEMP=${_tmpdir}")
     endif()
     set_tests_properties(
-        Portable.${name}
+        ${test}
         PROPERTIES
             LABELS "Unit;Portable"
             TIMEOUT 60
             ENVIRONMENT "${_environment}"
     )
 endfunction()
+
+# Register an executable that shares its test body with the application harness
+function(qgc_add_portable_test name source)
+    qgc_add_portable_test_executable(${name} ${source})
+    add_test(NAME Portable.${name} COMMAND ${name})
+    qgc_set_portable_test_properties(Portable.${name})
+endfunction()
+
+# The harness itself: that it fails a test function that misbehaves. Each function of the probe is a test of its own.
+# One that fails on purpose passes on the failure it is to cause, whatever the exit code: <function>|<failure>
+qgc_add_portable_test_executable(PortableHarnessProbe PortableHarnessProbe)
+set(_qgc_harness_probe_cases
+    "unexpectedWarning|Unexpected log messages \\(strict mode\\).*Failure context dump for .PortableHarnessProbe"
+    "unverifiedExpectation|expectLogMessage was called without a matching verifyExpectedLogMessage"
+    "expectationWithoutMessage|Expected log message was not captured after expectLogMessage"
+    "debugAndInfoAreOff|"
+    "warningFromAnotherThread|"
+)
+foreach(_qgc_harness_probe_case IN LISTS _qgc_harness_probe_cases)
+    string(REGEX MATCH "^([^|]+)\\|(.*)$" _qgc_harness_probe_match "${_qgc_harness_probe_case}")
+    set(_qgc_harness_probe_test "Portable.PortableHarnessProbe.${CMAKE_MATCH_1}")
+    add_test(NAME ${_qgc_harness_probe_test} COMMAND PortableHarnessProbe "_${CMAKE_MATCH_1}")
+    qgc_set_portable_test_properties(${_qgc_harness_probe_test})
+    if(CMAKE_MATCH_2)
+        set_tests_properties(
+            ${_qgc_harness_probe_test}
+            PROPERTIES PASS_REGULAR_EXPRESSION "FAIL! +: PortableHarnessProbe::_${CMAKE_MATCH_1}\\(\\) ${CMAKE_MATCH_2}"
+        )
+    endif()
+endforeach()
 
 qgc_add_portable_test(DataRateTrackerTest ../Utilities/DataRateTrackerTest)
 target_link_libraries(DataRateTrackerTest PRIVATE QGCIO)

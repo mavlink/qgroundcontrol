@@ -560,6 +560,8 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         return;
     }
 
+    _lastRequestTargetComponent = requestFTP.target_component;
+
     MavlinkFTP::Request *request = reinterpret_cast<MavlinkFTP::Request*>(&requestFTP.payload[0]);
 
     // kCmdOpenFileRO and kCmdResetSessions don't support retry so we can't drop those

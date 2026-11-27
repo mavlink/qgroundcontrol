@@ -12,9 +12,9 @@ class FirmwareUpgradeControllerTest : public UnitTest
 
 private slots:
     void _manifestCompleteErrorClearsDownloadingState();
-    void _manifestCompleteBadJsonClearsDownloadingState();
     void _manifestCompleteValidJsonPopulatesManifestInfo();
-    void _manifestReadAgainReplacesEarlierResult();
+    UT_PARAMETERIZED_TEST(_manifestReadIsDroppedOnceUnwanted);
+    void _manifestReadAfterBoardFoundBuildsFirmwareNames();
     void _manifestIsDownloadedWhenAskedFor();
     void _manifestIsDownloadedOnce();
     void _manifestIsDownloadedAgainAfterFailure();
@@ -23,6 +23,7 @@ private slots:
     void _manifestThatCannotBeReadKeepsTheList();
     void _manifestSplitterEntries_data();
     void _manifestSplitterEntries();
+    void _manifestSplitterRefusesHugeEntry();
     void _manifestSplitterRefusesEveryPrefix();
     void _px4ReleasesCompleteParsesStableAndBeta();
     void _px4ReleasesCompleteBadJsonKeepsPreviousVersions();

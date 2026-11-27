@@ -33,3 +33,50 @@ qgc_bundled_decoder_exports("${_own}" _found)
 qgc_test_assert_streq("application symbols" "" "${_found}")
 
 qgc_test_pass("decoder export check finds the symbols of the bundled decompression libraries")
+
+# The check as the build runs it after the link. A build of a correct application only ever sees it pass: here it
+# must fail on an exported decoder symbol, and when nm fails. A shell script stands in for nm.
+if(NOT CMAKE_HOST_WIN32)
+    qgc_test_sandbox(_sandbox qgc_bundled_decoder_exports_test)
+
+    # Runs the check with a stand-in nm that runs the shell commands <script>, and sets <result_var> to its exit code
+    # and <error_var> to what it wrote to stderr. The stand-in refuses arguments other than those nm needs.
+    function(qgc_test_run_export_check script result_var error_var)
+        set(_app "${_sandbox}/application")
+        set(_nm "${_sandbox}/nm")
+        file(WRITE "${_nm}" "#!/bin/sh\ntest \"$*\" = \"-D --defined-only ${_app}\" || exit 64\n${script}\n")
+        # cmake-lint: disable=E1126
+        file(CHMOD "${_nm}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+        execute_process(
+            COMMAND "${CMAKE_COMMAND}" "-DAPP=${_app}" "-DNM=${_nm}" -P
+                    "${CMAKE_CURRENT_LIST_DIR}/../BundledDecoderExports.cmake"
+            RESULT_VARIABLE _result
+            OUTPUT_QUIET
+            ERROR_VARIABLE _error
+        )
+        set(${result_var}
+            "${_result}"
+            PARENT_SCOPE
+        )
+        set(${error_var}
+            "${_error}"
+            PARENT_SCOPE
+        )
+    endfunction()
+
+    qgc_test_run_export_check("echo '0000000000001000 T main'" _result _error)
+    qgc_test_assert_streq("no decoder symbol exported: ${_error}" "0" "${_result}")
+
+    qgc_test_run_export_check("echo '0000000000001000 T main'; echo '0000000005e84949 T inflate'" _result _error)
+    qgc_test_assert_streq("decoder symbol exported" "1" "${_result}")
+    qgc_test_assert_matches(
+        "decoder symbol exported" "exports symbols of the decompression libraries it links statically \\(inflate\\)"
+        "${_error}"
+    )
+
+    qgc_test_run_export_check("exit 2" _result _error)
+    qgc_test_assert_streq("nm fails" "1" "${_result}")
+    qgc_test_assert_matches("nm fails" "-D --defined-only ${_sandbox}/application' failed \\(2\\)" "${_error}")
+
+    qgc_test_pass("decoder export check fails the build on an exported decoder symbol, and when nm fails")
+endif()

@@ -44,6 +44,7 @@ private slots:
     void _ftpRefusedNameFallbackTest();
     void _ftpSortOrderTest();
     void _ftpCancelDownloadTest();
+    void _ftpVehicleChangeEndsRequestTest();
     void _ftpRefreshDuringDownloadTest();
     void _ftpEraseSelectedTest();
     void _ftpCancelEraseSelectedTest();

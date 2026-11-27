@@ -27,7 +27,7 @@ bool ComponentInformationTranslation::downloadAndTranslate(const QString& summar
                                                            const QString& toTranslateJsonFile, int maxCacheAgeSec, const QString& componentName)
 {
     // Metadata is authored in English, no translation needed
-    const QString locale = QLocale::system().name();
+    const QString locale = _localeName;
     if (locale.startsWith(QLatin1String("en"))) {
         qCDebug(ComponentInformationTranslationLog) << "Skipping translation for English locale" << locale << "for" << componentName;
         return false;

@@ -4,8 +4,10 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QtEndian>
 
+#include "EventHandler.h"
 #include "MAVLinkLib.h"
 
 namespace TestFixtures {
@@ -127,6 +129,14 @@ QString writeMetadata(const QString& directory, uint32_t manualCustomMode, uint3
         return QString();
     }
     return path;
+}
+
+std::shared_ptr<events::parser::Parser> loadedMetadata(uint32_t manualCustomMode, uint32_t takeoffCustomMode,
+                                                       uint32_t missionCustomMode)
+{
+    QTemporaryDir directory;
+    const QString file = writeMetadata(directory.path(), manualCustomMode, takeoffCustomMode, missionCustomMode);
+    return file.isEmpty() ? nullptr : EventHandler::loadMetadata(file);
 }
 
 EventStream::EventStream(uint8_t systemId)

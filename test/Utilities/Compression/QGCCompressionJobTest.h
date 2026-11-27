@@ -13,6 +13,8 @@ private slots:
     UT_PARAMETERIZED_TEST(_testDecompression);
     void _testDecompressionProgressOfUnknownSize();
     UT_PARAMETERIZED_TEST(_testCancelledWhileRunning);
+    void _testDeletedWhileRunning();
+    void _testCallbackDeletesContext();
     UT_PARAMETERIZED_TEST(_testEndedWithoutCallback);
     void _testRunsBesideGlobalPool();
 };

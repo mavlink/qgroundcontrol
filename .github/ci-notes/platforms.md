@@ -115,10 +115,11 @@ How CI runs, retries, and reports the application tests is described in
   still fail the job.
 - Reproduce either Linux lane with `cmake --workflow --preset Linux-sanitizers` or
   `--preset Linux-coverage` (`just coverage` uses `Linux-coverage`).
-- **Portable tests**: Windows x64 and the macOS Release leg build and run sixteen standalone portable
+- **Portable tests**: Windows x64 and the macOS Release leg build and run seventeen standalone portable
   utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). Fifteen share test
   bodies with the full harness, among them the three Compression suites, and do not enable test hooks
-  in the packaged application; the sixteenth runs the Compression fuzz harness on its fixed inputs.
+  in the packaged application; one runs the Compression fuzz harness on its fixed inputs, and one, in
+  five CTest entries, checks that the portable harness fails a test that misbehaves.
   There is no separate Extended Tests workflow.
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests

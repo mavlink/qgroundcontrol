@@ -2,6 +2,7 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QJsonObject>
+#include <QtCore/QLocale>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
@@ -14,6 +15,7 @@ class ComponentInformationTranslation : public QObject
     Q_OBJECT
 #ifdef QGC_UNITTEST_BUILD
     friend class ComponentInformationTranslationTest; // Unit test
+    friend class RequestMetaDataTypeStateMachineTest;  // Unit test
 #endif
 
 public:
@@ -78,6 +80,8 @@ private:
     static QString getRefName(const QString& ref);
 
     QGCCachedFileDownload* _cachedFileDownload = nullptr;
+    /// Name of the locale to translate for, as QLocale::name() gives it
+    QString _localeName = QLocale::system().name();
     QString _toTranslateJsonFile;
     bool _downloading = false;
     /// Reading the summary, then translating: the jobs of the request in progress. Deleting one drops its result.

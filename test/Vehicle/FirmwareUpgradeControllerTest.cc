@@ -1,12 +1,14 @@
 #include "FirmwareUpgradeControllerTest.h"
 
 #include <algorithm>
+#include <memory>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 #include <QtCore/QThreadPool>
@@ -16,7 +18,10 @@
 #include "FirmwareImage.h"
 #include "FirmwarePluginManager.h"
 #include "FirmwareUpgradeController.h"
+#include "FirmwareUpgradeSettings.h"
+#include "ProcessFixtures.h"
 #include "QGCFileDownload.h"
+#include "SettingsManager.h"
 
 namespace {
 
@@ -142,31 +147,12 @@ void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState
     QVERIFY(spy.isValid());
 
     controller._downloadingFirmwareList = true;
-    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("ArduPilot Manifest download failed"));
+    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg,
+                     QRegularExpression("ArduPilot Manifest download failed"));
     controller._ardupilotManifestDownloadComplete(false, QString(), QStringLiteral("simulated error"));
     verifyExpectedLogMessage();
 
     QVERIFY(!controller._downloadingFirmwareList);
-    QVERIFY(!spy.isEmpty());
-    QCOMPARE(spy.last().at(0).toBool(), false);
-}
-
-void FirmwareUpgradeControllerTest::_manifestCompleteBadJsonClearsDownloadingState()
-{
-    QTemporaryDir tempDir;
-    FirmwareUpgradeController controller;
-    QSignalSpy spy(&controller, &FirmwareUpgradeController::downloadingFirmwareListChanged);
-    QVERIFY(spy.isValid());
-
-    const QString missingFile = tempDir.filePath(QStringLiteral("missing_manifest.json"));
-
-    stopManifestDownload(controller);
-    controller._downloadingFirmwareList = true;
-    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("Json file read failed"));
-    controller._ardupilotManifestDownloadComplete(true, missingFile, QString());
-    QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
-    verifyExpectedLogMessage();
-
     QVERIFY(!spy.isEmpty());
     QCOMPARE(spy.last().at(0).toBool(), false);
 }
@@ -211,32 +197,94 @@ void FirmwareUpgradeControllerTest::_manifestCompleteValidJsonPopulatesManifestI
     QVERIFY(info.friendlyName.contains(QStringLiteral("TestBrand")));
 }
 
-void FirmwareUpgradeControllerTest::_manifestReadAgainReplacesEarlierResult()
+void FirmwareUpgradeControllerTest::_manifestReadIsDroppedOnceUnwanted_data()
 {
-    // A manifest that takes longer to read than the next one: its result, which comes last, is no longer wanted
+    QTest::addColumn<bool>("controllerDeleted");
+
+    QTest::newRow("a later manifest is read") << false;
+    QTest::newRow("the controller is deleted") << true;
+}
+
+// The manifest is read on a worker, which takes seconds for the real one. A read whose result is no longer wanted,
+// because a later download is read or because the firmware page and its controller are gone, is dropped. The
+// manifest here cannot be read: its result, were it taken, would be warned about.
+void FirmwareUpgradeControllerTest::_manifestReadIsDroppedOnceUnwanted()
+{
+    QFETCH(bool, controllerDeleted);
+
     QTemporaryDir tempDir;
-    const QString earlierPath = tempDir.filePath(QStringLiteral("earlier.json"));
-    QByteArray earlier = arduPilotManifest(41);
-    earlier.append(QByteArray(32 * 1024 * 1024, ' '));
-    QVERIFY(TestFixtures::writeFile(earlierPath, earlier));
+    const QString unwantedPath = tempDir.filePath(QStringLiteral("unwanted.json"));
+    QVERIFY(TestFixtures::writeFile(unwantedPath, "{ not a manifest"));
     const QString laterPath = tempDir.filePath(QStringLiteral("later.json"));
     QVERIFY(TestFixtures::writeFile(laterPath, arduPilotManifest(43)));
 
+    auto controller = std::make_unique<FirmwareUpgradeController>();
+    stopManifestDownload(*controller);
+    controller->_bootloaderFound = false;
+    controller->_rgManifestFirmwareInfo.clear();
+    controller->_downloadingFirmwareList = true;
+
+    TestFixtures::ThreadPoolBlocker blocker;
+    QVERIFY(blocker.isBlocking());
+    controller->_ardupilotManifestDownloadComplete(true, unwantedPath, QString());
+    if (controllerDeleted) {
+        controller.reset();
+    } else {
+        controller->_ardupilotManifestDownloadComplete(true, laterPath, QString());
+    }
+    blocker.release();
+
+    if (!controllerDeleted) {
+        QTRY_VERIFY_WITH_TIMEOUT(!controller->_downloadingFirmwareList, TestTimeout::mediumMs());
+        QCOMPARE(controller->_rgManifestFirmwareInfo.size(), 1);
+        QCOMPARE(controller->_rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
+    }
+    // In whatever order the reads end, the unwanted one changes nothing
+    QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+    QCoreApplication::sendPostedEvents();
+    if (!controllerDeleted) {
+        QCOMPARE(controller->_rgManifestFirmwareInfo.size(), 1);
+        QCOMPARE(controller->_rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
+    }
+}
+
+// The firmware selection asks for the list once a board is found, so the list is usually read after that: the
+// firmware of the board is offered as soon as the list is there
+void FirmwareUpgradeControllerTest::_manifestReadAfterBoardFoundBuildsFirmwareNames()
+{
+    if (!FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        QSKIP("The build does not offer ArduPilot");
+    }
+
+    QTemporaryDir tempDir;
+    const QString manifestPath = tempDir.filePath(QStringLiteral("manifest.json"));
+    QVERIFY(TestFixtures::writeFile(manifestPath, arduPilotManifest(42)));
+
+    FirmwareUpgradeSettings* const settings = SettingsManager::instance()->firmwareUpgradeSettings();
+    const QVariant chibiOS = settings->apmChibiOS()->rawValue();
+    const QVariant vehicleType = settings->apmVehicleType()->rawValue();
+    const auto restoreSettings = qScopeGuard([settings, chibiOS, vehicleType]() {
+        settings->apmChibiOS()->setRawValue(chibiOS);
+        settings->apmVehicleType()->setRawValue(vehicleType);
+    });
+    settings->apmChibiOS()->setRawValue(0);
+    settings->apmVehicleType()->setRawValue(FirmwareUpgradeController::CopterFirmware);
+
     FirmwareUpgradeController controller;
     stopManifestDownload(controller);
-    controller._rgManifestFirmwareInfo.clear();
+    controller.setSelectedFirmwareBuildType(FirmwareUpgradeController::StableFirmware);
+    controller._bootloaderFound = true;
+    controller._bootloaderBoardID = 42;
+    QCOMPARE(controller._apmFirmwareNames, QStringList());
+    QSignalSpy namesSpy(&controller, &FirmwareUpgradeController::apmFirmwareNamesChanged);
+
     controller._downloadingFirmwareList = true;
-    controller._ardupilotManifestDownloadComplete(true, earlierPath, QString());
-    controller._ardupilotManifestDownloadComplete(true, laterPath, QString());
+    controller._ardupilotManifestDownloadComplete(true, manifestPath, QString());
     QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
 
-    QCOMPARE(controller._rgManifestFirmwareInfo.size(), 1);
-    QCOMPARE(controller._rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
-
-    // The earlier read ends later, and its result is not taken
-    QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
-    QCoreApplication::processEvents();
-    QCOMPARE(controller._rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
+    QCOMPARE(namesSpy.count(), 1);
+    QCOMPARE(controller._apmFirmwareNames, QStringList{QStringLiteral("TestBrand - 4.5.0")});
+    QCOMPARE(controller._apmFirmwareUrls, QStringList{QStringLiteral("https://example.com/fw.apj")});
 }
 
 void FirmwareUpgradeControllerTest::_manifestIsDownloadedWhenAskedFor()
@@ -272,6 +320,7 @@ void FirmwareUpgradeControllerTest::_manifestIsDownloadedOnce()
     QVERIFY(TestFixtures::writeFile(manifestPath, arduPilotManifest(45)));
 
     FirmwareUpgradeController controller;
+    controller._bootloaderFound = false;
     controller.loadArduPilotFirmwareList();
     // Asked again while it is downloaded, as when the user picks ArduPilot twice
     controller.loadArduPilotFirmwareList();
@@ -417,6 +466,8 @@ void FirmwareUpgradeControllerTest::_manifestThatCannotBeReadKeepsTheList_data()
     QByteArray changedChecksum = compressed;
     changedChecksum[changedChecksum.size() - 8] = static_cast<char>(changedChecksum.at(changedChecksum.size() - 8) ^ 1);
 
+    // A null file stands for one that is not there
+    QTest::newRow("missing file") << QByteArray() << QStringLiteral("does not exist");
     QTest::newRow("cut download") << compressed.first(compressed.size() - 20) << QStringLiteral("truncated");
     QTest::newRow("checksum") << changedChecksum << QStringLiteral("does not match its checksum");
     QTest::newRow("cut text") << TestFixtures::gzipMember(manifest.first(manifest.size() - 8))
@@ -437,10 +488,13 @@ void FirmwareUpgradeControllerTest::_manifestThatCannotBeReadKeepsTheList()
 
     QTemporaryDir tempDir;
     const QString manifestPath = tempDir.filePath(QStringLiteral("manifest.json.gz"));
-    QVERIFY(TestFixtures::writeFile(manifestPath, file));
+    if (!file.isNull()) {
+        QVERIFY(TestFixtures::writeFile(manifestPath, file));
+    }
 
     FirmwareUpgradeController controller;
     stopManifestDownload(controller);
+    QSignalSpy spy(&controller, &FirmwareUpgradeController::downloadingFirmwareListChanged);
     FirmwareUpgradeController::ManifestFirmwareInfo_t kept{};
     kept.boardId = 7;
     controller._rgManifestFirmwareInfo.append(kept);
@@ -451,9 +505,19 @@ void FirmwareUpgradeControllerTest::_manifestThatCannotBeReadKeepsTheList()
     QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
 
+    QVERIFY(!spy.isEmpty());
+    QCOMPARE(spy.last().at(0).toBool(), false);
+
     // Not the entries that were read before the damage was found
     QCOMPARE(controller._rgManifestFirmwareInfo.size(), 1);
     QCOMPARE(controller._rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(7));
+
+    // The list could not be shown: the next time it is to be shown, it is downloaded again
+    if (FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        controller.loadArduPilotFirmwareList();
+        QCOMPARE(manifestDownloads(controller), 1);
+        stopManifestDownload(controller);
+    }
 }
 
 void FirmwareUpgradeControllerTest::_manifestSplitterEntries_data()
@@ -502,6 +566,7 @@ void FirmwareUpgradeControllerTest::_manifestSplitterEntries_data()
     malformed("comma before the end of an array", R"({"firmware":[{"a":1},]})", "closes nothing open");
     malformed("comma before the end of an object", R"({"firmware":[{"a":1,}]})", "closes nothing open");
     malformed("name that is not a string", R"({"firmware":[{a:1}]})", "where it cannot be");
+    malformed("number that is too long", R"({"firmware":[],"a":)" + QByteArray(65, '1') + "}", "too long");
     malformed("nested too deeply",
               QByteArray(R"({"firmware":[)") + QByteArray(70, '[') + QByteArray(70, ']') + QByteArray("]}"),
               "nested too deeply");
@@ -527,6 +592,18 @@ void FirmwareUpgradeControllerTest::_manifestSplitterEntries()
             QVERIFY2(split.error.contains(error), qPrintable(split.error));
         }
     }
+}
+
+// The splitter holds one entry of the firmware list at a time, which arrives in chunks: an entry that is larger than
+// any real one is refused before it is held whole
+void FirmwareUpgradeControllerTest::_manifestSplitterRefusesHugeEntry()
+{
+    // More than the limit of an entry, 1 MiB, before the chunk that ends it
+    const QByteArray manifest = R"({"firmware":[{"platform":")" + QByteArray(1024 * 1024 + 128 * 1024, 'a') + R"("}]})";
+    const Split split = _splitManifest(manifest, 64 * 1024);
+    QVERIFY(!split.ok);
+    QVERIFY2(split.error.contains(QStringLiteral("larger than")), qPrintable(split.error));
+    QCOMPARE(split.objects, QList<QByteArray>());
 }
 
 void FirmwareUpgradeControllerTest::_manifestSplitterRefusesEveryPrefix()

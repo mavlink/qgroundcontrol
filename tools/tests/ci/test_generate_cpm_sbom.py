@@ -13,6 +13,7 @@ from ci.security.generate_cpm_sbom import (
     git_exact_tag,
     gstreamer_component,
     main,
+    make_cpe,
     make_purl,
     normalize_git_url,
 )
@@ -129,6 +130,24 @@ def test_components_name_the_nvd_product_scanners_match(tmp_path: Path) -> None:
         "mavlink": None,
     }
     assert components["mavlink"]["version"] == "b1fb5a1a32c4"
+
+
+@pytest.mark.parametrize(
+    ("name", "version", "expected"),
+    [
+        ("ZLIB", "1.3.2", "cpe:2.3:a:zlib:zlib:1.3.2:*:*:*:*:*:*:*"),
+        # NVD lists releases: a name made from anything else matches no advisory, or is no CPE at all.
+        ("ZLIB", "1.3.2-rc1", None),
+        ("ZLIB", "", None),
+        # NVD's clipper_project:clipper is another library, whatever release of clipper2 this is.
+        ("clipper2", "1.5.4", None),
+        ("not-in-the-table", "1.0", None),
+    ],
+)
+def test_cpe_only_for_a_release_of_a_product_nvd_has(
+    name: str, version: str, expected: str | None
+) -> None:
+    assert make_cpe(name, version) == expected
 
 
 def test_spdx_carries_the_cpe_as_a_security_reference(tmp_path: Path) -> None:

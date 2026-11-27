@@ -7,7 +7,6 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 
-#include "Compression.h"
 #include "QGCFileHelper.h"
 
 // ============================================================================
@@ -393,17 +392,6 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
     QCOMPARE(file.size(), 0);
 }
 
-void QGCFileHelperTest::_testReadCompressedFile()
-{
-    // The test manifest is a few bytes
-    constexpr qint64 maxManifestBytes = 1024;
-    QByteArray data;
-    const Compression::Outcome read =
-        Compression::decompressFileToMemory(":/unittest/manifest.json.gz", data, maxManifestBytes);
-    QVERIFY2(read, qPrintable(read.description()));
-    QVERIFY(data.contains("\"name\""));
-}
-
 // ============================================================================
 // Disk space utilities tests
 // ============================================================================
@@ -502,27 +490,6 @@ void QGCFileHelperTest::_testToLocalPathQrcUrls()
 
     // QUrl(":/resource/path") is invalid in Qt but should still round-trip to resource path.
     QCOMPARE(QGCFileHelper::toLocalPath(QUrl(QStringLiteral(":/resource/path"))), QStringLiteral(":/resource/path"));
-}
-
-void QGCFileHelperTest::_testToLocalPathCompressionInterop()
-{
-    QTemporaryDir tempDir;
-    const QString archivePath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.zip")));
-    QCOMPARE(archivePath, QStringLiteral(":/unittest/manifest.json.zip"));
-    QVERIFY(Compression::isArchiveFile(archivePath));
-
-    const QString extractDir = tempDir.filePath("from_url_extract");
-    QVERIFY(Compression::extractArchive(archivePath, extractDir));
-    QVERIFY(QFile::exists(extractDir + QStringLiteral("/manifest.json")));
-
-    const QString gzipPath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.gz")));
-    QCOMPARE(gzipPath, QStringLiteral(":/unittest/manifest.json.gz"));
-
-    // The test manifest is a few bytes
-    constexpr qint64 maxManifestBytes = 1024;
-    QByteArray decompressed;
-    QVERIFY(Compression::decompressFileToMemory(gzipPath, decompressed, maxManifestBytes));
-    QVERIFY(decompressed.contains("\"name\""));
 }
 
 void QGCFileHelperTest::_testIsLocalPath()

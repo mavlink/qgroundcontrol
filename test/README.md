@@ -408,13 +408,16 @@ ctest --test-dir build -R QmlTestFileValidator --output-on-failure
 
 Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal
 application build (the macOS Debug leg runs the Unit and Integration suites instead, same as
-Linux). Fifteen of the sixteen `Portable.*` CTest entries use small Qt Test executables, with the
+Linux). Fifteen `Portable.*` CTest entries use small Qt Test executables, with the
 same test bodies and production utility libraries as the Linux application tests, among them the three
 Compression suites with the files they read from `:/unittest/`. They require no QGCApplication,
 vehicles, or QML engine. The portable command-line parser target enables its own test hooks; the
-packaged application keeps its normal build configuration. The sixteenth,
-`Portable.QGCCompressionFuzzSmoke`, runs the [Compression fuzz harness](#compression-fuzzing) on its
-fixed inputs.
+packaged application keeps its normal build configuration. `Portable.QGCCompressionFuzzSmoke` runs the
+[Compression fuzz harness](#compression-fuzzing) on its fixed inputs. The five
+`Portable.PortableHarnessProbe.*` entries test the harness itself: each runs one function of
+`test/Portable/PortableHarnessProbe.cc`, and an entry whose function misbehaves passes on the failure the
+harness has to report for it (a log message nobody expected, an expectation that was not verified or not
+met).
 
 ```bash
 cmake -S . -B build -DQGC_BUILD_PORTABLE_TESTS=ON

@@ -9,7 +9,6 @@ class QGCArchiveExtractionTest : public PortableTest
     Q_OBJECT
 
 private slots:
-    UT_PARAMETERIZED_TEST(_testExtractFromResource);
     UT_PARAMETERIZED_TEST(_testArchiveOfManyEntries);
     UT_PARAMETERIZED_TEST(_testEncryptedArchive);
     UT_PARAMETERIZED_TEST(_testZipCompressionMethods);
@@ -25,19 +24,20 @@ private slots:
     void _testOutputPathIsResolvedByName();
     UT_PARAMETERIZED_TEST(_testFailedExtractionIsUndone);
     UT_PARAMETERIZED_TEST(_testThrowingCallbackUndoesExtraction);
-    UT_PARAMETERIZED_TEST(_testEntriesOfTheSameName);
+    void _testEntriesOfTheSameName();
     UT_PARAMETERIZED_TEST(_testExtractionNeedsRoomOnDisk);
     UT_PARAMETERIZED_TEST(_testOutputThatFailsWhileWritten);
+    void _testCleanupDoesNotFollowLinks();
     void _testEntryIsWrittenInPlace();
     UT_PARAMETERIZED_TEST(_testCancelledWhereNoDataIsCopied);
     void _testExtractArchiveToSymlinkedOutputPath();
-    UT_PARAMETERIZED_TEST(_testExtractRejectsEscapingNames);
-    UT_PARAMETERIZED_TEST(_testExtractSkipsNamesThatAreNotPortable);
+    UT_PARAMETERIZED_TEST(_testExtractSkipsEntriesForTheirNames);
     UT_PARAMETERIZED_TEST(_testExtractSkipsSpellingsThatClash);
     void _testSpellingsClashInAnotherNormalisation();
     void _testSpellingsGrowWithNewComponentsOnly();
     UT_PARAMETERIZED_TEST(_testExtractTakesBackslashForSeparator);
     void _testExtractCountsSkippedEntries();
+    void _testRefusedEntriesCountForNothing();
     UT_PARAMETERIZED_TEST(_testExtractNameThatIsNotUtf8);
     void _testExtractLeavesOutOverlongPath();
     UT_PARAMETERIZED_TEST(_testExtractLeavesOutLinks);

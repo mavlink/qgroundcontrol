@@ -2,11 +2,11 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QJsonObject>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
-#include <QtCore/QTextStream>
 #include <QtCore/QThreadPool>
 #include <QtCore/QUrl>
 #include <QtCore/QUuid>
@@ -22,26 +22,16 @@
 
 namespace {
 
-bool translationSystemLocaleIsEnglish()
-{
-    return QLocale::system().name().startsWith(QLatin1String("en"));
-}
+/// The locale of the test translation, TranslationTest_de_DE.ts. The tests translate for it whatever the locale of
+/// the machine is: for an English one nothing is translated.
+const QString translationTestLocale = QStringLiteral("de_DE");
 
 }  // namespace
 
 bool ComponentInformationTranslationTest::writeSummary(const QString& path, const QString& locale, const QString& url)
 {
-    QFile summaryFile(path);
-    if (!summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-        return false;
-    }
-    QTextStream summaryStream(&summaryFile);
-    summaryStream << "{\n";
-    summaryStream << "  \"" << locale << "\": {\n";
-    summaryStream << "    \"url\": \"" << url << "\"\n";
-    summaryStream << "  }\n";
-    summaryStream << "}\n";
-    return true;
+    const QJsonObject summary{{locale, QJsonObject{{QStringLiteral("url"), url}}}};
+    return TestFixtures::writeFile(path, QJsonDocument(summary).toJson());
 }
 
 QStringList ComponentInformationTranslationTest::translatedFiles()
@@ -73,8 +63,11 @@ void ComponentInformationTranslationTest::_basic_test()
     QTemporaryDir inputDir;
     QVERIFY(inputDir.isValid());
     const QString overTheLimit = inputDir.filePath(QStringLiteral("zeros.gz"));
-    // 1025 members of 64 KiB: 64 KiB more than the limit
-    QVERIFY(ArchiveFixtures::writeGzipOfZeros(overTheLimit, 1025));
+    const bool overLimit = compression.endsWith(QStringLiteral("over the limit"));
+    if (overLimit) {
+        // 1025 members of 64 KiB: 64 KiB more than the limit
+        QVERIFY(ArchiveFixtures::writeGzipOfZeros(overTheLimit, 1025));
+    }
     if (compression == QStringLiteral("gzip")) {
         const QString json = inputDir.filePath(QStringLiteral("TranslationTest.json.gz"));
         QVERIFY(TestFixtures::writeFile(json, TestFixtures::gzipMember(TestFixtures::readFile(translationJson))));
@@ -88,7 +81,6 @@ void ComponentInformationTranslationTest::_basic_test()
         translationTs = overTheLimit;
     }
 
-    const bool overLimit = compression.endsWith(QStringLiteral("over the limit"));
     const ComponentInformationTranslation::Translation translation =
         ComponentInformationTranslation::translateJsonUsingTS(translationJson, translationTs, outputDir.path());
     if (overLimit) {
@@ -127,51 +119,13 @@ void ComponentInformationTranslationTest::readJson(const QByteArray& bytes, QJso
     QVERIFY(!jsonDoc.isEmpty());
 }
 
-void ComponentInformationTranslationTest::_downloadAndTranslateFromSummary_test()
-{
-    // Skip test on English locales since translation is intentionally skipped
-    if (translationSystemLocaleIsEnglish()) {
-        QSKIP("Translation is skipped for English locales");
-    }
-
-    QTemporaryDir tempDir;
-    TestFixtures::LocalHttpTestServer server;
-    QVERIFY(server.listen());
-    const QString summaryPath = tempDir.filePath(QStringLiteral("summary.json"));
-    QVERIFY(writeSummary(summaryPath, QLocale::system().name(), serveTranslation(server)));
-
-    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
-    ComponentInformationTranslation translation(this, &cachedDownloader);
-
-    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
-    QVERIFY(completeSpy.isValid());
-
-    QVERIFY(translation.downloadAndTranslate(summaryPath, QStringLiteral(":/unittest/TranslationTest.json"), 3600, QStringLiteral("TEST")));
-    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::mediumMs());
-    QCOMPARE(completeSpy.count(), 1);
-
-    const QList<QVariant> args = completeSpy.first();
-    const QString translatedPath = args.at(0).toString();
-    const QString error = args.at(1).toString();
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!translatedPath.isEmpty());
-    QVERIFY(QFile::exists(translatedPath));
-
-    QFile translatedFile(translatedPath);
-    QVERIFY(translatedFile.open(QIODevice::ReadOnly | QIODevice::Text));
-    const QByteArray translatedData = translatedFile.readAll();
-    translatedFile.close();
-    QVERIFY(translatedFile.remove());
-    QVERIFY(translatedData.contains("TRANSLATED"));
-}
-
 QString ComponentInformationTranslationTest::serveTranslation(TestFixtures::LocalHttpTestServer& server)
 {
-    QFile translation(QStringLiteral(":/unittest/TranslationTest_de_DE.ts"));
-    if (!translation.open(QIODevice::ReadOnly)) {
+    const QByteArray translation = TestFixtures::readFile(QStringLiteral(":/unittest/TranslationTest_de_DE.ts"));
+    if (translation.isEmpty()) {
         return QString();
     }
-    server.installHttpResponder(translation.readAll());
+    server.installHttpResponder(translation);
     // A path of its own: the network cache of an earlier request must not answer for it
     return server.url(
         QStringLiteral("/%1/TranslationTest_de_DE.ts").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
@@ -179,51 +133,31 @@ QString ComponentInformationTranslationTest::serveTranslation(TestFixtures::Loca
 
 void ComponentInformationTranslationTest::_translationUrlMustBeHttp_test_data()
 {
-    QTest::addColumn<QString>("kind");
+    QTest::addColumn<bool>("fileUrl");
 
-    QTest::newRow("Qt resource") << QStringLiteral("resource");
-    QTest::newRow("file URL") << QStringLiteral("file URL");
-    QTest::newRow("absolute path") << QStringLiteral("absolute path");
-    QTest::newRow("relative path") << QStringLiteral("relative path");
-    QTest::newRow("other scheme") << QStringLiteral("other scheme");
+    // The other forms that are no HTTP(S) URL are those of VehicleFileFetchTest::_testUriOtherThanFtpOrHttpRefused
+    QTest::newRow("file URL") << true;
+    QTest::newRow("absolute path") << false;
 }
 
 // The summary comes from the vehicle. The translation it names is fetched over HTTP(S) only: one on this computer is
 // not read, and the metadata stays untranslated.
 void ComponentInformationTranslationTest::_translationUrlMustBeHttp_test()
 {
-    QFETCH(QString, kind);
-
-    if (translationSystemLocaleIsEnglish()) {
-        QSKIP("The summary is not read for an English locale");
-    }
+    QFETCH(bool, fileUrl);
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     // A translation that would load, were it read
     const QString localFile = tempDir.filePath(QStringLiteral("translation.ts"));
     QVERIFY(QFile::copy(QStringLiteral(":/unittest/TranslationTest_de_DE.ts"), localFile));
-    QString url = QStringLiteral("ftp://127.0.0.1/translation.ts");
-    if (kind == QStringLiteral("resource")) {
-        url = QStringLiteral(":/unittest/TranslationTest_de_DE.ts");
-    } else if (kind == QStringLiteral("file URL")) {
-        url = QUrl::fromLocalFile(localFile).toString();
-    } else if (kind == QStringLiteral("absolute path")) {
-        url = localFile;
-    }
-    // Relative to the working directory, and without "./" before it
-    QTemporaryDir relativeDirectory(QStringLiteral("translation-test-XXXXXX"));
-    if (kind == QStringLiteral("relative path")) {
-        QVERIFY(relativeDirectory.isValid());
-        url = QDir::current().relativeFilePath(relativeDirectory.filePath(QStringLiteral("translation.ts")));
-        QVERIFY(QFile::copy(localFile, url));
-        QVERIFY(!url.startsWith(QLatin1Char('.')));
-    }
     const QString summaryPath = tempDir.filePath(QStringLiteral("summary.json"));
-    QVERIFY(writeSummary(summaryPath, QLocale::system().name(), url));
+    QVERIFY(writeSummary(summaryPath, translationTestLocale,
+                         fileUrl ? QUrl::fromLocalFile(localFile).toString() : localFile));
 
     QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
+    translation._localeName = translationTestLocale;
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
     QSignalSpy downloadStartedSpy(&cachedDownloader, &QGCCachedFileDownload::urlChanged);
 
@@ -242,7 +176,7 @@ void ComponentInformationTranslationTest::_summaryWithoutTranslation_test_data()
     QTest::addColumn<QByteArray>("summary");
     QTest::addColumn<QString>("warning");
 
-    const QByteArray locale = QLocale::system().name().toUtf8();
+    const QByteArray locale = translationTestLocale.toUtf8();
     QTest::newRow("locale missing") << QByteArray(R"({"zz_ZZ":{"url":":/unittest/TranslationTest_de_DE.ts"}})")
                                     << QStringLiteral("not found in translation json");
     QTest::newRow("url missing") << QByteArray(R"({")" + locale + R"(":{"unused":"value"}})")
@@ -257,19 +191,13 @@ void ComponentInformationTranslationTest::_summaryWithoutTranslation_test()
     QFETCH(QByteArray, summary);
     QFETCH(QString, warning);
 
-    if (translationSystemLocaleIsEnglish()) {
-        QSKIP("The summary is not read for an English locale");
-    }
-
     QTemporaryDir tempDir;
     const QString summaryPath = tempDir.filePath(QStringLiteral("summary.json"));
-    QFile summaryFile(summaryPath);
-    QVERIFY(summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
-    QCOMPARE(summaryFile.write(summary), summary.size());
-    summaryFile.close();
+    QVERIFY(TestFixtures::writeFile(summaryPath, summary));
 
     QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
+    translation._localeName = translationTestLocale;
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
 
     expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg, QRegularExpression(warning));
@@ -283,26 +211,19 @@ void ComponentInformationTranslationTest::_summaryWithoutTranslation_test()
     QVERIFY(!cachedDownloader.isRunning());
 }
 
-void ComponentInformationTranslationTest::_onDownloadCompletedFailurePropagatesError_test()
+void ComponentInformationTranslationTest::_onDownloadCompletedPropagatesError_test_data()
 {
-    QTemporaryDir tempDir;
-    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
-    ComponentInformationTranslation translation(this, &cachedDownloader);
-    translation._toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
+    QTest::addColumn<bool>("downloaded");
 
-    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
-    QVERIFY(completeSpy.isValid());
-
-    translation.onDownloadCompleted(false, QString(), QStringLiteral("simulated failure"), false);
-    QCOMPARE(completeSpy.count(), 1);
-
-    const QList<QVariant> args = completeSpy.first();
-    QVERIFY(args.at(0).toString().isEmpty());
-    QCOMPARE(args.at(1).toString(), QStringLiteral("simulated failure"));
+    QTest::newRow("download failed") << false;
+    QTest::newRow("downloaded TS file missing") << true;
 }
 
-void ComponentInformationTranslationTest::_onDownloadCompletedMissingTsPropagatesError_test()
+// A translation that could not be downloaded, or that cannot be read once it is, ends the request with an error
+void ComponentInformationTranslationTest::_onDownloadCompletedPropagatesError_test()
 {
+    QFETCH(bool, downloaded);
+
     QTemporaryDir tempDir;
     QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
@@ -311,34 +232,48 @@ void ComponentInformationTranslationTest::_onDownloadCompletedMissingTsPropagate
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
     QVERIFY(completeSpy.isValid());
 
-    expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
-                     QRegularExpression("Failed reading TS file"));
-    translation.onDownloadCompleted(true, tempDir.filePath(QStringLiteral("missing.ts")), QString(), false);
-    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::mediumMs());
-    verifyExpectedLogMessage();
+    if (downloaded) {
+        // The file is read on a worker
+        expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
+                         QRegularExpression("Failed reading TS file"));
+        translation.onDownloadCompleted(true, tempDir.filePath(QStringLiteral("missing.ts")), QString(), false);
+        QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+    } else {
+        translation.onDownloadCompleted(false, QString(), QStringLiteral("simulated failure"), false);
+    }
     QCOMPARE(completeSpy.count(), 1);
 
     const QList<QVariant> args = completeSpy.first();
     QVERIFY(args.at(0).toString().isEmpty());
-    QVERIFY(!args.at(1).toString().isEmpty());
+    QCOMPARE(args.at(1).toString(),
+             downloaded ? QStringLiteral("Failed to translate json file") : QStringLiteral("simulated failure"));
+}
+
+void ComponentInformationTranslationTest::_summaryIsReadOnWorker_test_data()
+{
+    QTest::addColumn<bool>("cancelled");
+
+    QTest::newRow("read, translation downloaded") << false;
+    QTest::newRow("cancelled while it is read") << true;
 }
 
 // The summary comes from the vehicle, or from where it points to: it is read on a worker thread, and the download
-// of the translation starts once it has been
+// of the translation starts once it has been. A summary whose request was cancelled meanwhile is dropped: it starts
+// no download, which would keep the downloader from the next request.
 void ComponentInformationTranslationTest::_summaryIsReadOnWorker_test()
 {
-    if (translationSystemLocaleIsEnglish()) {
-        QSKIP("The summary is not read for an English locale");
-    }
+    QFETCH(bool, cancelled);
 
     QTemporaryDir tempDir;
     TestFixtures::LocalHttpTestServer server;
     QVERIFY(server.listen());
     const QString summaryPath = tempDir.filePath(QStringLiteral("summary.json"));
-    QVERIFY(writeSummary(summaryPath, QLocale::system().name(), serveTranslation(server)));
+    QVERIFY(writeSummary(summaryPath, translationTestLocale, serveTranslation(server)));
 
     QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
+    translation._localeName = translationTestLocale;
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
     QSignalSpy downloadStartedSpy(&cachedDownloader, &QGCCachedFileDownload::urlChanged);
 
@@ -349,11 +284,25 @@ void ComponentInformationTranslationTest::_summaryIsReadOnWorker_test()
     QCoreApplication::processEvents();
     QCOMPARE(downloadStartedSpy.count(), 0);
 
+    if (cancelled) {
+        translation.cancel();
+        blocker.release();
+        QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+        QCoreApplication::sendPostedEvents();
+        QCOMPARE(downloadStartedSpy.count(), 0);
+        QCOMPARE(completeSpy.count(), 0);
+        return;
+    }
+
     blocker.release();
     QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::mediumMs());
+    QCOMPARE(completeSpy.count(), 1);
     QCOMPARE(downloadStartedSpy.count(), 1);
     const QString translatedPath = completeSpy.first().at(0).toString();
-    QVERIFY(!translatedPath.isEmpty());
+    const QString error = completeSpy.first().at(1).toString();
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(QFile::exists(translatedPath));
+    QVERIFY(TestFixtures::readFile(translatedPath).contains("TRANSLATED"));
     QVERIFY(QFile::remove(translatedPath));
 }
 
@@ -374,14 +323,11 @@ void ComponentInformationTranslationTest::_translationOnWorkerEndsWithItsRequest
 {
     QFETCH(QString, end);
 
-    if ((end == QStringLiteral("newer request")) && translationSystemLocaleIsEnglish()) {
-        QSKIP("No request is made for an English locale");
-    }
-
     QTemporaryDir tempDir;
     QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
     QPointer<ComponentInformationTranslation> translation =
         new ComponentInformationTranslation(this, &cachedDownloader);
+    translation->_localeName = translationTestLocale;
     translation->_toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
     QSignalSpy completeSpy(translation.data(), &ComponentInformationTranslation::downloadComplete);
     const QStringList filesBefore = translatedFiles();

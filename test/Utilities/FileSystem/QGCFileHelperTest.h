@@ -43,7 +43,6 @@ private slots:
     void _testAtomicWriteCreatesParent();
     void _testAtomicWriteEmptyPath();
     void _testAtomicWriteEmptyData();
-    void _testReadCompressedFile();
 
     // Disk space utilities tests
     void _testAvailableDiskSpaceBasic();
@@ -56,7 +55,6 @@ private slots:
     void _testToLocalPathPlainPaths();
     void _testToLocalPathFileUrls();
     void _testToLocalPathQrcUrls();
-    void _testToLocalPathCompressionInterop();
     void _testIsLocalPath();
     void _testIsQtResource();
 

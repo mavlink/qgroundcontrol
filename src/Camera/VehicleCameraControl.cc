@@ -1045,7 +1045,7 @@ bool VehicleCameraControl::_loadCameraDefinitionFile(const ParsedDefinition& par
         qWarning() << "Localization entry is missing its name attribute";
     }
     if (parsed.noLocaleMatch) {
-        qWarning() << "No match for" << QLocale::system().name() << "in camera definition file";
+        qWarning() << "No match for" << _localeName << "in camera definition file";
     }
     if (parsed.document.isNull()) {
         qCCritical(VehicleCameraControlLog) << "Unable to parse camera definition file on line:" << parsed.errorLine;
@@ -2502,11 +2502,11 @@ void VehicleCameraControl::_dataReady(QByteArray data)
 void VehicleCameraControl::_parseAndLoadDefinition(const QByteArray& bytes)
 {
     //-- Find out where we are
-    QLocale locale = QLocale::system();
+    QString name = _localeName;
 #if defined(Q_OS_MACOS)
-    locale = QLocale(locale.name());
+    name = QLocale(name).name();
 #endif
-    const QString localeName = locale.name().toLower().replace("-", "_");
+    const QString localeName = name.toLower().replace("-", "_");
     qCDebug(VehicleCameraControlLog) << "Current locale:" << localeName;
 
     const auto parse = [bytes, localeName]() { return _parseDefinition(bytes, localeName); };

@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 
+#include <QtCore/QFuture>
 #include <QtCore/QPointer>
 #include <QtCore/QSemaphore>
 #include <QtCore/QThread>
@@ -157,41 +158,62 @@ void WorkerJobTest::_testDeletingJobOrContextDropsResult_data()
 {
     QTest::addColumn<bool>("deleteContext");
     QTest::addColumn<QString>("when");
+    QTest::addColumn<bool>("droppedHandler");
 
     const QString beforeStart = QStringLiteral("before start");
     const QString whileRunning = QStringLiteral("while running");
     const QString afterEnd = QStringLiteral("after end");
 
-    QTest::newRow("job deleted before the work starts") << false << beforeStart;
-    QTest::newRow("job deleted while the work runs") << false << whileRunning;
-    QTest::newRow("job deleted after the work ended, before the event") << false << afterEnd;
-    QTest::newRow("context deleted before the work starts") << true << beforeStart;
-    QTest::newRow("context deleted while the work runs") << true << whileRunning;
-    QTest::newRow("context deleted after the work ended, before the event") << true << afterEnd;
+    QTest::newRow("job deleted before the work starts") << false << beforeStart << false;
+    QTest::newRow("job deleted while the work runs") << false << whileRunning << false;
+    QTest::newRow("job deleted after the work ended, before the event") << false << afterEnd << false;
+    QTest::newRow("context deleted before the work starts") << true << beforeStart << false;
+    QTest::newRow("context deleted while the work runs") << true << whileRunning << false;
+    QTest::newRow("context deleted after the work ended, before the event") << true << afterEnd << false;
+    QTest::newRow("dropped handler, job deleted before the work starts") << false << beforeStart << true;
+    QTest::newRow("dropped handler, context deleted while the work runs") << true << whileRunning << true;
+    QTest::newRow("dropped handler, job deleted after the work ended") << false << afterEnd << true;
 }
 
 // Deleting the job, directly or with its context, before done drops the result: done is not called, and the result,
-// never copied, is destroyed once
+// never copied, is destroyed once. It goes to a dropped handler, if there is one, once and as the only instance: on
+// the worker thread when the work ends, or at once, on the thread that deletes the job, if it has ended. ended()
+// tells when the work has ended, not when the job is gone: a caller waits for it before it removes what the work reads
 void WorkerJobTest::_testDeletingJobOrContextDropsResult()
 {
     QFETCH(bool, deleteContext);
     QFETCH(QString, when);
+    QFETCH(bool, droppedHandler);
+    const bool beforeStart = (when == QStringLiteral("before start"));
+    const bool afterEnd = (when == QStringLiteral("after end"));
 
     const auto record = std::make_shared<WorkerTrackedRecord>();
     const auto probe = std::make_shared<WorkerJobProbe>();
+    const auto dropped = std::make_shared<WorkerDroppedProbe>();
     std::unique_ptr<TestFixtures::ThreadPoolBlocker> blocker;
-    if (when == QStringLiteral("before start")) {
+    if (beforeStart) {
         blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>();
         QVERIFY(blocker->isBlocking());
     }
 
     auto context = std::make_unique<QObject>();
     bool doneCalled = false;
-    const QPointer<QObject> job = QGC::runOnWorker(context.get(), trackedWork(record, probe),
-                                                   [&doneCalled](WorkerTrackedResult) { doneCalled = true; });
+    QGC::WorkerJob<WorkerTrackedResult>::Handler droppedTo;
+    if (droppedHandler) {
+        droppedTo = [record, dropped](WorkerTrackedResult) {
+            dropped->thread = QThread::currentThread();
+            dropped->instances = record->instances();
+            ++dropped->calls;
+        };
+    }
+    auto* const startedJob = QGC::runOnWorker(
+        context.get(), trackedWork(record, probe), [&doneCalled](WorkerTrackedResult) { doneCalled = true; },
+        droppedTo);
+    const QPointer<QObject> job = startedJob;
+    const QFuture<void> ended = startedJob->ended();
     if (when == QStringLiteral("while running")) {
         QVERIFY(probe->started.tryAcquire(1, TestTimeout::mediumMs()));
-    } else if (when == QStringLiteral("after end")) {
+    } else if (afterEnd) {
         probe->mayEnd.release();
         QVERIFY(waitForWorkerPool());
     }
@@ -202,6 +224,13 @@ void WorkerJobTest::_testDeletingJobOrContextDropsResult()
         delete job.data();
     }
     QVERIFY(job.isNull());
+    if (beforeStart) {
+        // Every thread is still held, so the work waits for one: the row is not one of a running work by another name
+        QVERIFY(QThreadPool::globalInstance()->activeThreadCount() >= QThreadPool::globalInstance()->maxThreadCount());
+        QVERIFY(probe->thread.load() == nullptr);
+    }
+    QCOMPARE(ended.isFinished(), afterEnd);
+    QCOMPARE(dropped->calls.load(), (droppedHandler && afterEnd) ? 1 : 0);
 
     probe->mayEnd.release();
     if (blocker) {
@@ -211,74 +240,14 @@ void WorkerJobTest::_testDeletingJobOrContextDropsResult()
     QCoreApplication::sendPostedEvents();
 
     QVERIFY(!doneCalled);
+    QVERIFY(ended.isFinished());
     QCOMPARE(record->copies.load(), 0);
     QCOMPARE(record->destroyed.load(), 1);
-}
-
-void WorkerJobTest::_testDroppedHandlerGetsTheResult_data()
-{
-    QTest::addColumn<bool>("deleteContext");
-    QTest::addColumn<QString>("when");
-    QTest::addColumn<bool>("onWorker");
-
-    QTest::newRow("job deleted before the work starts") << false << QStringLiteral("before start") << true;
-    QTest::newRow("context deleted while the work runs") << true << QStringLiteral("while running") << true;
-    QTest::newRow("job deleted after the work ended") << false << QStringLiteral("after end") << false;
-}
-
-// A dropped result goes to the dropped handler, once and as the only instance: on the worker thread when the work
-// ends, or at once, on the thread that deletes the job, if it has ended
-void WorkerJobTest::_testDroppedHandlerGetsTheResult()
-{
-    QFETCH(bool, deleteContext);
-    QFETCH(QString, when);
-    QFETCH(bool, onWorker);
-
-    const auto record = std::make_shared<WorkerTrackedRecord>();
-    const auto probe = std::make_shared<WorkerJobProbe>();
-    const auto dropped = std::make_shared<WorkerDroppedProbe>();
-    std::unique_ptr<TestFixtures::ThreadPoolBlocker> blocker;
-    if (when == QStringLiteral("before start")) {
-        blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>();
-        QVERIFY(blocker->isBlocking());
+    QCOMPARE(dropped->calls.load(), droppedHandler ? 1 : 0);
+    if (droppedHandler) {
+        QCOMPARE(dropped->thread.load(), afterEnd ? QThread::currentThread() : probe->thread.load());
+        QCOMPARE(dropped->instances.load(), 1);
     }
-
-    auto context = std::make_unique<QObject>();
-    bool doneCalled = false;
-    const QPointer<QObject> job = QGC::runOnWorker(
-        context.get(), trackedWork(record, probe), [&doneCalled](WorkerTrackedResult) { doneCalled = true; },
-        [record, dropped](WorkerTrackedResult) {
-            dropped->thread = QThread::currentThread();
-            dropped->instances = record->instances();
-            ++dropped->calls;
-        });
-    if (when == QStringLiteral("while running")) {
-        QVERIFY(probe->started.tryAcquire(1, TestTimeout::mediumMs()));
-    } else if (when == QStringLiteral("after end")) {
-        probe->mayEnd.release();
-        QVERIFY(waitForWorkerPool());
-    }
-
-    if (deleteContext) {
-        context.reset();
-    } else {
-        delete job.data();
-    }
-    QCOMPARE(dropped->calls.load(), onWorker ? 0 : 1);
-
-    probe->mayEnd.release();
-    if (blocker) {
-        blocker->release();
-    }
-    QVERIFY(waitForWorkerPool());
-    QCoreApplication::sendPostedEvents();
-
-    QVERIFY(!doneCalled);
-    QCOMPARE(dropped->calls.load(), 1);
-    QCOMPARE(dropped->thread.load(), onWorker ? probe->thread.load() : QThread::currentThread());
-    QCOMPARE(dropped->instances.load(), 1);
-    QCOMPARE(record->copies.load(), 0);
-    QCOMPARE(record->destroyed.load(), 1);
 }
 
 // done may delete the context, which the job belongs to

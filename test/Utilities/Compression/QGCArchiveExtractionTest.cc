@@ -42,27 +42,6 @@ bool isOutputAsBefore(const QString& outputDir, bool existed)
 
 }  // namespace
 
-void QGCArchiveExtractionTest::_testExtractFromResource_data()
-{
-    QTest::addColumn<QString>("resource");
-
-    QTest::newRow("ZIP") << ArchiveFixtures::zipResource;
-#ifdef QGC_ENABLE_7ZIP
-    QTest::newRow("7z") << ArchiveFixtures::sevenZipResource;
-#endif
-}
-
-void QGCArchiveExtractionTest::_testExtractFromResource()
-{
-    QFETCH(QString, resource);
-
-    QTemporaryDir tempDir;
-    const QString outputPath = tempDir.filePath("output");
-    const Compression::Outcome outcome = Compression::extractArchive(resource, outputPath);
-    QVERIFY2(outcome, qPrintable(outcome.message));
-    QCOMPARE(ArchiveFixtures::entriesBelow(outputPath), QStringList{QStringLiteral("manifest.json")});
-}
-
 void QGCArchiveExtractionTest::_testArchiveOfManyEntries_data()
 {
     QTest::addColumn<QString>("resource");
@@ -231,11 +210,15 @@ void QGCArchiveExtractionTest::_testExtractArchiveFiltered()
     // The filter sees each entry as the archive describes it, and the entries it accepts are extracted
     const QString acceptedDir = tempDir.filePath("accepted");
     QList<Compression::ArchiveEntry> asked;
-    QVERIFY(Compression::extractArchive(ArchiveFixtures::zipResource, acceptedDir,
-                                        {.filter = [&asked](const Compression::ArchiveEntry& entry) {
-                                            asked.append(entry);
-                                            return true;
-                                        }}));
+    const Compression::Outcome accepted = Compression::extractArchive(
+        ArchiveFixtures::zipResource, acceptedDir, {.filter = [&asked](const Compression::ArchiveEntry& entry) {
+            asked.append(entry);
+            return true;
+        }});
+    QVERIFY2(accepted, qPrintable(accepted.description()));
+    // A success has nothing to describe, and an archive that is not compressed as a whole no filter to name
+    QCOMPARE(accepted.description(), QString());
+    QCOMPARE(accepted.filterName, QStringLiteral("none"));
     QCOMPARE(asked.size(), 1);
     QCOMPARE(asked.constFirst().name, QStringLiteral("manifest.json"));
     QVERIFY(!asked.constFirst().isDirectory);
@@ -246,6 +229,26 @@ void QGCArchiveExtractionTest::_testExtractArchiveFiltered()
     QVERIFY(Compression::extractArchive(ArchiveFixtures::zipResource, refusedDir,
                                         {.filter = [](const Compression::ArchiveEntry&) { return false; }}));
     QCOMPARE(ArchiveFixtures::entriesBelow(refusedDir), QStringList());
+
+    // It is asked about a directory too, and is given every name with slashes, also one that the archive has with
+    // a backslash. A directory that it refuses is made all the same for an entry in it that it accepts
+    const QString archivePath = tempDir.filePath("folders.zip");
+    QVERIFY(TestFixtures::writeFile(archivePath, ArchiveFixtures::makeZip({{.name = "sets/"},
+                                                                           {.name = "sets\\inner.db", .data = "tiles"},
+                                                                           {.name = "other.txt", .data = "other"}})));
+    const QString neededDir = tempDir.filePath("needed");
+    QList<std::pair<QString, bool>> seen;
+    QVERIFY(
+        Compression::extractArchive(archivePath, neededDir, {.filter = [&seen](const Compression::ArchiveEntry& entry) {
+                                        seen.append({entry.name, entry.isDirectory});
+                                        return !entry.isDirectory && (entry.name == QLatin1String("sets/inner.db"));
+                                    }}));
+    const QList<std::pair<QString, bool>> entries{{QStringLiteral("sets/"), true},
+                                                  {QStringLiteral("sets/inner.db"), false},
+                                                  {QStringLiteral("other.txt"), false}};
+    QCOMPARE(seen, entries);
+    QCOMPARE(ArchiveFixtures::entriesBelow(neededDir),
+             (QStringList{QStringLiteral("sets"), QStringLiteral("sets/inner.db")}));
 }
 
 void QGCArchiveExtractionTest::_testProgressCallbackExtract()
@@ -339,10 +342,8 @@ void QGCArchiveExtractionTest::_testTruncatedArchive()
 
 void QGCArchiveExtractionTest::_testGzipChecksumOfArchive_data()
 {
-#ifndef QGC_ENABLE_TAR
-    QSKIP("This build does not extract TAR archives");
-#endif
-    // What the gzip stream holds after the end of the TAR archive
+    QTest::addColumn<QString>("format");
+    // What the gzip stream holds after the end of the archive
     QTest::addColumn<QByteArray>("afterArchive");
     QTest::addColumn<bool>("checked");
 
@@ -351,27 +352,39 @@ void QGCArchiveExtractionTest::_testGzipChecksumOfArchive_data()
     QRandomGenerator(0x51474343).fillRange(words.data(), words.size());
     const QByteArray noise(reinterpret_cast<const char*>(words.constData()), words.size() * qsizetype{sizeof(quint32)});
 
-    QTest::newRow("archive only") << QByteArray() << true;
-    // libarchive stops reading where the archive ends. The rest of the stream is read for its checksum
-    QTest::newRow("data after the archive") << noise << true;
-    // No more than 16 MiB of it, so that a small file cannot hide a long time of inflating behind its archive
-    QTest::newRow("more data than is checked") << (noise + QByteArray(24 * 1024 * 1024, '\0')) << false;
+    // Every build reads a ZIP archive in a gzip stream. A TAR archive is the one that is compressed so
+    QStringList formats{QStringLiteral("zip")};
+#ifdef QGC_ENABLE_TAR
+    formats.append(QStringLiteral("tar"));
+#endif
+    for (const QString& format : std::as_const(formats)) {
+        const QByteArray tag = format.toLatin1();
+        QTest::addRow("%s, archive only", tag.constData()) << format << QByteArray() << true;
+        // libarchive stops reading where the archive ends. The rest of the stream is read for its checksum
+        QTest::addRow("%s, data after the archive", tag.constData()) << format << noise << true;
+        // No more than 16 MiB of it, so that a small file cannot hide a long time of inflating behind its archive
+        QTest::addRow("%s, more data than is checked", tag.constData())
+            << format << (noise + QByteArray(24 * 1024 * 1024, '\0')) << false;
+    }
 }
 
 void QGCArchiveExtractionTest::_testGzipChecksumOfArchive()
 {
+    QFETCH(QString, format);
     QFETCH(QByteArray, afterArchive);
     QFETCH(bool, checked);
 
-    // A TAR archive that is compressed as a whole. libarchive does not compare the checksum that ends the gzip
+    // An archive that is compressed as a whole. libarchive does not compare the checksum that ends the gzip
     // stream, so the extraction does
     QTemporaryDir tempDir;
-    const QString archivePath = tempDir.filePath("files.tar.gz");
+    const QString archivePath = tempDir.filePath(QStringLiteral("files.%1.gz").arg(format));
     const QString outputDir = tempDir.filePath("output");
-    const QByteArray archive =
-        TestFixtures::gzipMember(ArchiveFixtures::makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
-                                                           {.name = "nested/second.txt", .data = "second"}}) +
-                                 afterArchive);
+    const QByteArray plainArchive = (format == "zip")
+                                        ? ArchiveFixtures::makeZip({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                                                    {.name = "nested/second.txt", .data = "second"}})
+                                        : ArchiveFixtures::makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                                                    {.name = "nested/second.txt", .data = "second"}});
+    const QByteArray archive = TestFixtures::gzipMember(plainArchive + afterArchive);
 
     QVERIFY(TestFixtures::writeFile(archivePath, archive));
     const Compression::Outcome intact = Compression::extractArchive(archivePath, outputDir);
@@ -509,18 +522,8 @@ void QGCArchiveExtractionTest::_testEmptyArchive()
 {
     QTemporaryDir tempDir;
     const QString emptyZip = tempDir.path() + "/empty.zip";
-    // A valid ZIP archive without entries: only the End of Central Directory record
-    const char emptyZipData[] = {
-        '\x50', '\x4b', '\x05', '\x06',  // End of central dir signature
-        '\x00', '\x00',                  // Number of this disk
-        '\x00', '\x00',                  // Disk where central directory starts
-        '\x00', '\x00',                  // Number of central directory records on this disk
-        '\x00', '\x00',                  // Total number of central directory records
-        '\x00', '\x00', '\x00', '\x00',  // Size of central directory
-        '\x00', '\x00', '\x00', '\x00',  // Offset of central directory
-        '\x00', '\x00'                   // Comment length
-    };
-    QVERIFY(TestFixtures::writeFile(emptyZip, QByteArray(emptyZipData, sizeof(emptyZipData))));
+    // A valid ZIP archive without entries: only the record that ends it
+    QVERIFY(TestFixtures::writeFile(emptyZip, ArchiveFixtures::makeZip({})));
     // An archive without entries is not an error: the extraction succeeds and writes nothing
     const QString outputDir = tempDir.path() + "/empty_extract";
     QVERIFY(Compression::extractArchive(emptyZip, outputDir));
@@ -542,6 +545,8 @@ void QGCArchiveExtractionTest::_testOutputDirectoryInUse_data()
         << "file in directory, by way of a missing one" << notEmpty;
     QTest::newRow("a file") << "file" << notDirectory;
     QTest::newRow("a link that leads nowhere") << "dangling link" << notDirectory;
+    // Not the working directory, which an empty path names to Qt
+    QTest::newRow("no path") << "no path" << notDirectory;
 #ifdef Q_OS_UNIX
     QTest::newRow("a directory that cannot be read")
         << "unreadable directory" << QStringLiteral(": the output directory %1 cannot be read");
@@ -562,7 +567,7 @@ void QGCArchiveExtractionTest::_testOutputDirectoryInUse()
         if (!TestFixtures::createSymbolicLink(tempDir.filePath("absent"), outputDir)) {
             QSKIP("Symbolic links are not supported in this environment");
         }
-    } else {
+    } else if (obstacle != "no path") {
         QVERIFY(QDir().mkdir(outputDir));
         if (obstacle.startsWith("file in directory")) {
             filePath = outputDir + "/there-before.txt";
@@ -589,13 +594,16 @@ void QGCArchiveExtractionTest::_testOutputDirectoryInUse()
     }
     const QStringList before = ArchiveFixtures::entriesBelow(tempDir.path());
 
-    const QString givenPath = obstacle.endsWith("missing one") ? (outputDir + "/missing/..") : outputDir;
+    QString givenPath = obstacle.endsWith("missing one") ? (outputDir + "/missing/..") : outputDir;
+    if (obstacle == "no path") {
+        givenPath.clear();
+    }
     const Compression::Outcome outcome = Compression::extractArchive(ArchiveFixtures::zipResource, givenPath);
 
     // Refused before the archive is opened, so no compression filter is known, and nothing is changed
     QCOMPARE(outcome.error, Compression::Error::IoError);
-    QCOMPARE(outcome.message,
-             QStringLiteral("Failed to extract archive: ") + ArchiveFixtures::zipResource + reason.arg(outputDir));
+    QCOMPARE(outcome.message, QStringLiteral("Failed to extract archive: ") + ArchiveFixtures::zipResource +
+                                  reason.arg((obstacle == "no path") ? QString() : outputDir));
     QVERIFY(outcome.filterName.isEmpty());
     QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), before);
     if (!filePath.isEmpty()) {
@@ -628,8 +636,9 @@ void QGCArchiveExtractionTest::_testOutputPathIsResolvedByName()
 
 void QGCArchiveExtractionTest::_testFailedExtractionIsUndone_data()
 {
-    QTest::addColumn<bool>("declaredSizes");   // Whether the archive declares the size of an entry before its data
-    QTest::addColumn<QString>("failure");      // What ends the extraction: the size "limit", a "cancel", or "damage"
+    QTest::addColumn<bool>("declaredSizes");  // Whether the archive declares the size of an entry before its data
+    // What ends the extraction: the size "limit", a "cancel", "damage", or an entry whose size is "understated"
+    QTest::addColumn<QString>("failure");
     QTest::addColumn<bool>("existingOutput");  // Whether the output directory exists, empty, before the extraction
 
     for (const bool existingOutput : {false, true}) {
@@ -637,6 +646,8 @@ void QGCArchiveExtractionTest::_testFailedExtractionIsUndone_data()
         QTest::addRow("limit, %s", output) << true << "limit" << existingOutput;
         QTest::addRow("cancel, %s", output) << true << "cancel" << existingOutput;
         QTest::addRow("damage, %s", output) << true << "damage" << existingOutput;
+        // An entry that holds more than it declares, so that the size it declares fits in any limit
+        QTest::addRow("size understated, %s", output) << true << "understated" << existingOutput;
         // The limit applies to what is written, whether or not the archive declares the sizes
         QTest::addRow("limit, sizes undeclared, %s", output) << false << "limit" << existingOutput;
     }
@@ -662,7 +673,10 @@ void QGCArchiveExtractionTest::_testFailedExtractionIsUndone()
         const QByteArray zip =
             ArchiveFixtures::makeZip({{.name = "empty/"},
                                       {.name = "first.txt", .data = QByteArray(600, 'a'), .deflated = false},
-                                      {.name = "nested/second.txt", .data = QByteArray(600, 'b'), .deflated = false},
+                                      {.name = "nested/second.txt",
+                                       .data = QByteArray(600, 'b'),
+                                       .deflated = false,
+                                       .declaredSize = (failure == "understated") ? 10 : -1},
                                       {.name = "third.txt", .data = QByteArray(600, 'c'), .deflated = false}});
         // Cut 100 bytes into the data of the second file
         QVERIFY(
@@ -677,7 +691,8 @@ void QGCArchiveExtractionTest::_testFailedExtractionIsUndone()
                                              false)));
     }
 
-    // In the archive that declares the sizes, the second file is the one that does not fit, the one that is cut, and
+    // In the archive that declares the sizes, the second file is the one that does not fit, the one that is cut, the
+    // one that holds more than the ten bytes it declares, which libarchive refuses before it gives any of them, and
     // the one at which the extraction is cancelled: the callback is called at each of the first three entries and
     // after the data of the first file, so the fourth call cancels
     int progressCalls = 0;
@@ -699,7 +714,7 @@ void QGCArchiveExtractionTest::_testFailedExtractionIsUndone()
         QCOMPARE(progressCalls, 4);
     }
     QCOMPARE(outcome.error, expected);
-    if (failure == "damage") {
+    if ((failure == "damage") || (failure == "understated")) {
         QVERIFY2(outcome.detail.startsWith("Failed to read data:"), qPrintable(outcome.detail));
     }
     // What the extraction wrote before it failed is removed: the output directory if the extraction created it,
@@ -761,24 +776,11 @@ void QGCArchiveExtractionTest::_testThrowingCallbackUndoesExtraction()
     QVERIFY(isOutputAsBefore(outputDir, existingOutput));
 }
 
-void QGCArchiveExtractionTest::_testEntriesOfTheSameName_data()
-{
-    QTest::addColumn<bool>("existingOutput");  // Whether the output directory exists, empty, before the extraction
-
-    QTest::newRow("new directory") << false;
-    QTest::newRow("empty directory") << true;
-}
-
 void QGCArchiveExtractionTest::_testEntriesOfTheSameName()
 {
-    QFETCH(bool, existingOutput);
-
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("names.zip");
     const QString outputDir = tempDir.filePath("output");
-    if (existingOutput) {
-        QVERIFY(QDir().mkdir(outputDir));
-    }
     QVERIFY(
         TestFixtures::writeFile(archivePath, ArchiveFixtures::makeZip({{.name = "first.txt", .data = "earlier entry"},
                                                                        {.name = "nested/second.txt", .data = "second"},
@@ -913,6 +915,44 @@ void QGCArchiveExtractionTest::_testOutputThatFailsWhileWritten()
     QVERIFY(isOutputAsBefore(outputDir, existingOutput));
 }
 
+// An output directory that was there is emptied after a failure. A link in it, which the extraction never makes, is
+// removed as a link: what it leads to is not the extraction's to remove
+void QGCArchiveExtractionTest::_testCleanupDoesNotFollowLinks()
+{
+    QTemporaryDir tempDir;
+    const QString outputDir = tempDir.filePath("output");
+    const QString linkPath = outputDir + QStringLiteral("/link");
+    const QString besidePath = tempDir.filePath("beside");
+    const QString keptPath = besidePath + QStringLiteral("/kept.txt");
+    QVERIFY(QDir().mkdir(outputDir));
+    QVERIFY(QDir().mkdir(besidePath));
+    QVERIFY(TestFixtures::writeFile(keptPath, "kept"));
+    // QTemporaryDir cannot remove a link to a directory on Windows
+    const auto removeLink = qScopeGuard([&linkPath]() {
+        std::error_code error;
+        std::filesystem::remove(QFileInfo(linkPath).filesystemAbsoluteFilePath(), error);
+    });
+
+    // The link appears in the output directory once the extraction has found it empty, and then the extraction
+    // is cancelled
+    bool linked = false;
+    const Compression::Outcome outcome =
+        Compression::extractArchive(ArchiveFixtures::zipResource, outputDir, {.progress = [&](qint64, qint64) {
+                                        linked = TestFixtures::createSymbolicLink(besidePath, linkPath);
+                                        return false;
+                                    }});
+    if (!linked) {
+        QSKIP("Directory symlinks are not supported in this environment");
+    }
+    QCOMPARE(outcome.error, Compression::Error::Cancelled);
+
+    QCOMPARE(TestFixtures::readFile(keptPath), QByteArray("kept"));
+#ifndef Q_OS_WIN
+    // Windows removes a link to a directory as a directory, which QFile::remove() does not do
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir), QStringList());
+#endif
+}
+
 void QGCArchiveExtractionTest::_testEntryIsWrittenInPlace()
 {
     QTemporaryDir tempDir;
@@ -997,112 +1037,103 @@ void QGCArchiveExtractionTest::_testExtractArchiveToSymlinkedOutputPath()
     QVERIFY(QFile::exists(symlinkOutputDir + "/manifest.json"));
 }
 
-void QGCArchiveExtractionTest::_testExtractRejectsEscapingNames_data()
-{
-    QTest::addColumn<QString>("name");
-    QTest::addColumn<QString>("warning");
-
-    QTest::newRow("above the output directory") << "../escape.txt" << "path traversal attempt.*escape";
-    // A file that would replace the output directory
-    QTest::newRow("the output directory") << "." << "names the output directory";
-}
-
-void QGCArchiveExtractionTest::_testExtractRejectsEscapingNames()
-{
-    QFETCH(QString, name);
-    QFETCH(QString, warning);
-
-    QTemporaryDir tempDir;
-    const QString outputDir = tempDir.filePath("output");
-    QString absolutePath = tempDir.filePath("absolute.txt");
-#ifdef Q_OS_WIN
-    // Without its drive letter: Windows allows no colon in a file name
-    absolutePath = absolutePath.mid(2);
-#endif
-    const QString archivePath = tempDir.filePath("hostile.zip");
-    QVERIFY(TestFixtures::writeFile(
-        archivePath, ArchiveFixtures::makeZip({{.name = name.toLatin1(), .data = "escaped"},
-                                               {.name = QFile::encodeName(absolutePath), .data = "absolute"},
-                                               {.name = "good.txt", .data = "good"}})));
-
-    // The entry is skipped, and the extraction continues
-    expectLogMessage("Utilities.LibArchive", QtWarningMsg, QRegularExpression(warning));
-    QVERIFY(Compression::extractArchive(archivePath, outputDir));
-    verifyExpectedLogMessage();
-
-    QVERIFY(!QFile::exists(tempDir.filePath("escape.txt")));
-    QVERIFY(!QFile::exists(absolutePath));
-    const QStringList archiveAndOutput{QStringLiteral("hostile.zip"), QStringLiteral("output")};
-    QCOMPARE(QDir(tempDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
-             archiveAndOutput);
-    QVERIFY(QFileInfo(outputDir).isDir());
-    QVERIFY(QFile::exists(outputDir + "/good.txt"));
-    // The entry with an absolute name is extracted below the output directory
-    QVERIFY(QFile::exists(outputDir + absolutePath));
-}
-
-void QGCArchiveExtractionTest::_testExtractSkipsNamesThatAreNotPortable_data()
+void QGCArchiveExtractionTest::_testExtractSkipsEntriesForTheirNames_data()
 {
     QTest::addColumn<QByteArray>("name");
-    // What the warning says is in the name, or empty for a name that is extracted
-    QTest::addColumn<QString>("reason");
+    // The warning of an entry that is skipped, or empty for one that is written
+    QTest::addColumn<QString>("warning");
+    // What an entry that is written adds to the output directory
+    QTest::addColumn<QStringList>("written");
 
-    // One name of each issue: QGCFileHelperTest checks every case of the rule. Here the extraction applies it to each
-    // part of a name
-    const QString device = QStringLiteral("a device name of Windows");
-    const QString character = QStringLiteral("a character that Windows does not allow");
-    const QString ending = QStringLiteral("a part that ends with a dot or a space");
-    QTest::newRow("serial port, with the extension of a tile set") << QByteArray("COM1.db") << device;
-    QTest::newRow("device as a directory") << QByteArray("prn/inner.txt") << device;
-    QTest::newRow("alternate data stream") << QByteArray("file.txt:stream") << character;
-    QTest::newRow("trailing dot") << QByteArray("file.") << ending;
-    QTest::newRow("three dots") << QByteArray("dir/.../file.txt") << ending;
+    // Containment: nothing is written outside the output directory, and nothing takes its place
+    QTest::newRow("containment: above the output directory")
+        << QByteArray("../escape.txt") << "Skipping path traversal attempt: ../escape.txt" << QStringList();
+    QTest::newRow("containment: a file named as the output directory")
+        << QByteArray(".") << "Skipping entry that names the output directory: ." << QStringList();
+    // The directory of that name is the output directory, which is there: what `tar -C directory .` starts an
+    // archive with
+    QTest::newRow("containment: a directory named as the output directory")
+        << QByteArray("./") << QString() << QStringList();
+    // An absolute name is taken below the output directory. This one is a path in the temporary directory, where an
+    // extraction that took it as it is would write. Without its drive letter: Windows allows no colon in a name
+    QString absoluteName = QDir::tempPath() + QStringLiteral("/qgc-absolute-entry.txt");
+#ifdef Q_OS_WIN
+    absoluteName = absoluteName.mid(2);
+#endif
+    QStringList absoluteParts;
+    for (qsizetype end = absoluteName.indexOf(QLatin1Char('/'), 1); end >= 0;
+         end = absoluteName.indexOf(QLatin1Char('/'), end + 1)) {
+        absoluteParts.append(absoluteName.sliced(1, end - 1));
+    }
+    absoluteParts.append(absoluteName.sliced(1));
+    QTest::newRow("containment: an absolute name") << absoluteName.toUtf8() << QString() << absoluteParts;
+
+    // Portability: one name of each issue. QGCFileHelperTest checks every case of the rule. Here the extraction
+    // applies it to each part of a name
+    const auto skipped = [](const char* tag, const QByteArray& name, const char* reason) {
+        QTest::addRow("portability: %s", tag)
+            << name << QStringLiteral("Skipping entry whose name has %1:").arg(QLatin1String(reason)) << QStringList();
+    };
+    const char* const device = "a device name of Windows";
+    const char* const ending = "a part that ends with a dot or a space";
+    skipped("serial port, with the extension of a tile set", "COM1.db", device);
+    skipped("device as a directory", "prn/inner.txt", device);
+    skipped("alternate data stream", "file.txt:stream", "a character that Windows does not allow");
+    skipped("trailing dot", "file.", ending);
+    skipped("three dots", "dir/.../file.txt", ending);
     // Longer than any system takes, also as a path below the output directory, but each part within the limit
     QByteArray overlong;
     while (overlong.size() <= 4096) {
         overlong += QByteArray(100, 'd') + '/';
     }
-    QTest::newRow("name of more than 4096 bytes") << (overlong + "file.txt") << QStringLiteral("more than 4096 bytes");
-    QTest::newRow("part of 256 bytes") << QByteArray(256, 'a') << QStringLiteral("a part longer than 255 bytes");
+    skipped("name of more than 4096 bytes", overlong + "file.txt", "more than 4096 bytes");
+    skipped("part of 256 bytes", QByteArray(256, 'a'), "a part longer than 255 bytes");
 
     // Names that every system writes as they are, which Windows and macOS check in the portable suite
-    QTest::newRow("device name inside a word") << QByteArray("console.txt") << QString();
-    QTest::newRow("serial port of two digits") << QByteArray("COM10") << QString();
-    QTest::newRow("hidden file") << QByteArray(".hidden") << QString();
-    QTest::newRow("delete character") << QByteArray("del\x7F.txt") << QString();
-    QTest::newRow("part of 255 bytes in UTF-8") << QString(85, QChar(0x65E5)).toUtf8() << QString();
+    const auto written = [](const char* tag, const QByteArray& name) {
+        QTest::addRow("portability: %s", tag) << name << QString() << QStringList{QString::fromUtf8(name)};
+    };
+    written("device name inside a word", "console.txt");
+    written("serial port of two digits", "COM10");
+    written("hidden file", ".hidden");
+    written("delete character", "del\x7F.txt");
+    written("part of 255 bytes in UTF-8", QString(85, QChar(0x65E5)).toUtf8());
 }
 
-void QGCArchiveExtractionTest::_testExtractSkipsNamesThatAreNotPortable()
+void QGCArchiveExtractionTest::_testExtractSkipsEntriesForTheirNames()
 {
     QFETCH(QByteArray, name);
-    QFETCH(QString, reason);
+    QFETCH(QString, warning);
+    QFETCH(QStringList, written);
 
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("names.zip");
     const QString outputDir = tempDir.filePath("output");
-    QVERIFY(TestFixtures::writeFile(archivePath, ArchiveFixtures::makeZip({{.name = name, .data = "entry"},
-                                                                           {.name = "good.txt", .data = "good"}})));
+    const QByteArray data = name.endsWith('/') ? QByteArray() : QByteArray("entry");
+    QVERIFY(TestFixtures::writeFile(
+        archivePath, ArchiveFixtures::makeZip({{.name = name, .data = data}, {.name = "good.txt", .data = "good"}})));
 
-    if (!reason.isEmpty()) {
-        expectLogMessage(
-            "Utilities.LibArchive", QtWarningMsg,
-            QRegularExpression(
-                QStringLiteral("Skipping entry whose name has %1:").arg(QRegularExpression::escape(reason))));
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.LibArchive", QtWarningMsg, QRegularExpression(QRegularExpression::escape(warning)));
     }
     const Compression::Outcome outcome = Compression::extractArchive(archivePath, outputDir);
     QVERIFY2(outcome, qPrintable(outcome.description()));
-    if (!reason.isEmpty()) {
+    if (!warning.isEmpty()) {
         verifyExpectedLogMessage();
     }
 
-    // The same on every system: the entry is skipped, and the extraction goes on
-    QStringList extracted{QStringLiteral("good.txt")};
-    if (reason.isEmpty()) {
-        extracted.append(QString::fromUtf8(name));
-        extracted.sort();
-    }
+    // The same on every system: the entry is skipped and counted, or written, and the extraction goes on
+    QCOMPARE(outcome.skippedEntries, warning.isEmpty() ? 0 : 1);
+    QStringList extracted = written;
+    extracted.append(QStringLiteral("good.txt"));
+    extracted.sort();
     QCOMPARE(ArchiveFixtures::entriesBelow(outputDir), extracted);
+    // Nothing appears beside the output directory, nor where an absolute name says
+    const QStringList archiveAndOutput{QStringLiteral("names.zip"), QStringLiteral("output")};
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
+             archiveAndOutput);
+    const QString givenName = QString::fromUtf8(name);
+    QVERIFY(!QDir::isAbsolutePath(givenName) || !QFileInfo::exists(givenName));
 }
 
 void QGCArchiveExtractionTest::_testExtractSkipsSpellingsThatClash_data()
@@ -1301,6 +1332,28 @@ void QGCArchiveExtractionTest::_testExtractCountsSkippedEntries()
     // An entry the filter refuses is not skipped for what it is
     QCOMPARE(outcome.skippedEntries, 4);
     QCOMPARE(ArchiveFixtures::entriesBelow(outputDir), QStringList{QStringLiteral("good.txt")});
+}
+
+// The filter is asked before anything else is done with an entry: one that it refuses is not written, so it takes
+// nothing of the size limit and no later entry can clash with its spelling
+void QGCArchiveExtractionTest::_testRefusedEntriesCountForNothing()
+{
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("refused.zip");
+    const QString outputDir = tempDir.filePath("output");
+    QVERIFY(TestFixtures::writeFile(
+        archivePath,
+        ArchiveFixtures::makeZip({{.name = "Data/large.bin", .data = QByteArray(64 * 1024, 'l'), .deflated = false},
+                                  {.name = "data/small.txt", .data = "small"}})));
+
+    const Compression::Outcome outcome = Compression::extractArchive(
+        archivePath, outputDir, {.maxBytes = 1000, .filter = [](const Compression::ArchiveEntry& entry) {
+                                     return entry.name == QLatin1String("data/small.txt");
+                                 }});
+    QVERIFY2(outcome, qPrintable(outcome.description()));
+    QCOMPARE(outcome.skippedEntries, 0);
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir),
+             (QStringList{QStringLiteral("data"), QStringLiteral("data/small.txt")}));
 }
 
 void QGCArchiveExtractionTest::_testExtractNameThatIsNotUtf8_data()

@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <QtCore/QLocale>
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 
@@ -319,6 +320,8 @@ protected:
     QString _cacheFileToken;  ///< sanitised "<vendor>_<model>_<hash>_<NNN>", no extension
     /// Largest size of the camera definition, as downloaded and decompressed
     qint64 _maxDefinitionBytes = VehicleFileFetch::kMaxSmallFileBytes;
+    /// Name of the locale whose strings a camera definition is loaded with, as QLocale::name() gives it
+    QString _localeName = QLocale::system().name();
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;

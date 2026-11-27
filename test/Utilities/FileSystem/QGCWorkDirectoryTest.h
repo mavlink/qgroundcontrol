@@ -9,4 +9,7 @@ class QGCWorkDirectoryTest : public UnitTest
 private slots:
     void _testLifetime();
     void _testRemoveStale();
+    void _testRemoveStaleLeavesLinks();
+    void _testParentLocked();
+    void _testParentMissing();
 };

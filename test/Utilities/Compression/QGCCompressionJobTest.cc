@@ -1,10 +1,12 @@
 #include "QGCCompressionJobTest.h"
 
+#include <atomic>
 #include <memory>
 #include <stdexcept>
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
+#include <QtCore/QSemaphore>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QThread>
 #include <QtCore/QThreadPool>
@@ -20,6 +22,15 @@ namespace {
 
 /// Limit of what the decompression jobs of these tests write, which is a few KiB
 constexpr qint64 kCompressionJobTestMaxBytes = 1024 * 1024;
+
+/// What _testDeletedWhileRunning shares with the worker, which may outlive the test function if the test fails
+struct QGCCompressionJobTestHeldWorker
+{
+    QSemaphore held;     ///< Released by the worker once it is in the callback
+    QSemaphore proceed;  ///< Lets the worker leave the callback
+    std::atomic_int calls{0};
+    std::atomic_bool inCallback{false};
+};
 
 }  // namespace
 
@@ -96,6 +107,9 @@ void QGCCompressionJobTest::_testExtraction()
         QVERIFY(!progressSpy.isEmpty());
         QCOMPARE(progressSpy.last().first().toReal(), 1.0);
         QCOMPARE(progressAtCallback, 1.0);
+    } else {
+        // Only an extraction that succeeds is reported as done
+        QVERIFY(progressSpy.isEmpty() || (progressSpy.last().first().toReal() < 1.0));
     }
 }
 
@@ -279,6 +293,78 @@ void QGCCompressionJobTest::_testCancelledWhileRunning()
     QVERIFY(firstProgress < 1.0);
     QVERIFY(!calledBack);
     QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{inputName});
+}
+
+// The destructor of a job returns only once its worker has stopped: no callback of the caller is left running with
+// what it captured, and what the operation had written is removed before the caller removes more
+void QGCCompressionJobTest::_testDeletedWhileRunning()
+{
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(QStringLiteral("two.zip"));
+    const QString outputDir = tempDir.filePath(QStringLiteral("output"));
+    QVERIFY(TestFixtures::writeFile(archivePath,
+                                    ArchiveFixtures::makeZip({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                                              {.name = "second.txt", .data = "second"}})));
+
+    // The progress callback of the caller holds the worker at its second call, which follows the data of the first
+    // file, until the context is being destroyed. Then it cancels the extraction, whose output the worker removes
+    const auto worker = std::make_shared<QGCCompressionJobTestHeldWorker>();
+    auto context = std::make_unique<QObject>();
+    connect(context.get(), &QObject::destroyed, this, [worker]() { worker->proceed.release(); });
+    bool calledBack = false;
+    const QPointer<CompressionJob> job =
+        CompressionJob::startExtraction(context.get(), archivePath, outputDir,
+                                        {.progress =
+                                             [worker](qint64, qint64) {
+                                                 if (++worker->calls != 2) {
+                                                     return true;
+                                                 }
+                                                 worker->inCallback = true;
+                                                 worker->held.release();
+                                                 worker->proceed.acquire();
+                                                 worker->inCallback = false;
+                                                 return false;
+                                             }},
+                                        [&calledBack](const Compression::Outcome&) { calledBack = true; });
+    QVERIFY(worker->held.tryAcquire(1, TestTimeout::mediumMs()));
+    QVERIFY(QFileInfo::exists(outputDir + QStringLiteral("/first.txt")));
+
+    context.reset();
+
+    // No event is handled in between: the destructor waited for the worker
+    QVERIFY(job.isNull());
+    QVERIFY(!worker->inCallback);
+    QVERIFY(!QFileInfo::exists(outputDir));
+    QVERIFY(!calledBack);
+}
+
+// The callback may delete the job through its context. The job has let go of the callback by then: destroyed with
+// the job, the callback would lose what it captured while it runs
+void QGCCompressionJobTest::_testCallbackDeletesContext()
+{
+    QTemporaryDir tempDir;
+    auto context = std::make_unique<QObject>();
+    // Held by the test and by the callback
+    const auto captured = std::make_shared<int>(0);
+    long holdersAfterDelete = 0;
+    int calls = 0;
+    const QPointer<CompressionJob> job = CompressionJob::startExtraction(
+        context.get(), ArchiveFixtures::zipResource, tempDir.filePath(QStringLiteral("output")), {},
+        [captured, &context, &holdersAfterDelete, &calls](const Compression::Outcome&) {
+            // Read first, for the case that the callback is destroyed while it runs
+            std::unique_ptr<QObject>& owner = context;
+            long& holders = holdersAfterDelete;
+            int& count = calls;
+            const std::weak_ptr<int> watched = captured;
+
+            owner.reset();
+            holders = watched.use_count();
+            ++count;
+        });
+
+    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
+    QCOMPARE(calls, 1);
+    QCOMPARE(holdersAfterDelete, 2L);
 }
 
 void QGCCompressionJobTest::_testEndedWithoutCallback_data()

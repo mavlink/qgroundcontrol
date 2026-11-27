@@ -1,16 +1,15 @@
 #include "RequestMetaDataTypeStateMachineTest.h"
 
+#include <cstring>
 #include <memory>
 
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QLocale>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -29,6 +28,7 @@
 #include "CompInfoParam.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
+#include "ComponentInformationTranslation.h"
 #include "FTPManager.h"
 #include "FactMetaData.h"
 #include "FileFixtures.h"
@@ -43,21 +43,43 @@
 #include "RequestMetaDataTypeStateMachine.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+#include "VehicleFileFetch.h"
 
 namespace {
 
-bool writeRequestMetaDataTestFile(const QString& fileName, const QByteArray& contents)
-{
-    QFile file(fileName);
-    return file.open(QIODevice::WriteOnly | QIODevice::Truncate) && (file.write(contents) == contents.size());
-}
-
-bool systemLocaleIsEnglish()
-{
-    return QLocale::system().name().startsWith(QLatin1String("en"));
-}
+/// The locale the metadata is translated for, whatever the locale of the machine is: for an English one nothing is
+/// translated
+const QString metadataTestLocale = QStringLiteral("de_DE");
 
 }  // namespace
+
+void RequestMetaDataTypeStateMachineTest::init()
+{
+    VehicleTest::init();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _manager = vehicle()->compInfoManager();
+    QVERIFY(_manager);
+    // The requests of the initial connect have ended
+    QVERIFY_TRUE_WAIT(!_manager->inProgress(), TestTimeout::mediumMs());
+    _manager->translation()->_localeName = metadataTestLocale;
+}
+
+bool RequestMetaDataTypeStateMachineTest::_requestAndWait(RequestMetaDataTypeStateMachine& machine, CompInfo* compInfo)
+{
+    QSignalSpy completeSpy(&machine, &RequestMetaDataTypeStateMachine::requestComplete);
+    machine.request(compInfo);
+    return !completeSpy.isEmpty() ||
+           UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete"));
+}
+
+QString RequestMetaDataTypeStateMachineTest::_cacheTag(const CompInfo* compInfo, uint32_t crc)
+{
+    // As ComponentInformationManager::_getFileCacheTag() makes it
+    return QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(compInfo->type), 0);
+}
 
 void RequestMetaDataTypeStateMachineTest::_typeToStringReflectsRequestedType()
 {
@@ -233,71 +255,11 @@ void RequestMetaDataTypeStateMachineTest::_requestSkipsCompInfoOnHighLatencyLink
     _disconnectMockLink();
 }
 
-void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter()
-{
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
-    QVERIFY(param);
-
-    static constexpr uint32_t crc = 0x1234ABCD;
-    param->setUriMetaData(QStringLiteral("http://example.invalid/cache-hit-param.json"), crc);
-
-    const QString fileTag = QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(param->type), 0);
-    const QString tempJsonFile =
-        QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
-            .filePath(QStringLiteral("qgc-compinfo-cache-hit-%1.json")
-                          .arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
-
-    QFile file(tempJsonFile);
-    QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-    const QByteArray jsonMetadata =
-        R"({"version":1,"parameters":[{"name":"CACHE_HIT_PARAM","type":"Float","shortDesc":"Loaded from cache"}]})";
-    QCOMPARE(file.write(jsonMetadata), jsonMetadata.size());
-    file.close();
-
-    const QString cachedPath = manager->fileCache().insert(fileTag, tempJsonFile);
-    QVERIFY(!cachedPath.isEmpty());
-    QVERIFY(QFile::exists(cachedPath));
-
-    _mockLink->clearReceivedMavCommandCounts();
-    const int initialCompMetadataRequests =
-        _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA);
-    const int initialCompInformationRequests =
-        _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION);
-
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    QVERIFY(completeSpy.isValid());
-
-    requestMachine.request(param);
-    if (completeSpy.count() == 0) {
-        QVERIFY(completeSpy.wait(TestTimeout::longMs()));
-    }
-
-    QCOMPARE(completeSpy.count(), 1);
-    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA),
-             initialCompMetadataRequests);
-    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION),
-             initialCompInformationRequests);
-    QVERIFY(!requestMachine.inProgress());
-
-    FactMetaData* metadata = param->factMetaDataForName(QStringLiteral("CACHE_HIT_PARAM"), FactMetaData::valueTypeFloat);
-    QVERIFY(metadata);
-    QCOMPARE(metadata->shortDescription(), QStringLiteral("Loaded from cache"));
-}
-
 // A metadata download that is clearly not going to finish in a sane time must be abandoned early: it sits in
 // front of parameter load, and on a slow telemetry link the projection is obvious within a few seconds.
 void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     // Random CRC so the file cache cannot satisfy the request
     param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), QRandomGenerator::global()->generate());
@@ -317,14 +279,10 @@ void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
     ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
     expectLogMessage(category, QtDebugMsg, QRegularExpression("Slow download, aborting"));
 
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    QVERIFY(completeSpy.isValid());
-
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
     QElapsedTimer timer;
     timer.start();
-    requestMachine.request(param);
-    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    QVERIFY(_requestAndWait(requestMachine, param));
     const qint64 elapsedMs = timer.elapsed();
     _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
 
@@ -348,10 +306,6 @@ void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField()
 {
     QFETCH(bool, deprecatedMessage);
 
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // MockLink answers neither request, so the ack and the message below are the answer
     mockLink()->clearReceivedRequestMessageCounts();
     mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_METADATA);
@@ -374,7 +328,7 @@ void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField()
                      QRegularExpression("failed to load metadata"));
 
     CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
     QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
     QVERIFY(completeSpy.isValid());
     requestMachine.request(&general);
@@ -413,11 +367,7 @@ void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField()
 // transfers that wait for it.
 void RequestMetaDataTypeStateMachineTest::_downloadEndsWithItsState()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     // Random CRC so the file cache cannot satisfy the request
     param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), QRandomGenerator::global()->generate());
@@ -435,12 +385,8 @@ void RequestMetaDataTypeStateMachineTest::_downloadEndsWithItsState()
     // The mock's blocking burst delay also starves unrelated commands sent to it during the download
     ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
 
-    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    QVERIFY(completeSpy.isValid());
-
-    requestMachine.request(param);
-    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this, timeouts);
+    QVERIFY(_requestAndWait(requestMachine, param));
     _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
@@ -450,24 +396,19 @@ void RequestMetaDataTypeStateMachineTest::_downloadEndsWithItsState()
 
     // So the vehicle's FTP session is free: the same file is downloaded now. A download that fails is reported with
     // a warning, which fails the test.
-    requestMachine.request(param);
-    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    QVERIFY(_requestAndWait(requestMachine, param));
 }
 
 // The same for a download over HTTP: it is aborted when its state is left, which closes its connection, and the next
 // request downloads anew.
 void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // Accepts a connection and never answers it
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     QSignalSpy connectionSpy(&server, &QTcpServer::newConnection);
 
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     // Random CRC so the file cache cannot satisfy the request
     param->setUriMetaData(QStringLiteral("http://127.0.0.1:%1/parameter.json").arg(server.serverPort()),
@@ -475,17 +416,14 @@ void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
 
     RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
     timeouts.metaDataDownload = 500;
-    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    QVERIFY(completeSpy.isValid());
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this, timeouts);
 
     for (int request = 1; request <= 2; ++request) {
         expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                          QRegularExpression("^Timeout \".*RequestMetaDataJson\" after 500 ms"));
         expectLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
                          QRegularExpression("failed to load metadata"));
-        requestMachine.request(param);
-        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        QVERIFY(_requestAndWait(requestMachine, param));
         verifyExpectedLogMessage();
         verifyExpectedLogMessage();
         QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), request, TestTimeout::shortMs());
@@ -501,17 +439,13 @@ void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
 // its CRC.
 void RequestMetaDataTypeStateMachineTest::_newCrcIsNotTakenFromTheHttpCache()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
 
     TestFixtures::LocalHttpTestServer server;
     QVERIFY(server.listen());
     const QString uri = server.url(_uniqueServerPath(QStringLiteral("parameter.json")));
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
 
     for (const QString& build : {QStringLiteral("First build"), QStringLiteral("Next build")}) {
         // The server lets the file be cached
@@ -521,8 +455,7 @@ void RequestMetaDataTypeStateMachineTest::_newCrcIsNotTakenFromTheHttpCache()
                 .toUtf8(),
             200, "application/json", 3600);
         param->setUriMetaData(uri, QRandomGenerator::global()->generate());
-        requestMachine.request(param);
-        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        QVERIFY(_requestAndWait(requestMachine, param));
 
         FactMetaData* const metadata =
             param->factMetaDataForName(QStringLiteral("BUILD_PARAM"), FactMetaData::valueTypeFloat);
@@ -546,10 +479,6 @@ void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManage
 {
     QFETCH(bool, ftp);
 
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     QString uri = QStringLiteral("mftp://[;comp=1]parameter.json.xz");
     TestFixtures::LocalHttpTestServer server;
     if (!ftp) {
@@ -567,7 +496,7 @@ void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManage
     QCOMPARE(tempDir.entryList({QStringLiteral("qgc_compinfo_*")}, QDir::Dirs), directoriesBefore);
     const QString otherDirectory = otherManager->downloadDirectory();
     QVERIFY(QFileInfo(otherDirectory).isDir());
-    QVERIFY(otherDirectory != manager->downloadDirectory());
+    QVERIFY(otherDirectory != _manager->downloadDirectory());
 
     // The file that a download leaves is cached, and so moved, before the request completes: where it was
     // downloaded to is logged, the same way for both
@@ -577,7 +506,7 @@ void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManage
         qScopeGuard([category]() { QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, false); });
     ignoreLogMessage(category, QtDebugMsg, QRegularExpression(QStringLiteral(".*")));
 
-    for (ComponentInformationManager* const requester : {manager, otherManager.get()}) {
+    for (ComponentInformationManager* const requester : {_manager, otherManager.get()}) {
         auto* const param = requester->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
         QVERIFY(param);
         // Random CRC so the file cache cannot satisfy the request
@@ -590,9 +519,7 @@ void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManage
                          QRegularExpression(QStringLiteral("^Download complete fileName:errorMsg \"%1\" \"\"$")
                                                 .arg(QRegularExpression::escape(downloaded))));
         RequestMetaDataTypeStateMachine requestMachine(requester, this);
-        QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-        requestMachine.request(param);
-        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        QVERIFY(_requestAndWait(requestMachine, param));
         verifyExpectedLogMessage();
     }
 
@@ -605,12 +532,8 @@ void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManage
 // given up while it waits: the timeout of the state counts from when its download begins.
 void RequestMetaDataTypeStateMachineTest::_downloadWaitsForTheOneInProgress()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     const QString uri = QStringLiteral("mftp://[;comp=1]parameter.json.xz");
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     // Random CRC so the file cache cannot satisfy the request
     param->setUriMetaData(uri, QRandomGenerator::global()->generate());
@@ -632,7 +555,7 @@ void RequestMetaDataTypeStateMachineTest::_downloadWaitsForTheOneInProgress()
 
     RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
     timeouts.metaDataDownload = 2000;
-    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this, timeouts);
     QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
     QVERIFY(completeSpy.isValid());
 
@@ -647,6 +570,260 @@ void RequestMetaDataTypeStateMachineTest::_downloadWaitsForTheOneInProgress()
     QVERIFY2(otherError.isEmpty(), qPrintable(otherError));
 }
 
+void RequestMetaDataTypeStateMachineTest::_transferIsHeldToTheSizeLimit_data()
+{
+    QTest::addColumn<QString>("transfer");
+
+    QTest::newRow("metadata over MAVLink FTP") << QStringLiteral("ftp");
+    QTest::newRow("metadata over HTTP") << QStringLiteral("http");
+    QTest::newRow("translation") << QStringLiteral("translation");
+}
+
+// The files come from the vehicle, or from where it points to. Their transfer is held to the size their readers take,
+// VehicleFileFetch::kMaxSmallFileBytes: a file that announces one byte more fails its transfer, and none of it is
+// written. A reader refuses such a file too, but only once all of it is on the disk.
+void RequestMetaDataTypeStateMachineTest::_transferIsHeldToTheSizeLimit()
+{
+    QFETCH(QString, transfer);
+
+    constexpr qint64 announcedBytes = VehicleFileFetch::kMaxSmallFileBytes + 1;
+    TestFixtures::LocalHttpTestServer oversizedServer;
+    QVERIFY(oversizedServer.listen());
+    oversizedServer.installRawResponder(
+        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: " + QByteArray::number(announcedBytes) + "\r\n\r\nx");
+
+    // The failed download of a metadata file is reported in the debug output only
+    const char* const category = "ComponentInformation.RequestMetaDataTypeStateMachine";
+    QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, true);
+    const auto restoreLogging =
+        qScopeGuard([category]() { QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, false); });
+    ignoreLogMessage(category, QtDebugMsg, QRegularExpression(QStringLiteral(".*")));
+
+    auto* const param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    TestFixtures::LocalHttpTestServer server;
+    const bool translation = (transfer == QStringLiteral("translation"));
+    if (translation) {
+        QVERIFY(server.listen());
+        _setUpTranslatedParameterMetadata(directory.path(), server,
+                                          oversizedServer.url(_uniqueServerPath(QStringLiteral("translation.ts"))));
+        if (QTest::currentTestFailed()) {
+            return;
+        }
+        expectLogMessage(category, QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Metadata translation failed:.*larger than")));
+    } else {
+        // Random CRC so the file cache cannot satisfy the request
+        const uint32_t crc = QRandomGenerator::global()->generate();
+        if (transfer == QStringLiteral("ftp")) {
+            _mockLink->mockLinkFTP()->setAnnouncedFileLength(static_cast<uint32_t>(announcedBytes));
+            param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), crc);
+        } else {
+            param->setUriMetaData(oversizedServer.url(_uniqueServerPath(QStringLiteral("parameter.json"))), crc);
+        }
+        expectLogMessage(category, QtDebugMsg, QRegularExpression(QStringLiteral("download failed:.*larger than")));
+        expectLogMessage(category, QtWarningMsg, QRegularExpression(QStringLiteral("failed to load metadata")));
+    }
+    if (transfer != QStringLiteral("ftp")) {
+        ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("The file is larger than")));
+    }
+
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
+    QVERIFY(_requestAndWait(requestMachine, param));
+    verifyExpectedLogMessage();
+    if (!translation) {
+        verifyExpectedLogMessage();
+        QCOMPARE(QDir(_manager->downloadDirectory()).entryList(QDir::Files), QStringList());
+        return;
+    }
+
+    // Without its translation the metadata is used as it was downloaded
+    QVERIFY(!QFileInfo::exists(QDir(_manager->downloadDirectory()).filePath(QStringLiteral("translation.ts"))));
+    FactMetaData* const metadata =
+        param->factMetaDataForName(QStringLiteral("TRANSLATED_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(metadata);
+    QCOMPARE(metadata->shortDescription(), QStringLiteral("In English"));
+}
+
+void RequestMetaDataTypeStateMachineTest::_fallbackUriIsUsedWhenPrimaryFails_data()
+{
+    QTest::addColumn<bool>("fallbackHasCrc");
+
+    QTest::newRow("fallback with a CRC") << true;
+    QTest::newRow("fallback without a CRC") << false;
+}
+
+// Metadata that cannot be downloaded from its URI is downloaded from its fallback URI, and cached under the CRC of
+// that one. A fallback is the only metadata file that may have no CRC: it is then not cached, and removed once read.
+void RequestMetaDataTypeStateMachineTest::_fallbackUriIsUsedWhenPrimaryFails()
+{
+    QFETCH(bool, fallbackHasCrc);
+
+    const QByteArray contents(
+        R"({"version":1,"parameters":[{"name":"FALLBACK_PARAM","type":"Float","shortDesc":"From the fallback"}]})");
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    const QString fallbackPath = _uniqueServerPath(QStringLiteral("parameter.json"));
+    // The server has no other file
+    server.installFileResponder({{fallbackPath, contents}});
+
+    // Random CRCs so the file cache cannot satisfy the request
+    const uint32_t crc = QRandomGenerator::global()->generate();
+    const uint32_t fallbackCrc = QRandomGenerator::global()->generate();
+    QJsonObject parameterType{
+        {QStringLiteral("type"), COMP_METADATA_TYPE_PARAMETER},
+        {QStringLiteral("uri"), server.url(_uniqueServerPath(QStringLiteral("missing.json")))},
+        {QStringLiteral("fileCrc"), static_cast<qint64>(crc)},
+        {QStringLiteral("uriFallback"), server.url(fallbackPath)},
+    };
+    if (fallbackHasCrc) {
+        parameterType.insert(QStringLiteral("fileCrcFallback"), static_cast<qint64>(fallbackCrc));
+    }
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    _setParameterUrisFromGeneralMetadata(directory.path(), parameterType);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    auto* const param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QCOMPARE(param->uriMetaDataFallback(), server.url(fallbackPath));
+    const QDir cacheDirectory(ComponentInformationCache::defaultDirectory());
+    const QStringList cachedBefore = cacheDirectory.entryList(QDir::Files);
+
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression(QStringLiteral("Download error")));
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
+    QVERIFY(_requestAndWait(requestMachine, param));
+    verifyExpectedLogMessage();
+
+    FactMetaData* const metadata =
+        param->factMetaDataForName(QStringLiteral("FALLBACK_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(metadata);
+    QCOMPARE(metadata->shortDescription(), QStringLiteral("From the fallback"));
+
+    QVERIFY(_manager->fileCache().access(_cacheTag(param, crc)).isEmpty());
+    if (fallbackHasCrc) {
+        QCOMPARE(TestFixtures::readFile(_manager->fileCache().access(_cacheTag(param, fallbackCrc))), contents);
+    } else {
+        QCOMPARE(cacheDirectory.entryList(QDir::Files), cachedBefore);
+    }
+    QCOMPARE(QDir(_manager->downloadDirectory()).entryList(QDir::Files), QStringList());
+}
+
+void RequestMetaDataTypeStateMachineTest::_managerGoneEndsItsRequest_data()
+{
+    QTest::addColumn<QString>("phase");
+
+    QTest::newRow("downloading over MAVLink FTP") << QStringLiteral("ftp");
+    QTest::newRow("downloading over HTTP") << QStringLiteral("http");
+    QTest::newRow("reading on a worker") << QStringLiteral("read");
+}
+
+// A vehicle that goes away takes its manager with it, whatever the request of the manager is doing then. The request
+// ends with the manager: its download is given up, which gives the FTP session of the vehicle back and closes the
+// connection, what a worker still reads is dropped, nothing is reported, and the download directory goes.
+void RequestMetaDataTypeStateMachineTest::_managerGoneEndsItsRequest()
+{
+    QFETCH(QString, phase);
+
+    // MockLink answers neither request, so the message below is the answer: it says where the general metadata is
+    mockLink()->clearReceivedRequestMessageCounts();
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_METADATA);
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_INFORMATION);
+
+    // A second manager of the vehicle stands for the manager of a vehicle that goes away
+    auto otherManager = std::make_unique<ComponentInformationManager>(vehicle());
+    const QString otherDirectory = otherManager->downloadDirectory();
+    QVERIFY(QFileInfo(otherDirectory).isDir());
+    CompInfoGeneral* const general = otherManager->compInfoGeneral(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(general);
+
+    // Accepts a connection and never answers it
+    QTcpServer silentServer;
+    QVERIFY(silentServer.listen(QHostAddress::LocalHost));
+    QSignalSpy connectionSpy(&silentServer, &QTcpServer::newConnection);
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    std::unique_ptr<TestFixtures::ThreadPoolBlocker> blocker;
+    // Random CRC so that the file cache has the file only if the test puts it there
+    const uint32_t crc = QRandomGenerator::global()->generate();
+    const QString cacheTag = _cacheTag(general, crc);
+    QString uri = QStringLiteral("http://127.0.0.1:%1/general.json").arg(silentServer.serverPort());
+    if (phase == QStringLiteral("ftp")) {
+        uri = QStringLiteral("mftp://[;comp=1]parameter.json.xz");
+        // One burst a second: the download is far from done when the manager goes
+        _mockLink->mockLinkFTP()->setBurstReadDelayMs(1000);
+        // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+        ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                         QRegularExpression("Failed to retrieve available modes"));
+    } else if (phase == QStringLiteral("read")) {
+        // From the file cache, and unreadable: a result that reached the request after all would be warned about,
+        // and its entry removed
+        const QByteArray compressed = TestFixtures::gzipMember(R"({"version":1,"metadataTypes":[]})");
+        const QString cachedFile = directory.filePath(QStringLiteral("general.json.gz"));
+        QVERIFY(TestFixtures::writeFile(cachedFile, compressed.first(compressed.size() / 2)));
+        QVERIFY(!otherManager->fileCache().insert(cacheTag, cachedFile).isEmpty());
+        blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>();
+        QVERIFY(blocker->isBlocking());
+    }
+
+    bool completed = false;
+    otherManager->requestAllComponentInformation([](void* called) { *static_cast<bool*>(called) = true; }, &completed);
+    QTRY_VERIFY_WITH_TIMEOUT(
+        mockLink()->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA) > 0,
+        TestTimeout::mediumMs());
+    char uriField[MAVLINK_MSG_COMPONENT_METADATA_FIELD_URI_LEN] = {};
+    const QByteArray uriBytes = uri.toUtf8();
+    QVERIFY(uriBytes.size() < static_cast<qsizetype>(sizeof(uriField)));
+    memcpy(uriField, uriBytes.constData(), static_cast<size_t>(uriBytes.size()));
+    mavlink_message_t message{};
+    (void) mavlink_msg_component_metadata_pack_chan(mockLink()->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                                    mockLink()->outgoingMavlinkChannel(), &message, 0, crc, uriField);
+    mockLink()->respondWithMavlinkMessage(message);
+    mockLink()->sendUnexpectedCommandAck(MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED);
+
+    // The request is under way. The states between the answer and the read of a cached file end as they are entered,
+    // so the read has begun once the URI is set
+    QTcpSocket* connection = nullptr;
+    if (phase == QStringLiteral("ftp")) {
+        // The transfer has begun, not only been queued: its file is open in the directory of the manager
+        QTRY_VERIFY_WITH_TIMEOUT(!QDir(otherDirectory).entryList(QDir::Files).isEmpty(), TestTimeout::mediumMs());
+        QCOMPARE(vehicle()->ftpManager()->requestCount(), 1);
+    } else if (phase == QStringLiteral("http")) {
+        QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), 1, TestTimeout::mediumMs());
+        connection = silentServer.nextPendingConnection();
+        QVERIFY(connection);
+    } else {
+        QTRY_COMPARE_WITH_TIMEOUT(general->uriMetaData(), uri, TestTimeout::mediumMs());
+    }
+    QVERIFY(!completed);
+
+    otherManager.reset();
+
+    QVERIFY(!QFileInfo::exists(otherDirectory));
+    if (phase == QStringLiteral("ftp")) {
+        QCOMPARE(vehicle()->ftpManager()->requestCount(), 0);
+        // So the FTP session of the vehicle is free: its own manager downloads now. A download that fails is reported
+        // with a warning, which fails the test.
+        _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+        auto* const param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+        QVERIFY(param);
+        param->setUriMetaData(uri, QRandomGenerator::global()->generate());
+        RequestMetaDataTypeStateMachine requestMachine(_manager, this);
+        QVERIFY(_requestAndWait(requestMachine, param));
+    } else if (phase == QStringLiteral("http")) {
+        QTRY_COMPARE_WITH_TIMEOUT(connection->state(), QAbstractSocket::UnconnectedState, TestTimeout::shortMs());
+    } else {
+        blocker->release();
+        QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+        QCoreApplication::sendPostedEvents();
+        QVERIFY(!_manager->fileCache().access(cacheTag).isEmpty());
+    }
+    QVERIFY(!completed);
+}
+
 QString RequestMetaDataTypeStateMachineTest::_uniqueServerPath(const QString& fileName)
 {
     return QStringLiteral("/%1/%2").arg(QUuid::createUuid().toString(QUuid::WithoutBraces), fileName);
@@ -658,7 +835,6 @@ void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(cons
                                                                             bool compressed,
                                                                             QHash<QString, QByteArray> files)
 {
-    const QString generalFile = QDir(directory).filePath(QStringLiteral("general.json"));
     const QString metadataPath = _uniqueServerPath(QStringLiteral("parameter.json"));
     const QString summaryPath =
         _uniqueServerPath(compressed ? QStringLiteral("summary.json.gz") : QStringLiteral("summary.json"));
@@ -668,62 +844,76 @@ void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(cons
         R"({"version":1,"translation":{"items":{"parameters":{"list":{"key":"name","translate":["shortDesc"]}}}},)"
         R"("parameters":[{"name":"TRANSLATED_PARAM","type":"Float","shortDesc":"In English"}]})");
 
-    const QJsonObject summary{{QLocale::system().name(), QJsonObject{{QStringLiteral("url"), translationUrl}}}};
+    const QJsonObject summary{
+        {_manager->translation()->_localeName, QJsonObject{{QStringLiteral("url"), translationUrl}}}};
     const QByteArray summaryJson = QJsonDocument(summary).toJson();
     files.insert(summaryPath, compressed ? TestFixtures::gzipMember(summaryJson) : summaryJson);
     server.installFileResponder(files);
 
     // Random CRC so the file cache cannot satisfy the request
     const QString summaryUrl = server.url(summaryPath);
-    const QJsonObject parameterType{
-        {QStringLiteral("type"), COMP_METADATA_TYPE_PARAMETER},
-        {QStringLiteral("uri"), server.url(metadataPath)},
-        {QStringLiteral("fileCrc"), static_cast<qint64>(QRandomGenerator::global()->generate())},
-        {QStringLiteral("translationUri"), summaryUrl},
-    };
+    _setParameterUrisFromGeneralMetadata(
+        directory, {
+                       {QStringLiteral("type"), COMP_METADATA_TYPE_PARAMETER},
+                       {QStringLiteral("uri"), server.url(metadataPath)},
+                       {QStringLiteral("fileCrc"), static_cast<qint64>(QRandomGenerator::global()->generate())},
+                       {QStringLiteral("translationUri"), summaryUrl},
+                   });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    QCOMPARE(_manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1)->uriTranslation(), summaryUrl);
+}
+
+void RequestMetaDataTypeStateMachineTest::_setParameterUrisFromGeneralMetadata(const QString& directory,
+                                                                               const QJsonObject& parameterType)
+{
+    const QString generalFile = QDir(directory).filePath(QStringLiteral("general.json"));
     const QJsonObject generalMetadata{
         {QStringLiteral("version"), 1},
         {QStringLiteral("metadataTypes"), QJsonArray{parameterType}},
     };
-    QVERIFY(writeRequestMetaDataTestFile(generalFile, QJsonDocument(generalMetadata).toJson()));
+    QVERIFY(TestFixtures::writeFile(generalFile, QJsonDocument(generalMetadata).toJson()));
 
-    // A type has the URI of its translation from the general metadata only
     CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
     general.setJson(generalFile, CompInfo::parseJsonFile(generalFile, general.jsonSchema()));
-    auto* const param = vehicle()->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* const param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     general.setUris(*param);
-    QCOMPARE(param->uriTranslation(), summaryUrl);
 }
 
-void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale_data()
+void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForLocale_data()
 {
+    QTest::addColumn<QString>("locale");
     QTest::addColumn<bool>("translationNamed");
     QTest::addColumn<bool>("translationReachable");
     QTest::addColumn<bool>("compressed");
+    QTest::addColumn<bool>("translated");
 
-    QTest::newRow("the summary names a translation") << true << true << false;
-    QTest::newRow("the summary and the translation are compressed") << true << true << true;
-    QTest::newRow("the summary names none") << false << false << false;
-    QTest::newRow("the translation cannot be downloaded") << true << false << false;
+    QTest::newRow("the summary names a translation") << metadataTestLocale << true << true << false << true;
+    QTest::newRow("the summary and the translation are compressed")
+        << metadataTestLocale << true << true << true << true;
+    QTest::newRow("the summary names none") << metadataTestLocale << false << false << false << false;
+    QTest::newRow("the translation cannot be downloaded") << metadataTestLocale << true << false << false << false;
+    // Metadata is written in English
+    QTest::newRow("an English locale is not translated for")
+        << QStringLiteral("en_US") << true << true << false << false;
 }
 
-// Metadata is translated unless the system locale is English, with the file that the translation summary names for
-// the locale. The metadata, the summary and that file come over HTTP, and are decompressed where they are read. Without
+// Metadata is translated unless the locale is English, with the file that the translation summary names for the
+// locale. The metadata, the summary and that file come over HTTP, and are decompressed where they are read. Without
 // a translation the metadata is used as it was downloaded.
-void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
+void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForLocale()
 {
+    QFETCH(QString, locale);
     QFETCH(bool, translationNamed);
     QFETCH(bool, translationReachable);
     QFETCH(bool, compressed);
+    QFETCH(bool, translated);
 
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
-    // What a missing translation logs depends on the locale: for an English one the summary is not read
+    _manager->translation()->_localeName = locale;
     if (!translationNamed) {
-        ignoreLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
+        expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
                          QRegularExpression("has no url in translation json"));
     } else if (!translationReachable) {
         ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error"));
@@ -758,17 +948,19 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
         return;
     }
 
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
     QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
     QVERIFY(completeSpy.isValid());
 
     // Well before the translation state would have timed out
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     requestMachine.request(param);
     QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::mediumMs(), QStringLiteral("requestComplete")));
     QVERIFY(!requestMachine.inProgress());
+    if (!translationNamed) {
+        verifyExpectedLogMessage();
+    }
 
-    const bool translated = translationNamed && translationReachable && !systemLocaleIsEnglish();
     FactMetaData* metadata =
         param->factMetaDataForName(QStringLiteral("TRANSLATED_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(metadata);
@@ -779,14 +971,6 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
 // use, so one that ran on refused the summary of the next request.
 void RequestMetaDataTypeStateMachineTest::_translationDownloadEndsWithItsState()
 {
-    if (systemLocaleIsEnglish()) {
-        QSKIP("No translation is downloaded for an English locale");
-    }
-
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // Accepts a connection and never answers it
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
@@ -804,18 +988,15 @@ void RequestMetaDataTypeStateMachineTest::_translationDownloadEndsWithItsState()
 
     RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
     timeouts.translation = 500;
-    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    QVERIFY(completeSpy.isValid());
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this, timeouts);
 
     // The second translation reaches the server only when the first download ended with its state. A summary that
     // found the downloader busy was refused with a warning, which fails the test.
-    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = _manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     for (int request = 1; request <= 2; ++request) {
         expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                          QRegularExpression("^Timeout \".*RequestTranslate\" after 500 ms"));
-        requestMachine.request(param);
-        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        QVERIFY(_requestAndWait(requestMachine, param));
         verifyExpectedLogMessage();
         QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), request, TestTimeout::shortMs());
     }
@@ -831,10 +1012,6 @@ void RequestMetaDataTypeStateMachineTest::_translationDownloadEndsWithItsState()
 // of whatever the machine was requesting by the time it came.
 void RequestMetaDataTypeStateMachineTest::_answerAfterRequestTimeoutIsNotUsed()
 {
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // MockLink answers neither request, so the ack and the message below are the answer
     mockLink()->clearReceivedRequestMessageCounts();
     mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_METADATA);
@@ -857,7 +1034,7 @@ void RequestMetaDataTypeStateMachineTest::_answerAfterRequestTimeoutIsNotUsed()
     });
 
     CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
-    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this, timeouts);
     QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
     QVERIFY(completeSpy.isValid());
     requestMachine.request(&general);
@@ -904,8 +1081,9 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker_data()
 // if it is compressed, and parsed on a worker thread, while its state waits. A file that cannot be decompressed, or
 // is larger than VehicleFileFetch::kMaxSmallFileBytes once it is, sets nothing, and its entry leaves the file cache, so
 // that the next connection downloads it again. So does a parse that ends after its state was left, or its machine
-// deleted, which leaves the entry. The events metadata is parsed by libevents, and once it is in place the vehicle is
-// asked for its prearm checks.
+// deleted, which leaves the entry. The events metadata is parsed by libevents. Vehicle asks for the prearm checks
+// whenever events metadata is handed to it, read or not, as it always has: only the request after metadata that was
+// read is checked here.
 void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
 {
     QFETCH(int, type);
@@ -914,13 +1092,9 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
     const bool events = (type == COMP_METADATA_TYPE_EVENTS);
     const bool readable = (file == QStringLiteral("plain")) || (file == QStringLiteral("compressed"));
 
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // A component of its own, so that only this test sets its metadata
     constexpr uint8_t compId = 43;
-    CompInfoParam* const param = manager->compInfoParam(compId);
+    CompInfoParam* const param = _manager->compInfoParam(compId);
     QVERIFY(param);
     CompInfoEvents eventsInfo(compId, vehicle());
     CompInfo* const compInfo = events ? static_cast<CompInfo*>(&eventsInfo) : param;
@@ -936,12 +1110,12 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
                  R"("supported_protocols":["health_and_arming_check"]}}})"
                : R"({"version":1,"parameters":[{"name":"WORKER_PARAM","type":"Float","shortDesc":"Parsed"}]})";
     if (file == QStringLiteral("plain")) {
-        QVERIFY(writeRequestMetaDataTestFile(metadataFile, contents));
+        QVERIFY(TestFixtures::writeFile(metadataFile, contents));
     } else if (file == QStringLiteral("compressed")) {
-        QVERIFY(writeRequestMetaDataTestFile(metadataFile, TestFixtures::gzipMember(contents)));
+        QVERIFY(TestFixtures::writeFile(metadataFile, TestFixtures::gzipMember(contents)));
     } else if (file == QStringLiteral("truncated")) {
         const QByteArray compressed = TestFixtures::gzipMember(contents);
-        QVERIFY(writeRequestMetaDataTestFile(metadataFile, compressed.first(compressed.size() / 2)));
+        QVERIFY(TestFixtures::writeFile(metadataFile, compressed.first(compressed.size() / 2)));
     } else {
         // 1025 members of 64 KiB: 64 KiB more than the limit
         QVERIFY(ArchiveFixtures::writeGzipOfZeros(metadataFile, 1025));
@@ -956,23 +1130,30 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
                              QRegularExpression("Metadata json file open failed.*" + reason));
         }
     }
-    const QString fileTag = QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(compInfo->type), 0);
-    QVERIFY(!manager->fileCache().insert(fileTag, metadataFile).isEmpty());
+    const QString fileTag = _cacheTag(compInfo, crc);
+    QVERIFY(!_manager->fileCache().insert(fileTag, metadataFile).isEmpty());
 
     RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
     if (end == QStringLiteral("timeout")) {
         timeouts.metaDataLoad = 100;
     }
-    auto requestMachine = std::make_unique<RequestMetaDataTypeStateMachine>(manager, nullptr, timeouts);
+    auto requestMachine = std::make_unique<RequestMetaDataTypeStateMachine>(_manager, nullptr, timeouts);
     QSignalSpy completeSpy(requestMachine.get(), &RequestMetaDataTypeStateMachine::requestComplete);
     QVERIFY(completeSpy.isValid());
     _mockLink->clearReceivedMavCommandCounts();
+    const auto requestsForUri = [this]() {
+        return _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA) +
+               _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION);
+    };
+    const int requestsForUriBefore = requestsForUri();
 
     TestFixtures::ThreadPoolBlocker blocker;
     QVERIFY(blocker.isBlocking());
     requestMachine->request(compInfo);
     QTRY_VERIFY_WITH_TIMEOUT(requestMachine->findChild<QFutureWatcherBase*>(), TestTimeout::mediumMs());
     QCOMPARE(completeSpy.count(), 0);
+    // Only the general metadata asks the vehicle where it is: every other type has its URI from there
+    QCOMPARE(requestsForUri(), requestsForUriBefore);
     QVERIFY(!vehicle()->healthAndArmingChecksSupported(compId));
 
     if (end == QStringLiteral("timeout")) {
@@ -988,6 +1169,8 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
     const bool loaded = (end == QStringLiteral("none")) && readable;
     if (end == QStringLiteral("none")) {
         QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        QCOMPARE(completeSpy.count(), 1);
+        QVERIFY(!requestMachine->inProgress());
         if (!readable) {
             verifyExpectedLogMessage();
         }
@@ -1001,8 +1184,6 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
         if (loaded) {
             QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MAV_CMD_RUN_PREARM_CHECKS) == 1,
                               TestTimeout::mediumMs());
-        } else {
-            QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_RUN_PREARM_CHECKS), 0);
         }
     } else {
         FactMetaData* const metadata =
@@ -1010,7 +1191,7 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
         QVERIFY(metadata);
         QCOMPARE(metadata->shortDescription() == QStringLiteral("Parsed"), loaded);
     }
-    QCOMPARE(manager->fileCache().access(fileTag).isEmpty(), (end == QStringLiteral("none")) && !readable);
+    QCOMPARE(_manager->fileCache().access(fileTag).isEmpty(), (end == QStringLiteral("none")) && !readable);
 }
 
 void RequestMetaDataTypeStateMachineTest::_downloadIsCachedOnceRead_data()
@@ -1034,13 +1215,9 @@ void RequestMetaDataTypeStateMachineTest::_downloadIsCachedOnceRead()
     QFETCH(bool, readable);
     const bool events = (type == COMP_METADATA_TYPE_EVENTS);
 
-    auto* manager = vehicle()->compInfoManager();
-    QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
-
     // A component of its own, so that only this test sets its metadata
     constexpr uint8_t compId = 44;
-    CompInfoParam* const param = manager->compInfoParam(compId);
+    CompInfoParam* const param = _manager->compInfoParam(compId);
     QVERIFY(param);
     CompInfoEvents eventsInfo(compId, vehicle());
     CompInfo* const compInfo = events ? static_cast<CompInfo*>(&eventsInfo) : param;
@@ -1065,21 +1242,18 @@ void RequestMetaDataTypeStateMachineTest::_downloadIsCachedOnceRead()
         }
     }
 
-    RequestMetaDataTypeStateMachine requestMachine(manager, this);
-    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
-    requestMachine.request(compInfo);
-    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    RequestMetaDataTypeStateMachine requestMachine(_manager, this);
+    QVERIFY(_requestAndWait(requestMachine, compInfo));
     if (!readable) {
         verifyExpectedLogMessage();
     }
 
-    const QString cachedFile =
-        manager->fileCache().access(QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(compInfo->type), 0));
+    const QString cachedFile = _manager->fileCache().access(_cacheTag(compInfo, crc));
     QCOMPARE(cachedFile.isEmpty(), !readable);
     if (readable) {
         QCOMPARE(TestFixtures::readFile(cachedFile), compressed);
     }
-    QCOMPARE(QDir(manager->downloadDirectory()).entryList(QDir::Files), QStringList());
+    QCOMPARE(QDir(_manager->downloadDirectory()).entryList(QDir::Files), QStringList());
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

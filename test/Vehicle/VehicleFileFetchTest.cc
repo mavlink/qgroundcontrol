@@ -48,6 +48,15 @@ QString fetchTestSizeFileUri(int size)
 
 }  // namespace
 
+VehicleFileFetch::Callback VehicleFileFetchTest::_record(Result& result)
+{
+    return [&result](const QString& file, const QString& errorMsg) {
+        result.calls++;
+        result.file = file;
+        result.error = errorMsg;
+    };
+}
+
 // Either way, the file arrives in the directory under the name asked for, the fetch reports its start and its
 // progress, and it calls back once with the file
 void VehicleFileFetchTest::_testFetch_data()
@@ -76,13 +85,9 @@ void VehicleFileFetchTest::_testFetch()
 
     QObject owner;
     Result result;
-    VehicleFileFetch* const fetch = VehicleFileFetch::start(
+    const QPointer<VehicleFileFetch> fetch = VehicleFileFetch::start(
         &owner, _vehicle, uri, {.directory = directory.path(), .fileName = QStringLiteral("fetched.bin")},
-        [&result](const QString& file, const QString& errorMsg) {
-            result.calls++;
-            result.file = file;
-            result.error = errorMsg;
-        });
+        _record(result));
     QVERIFY(fetch);
     QSignalSpy startedSpy(fetch, &VehicleFileFetch::started);
     QSignalSpy progressSpy(fetch, &VehicleFileFetch::progressChanged);
@@ -94,6 +99,8 @@ void VehicleFileFetchTest::_testFetch()
     QCOMPARE(startedSpy.count(), 1);
     QVERIFY(!progressSpy.isEmpty());
     QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QStringLiteral("fetched.bin")});
+    // A fetch that stayed would live as long as its owner, a camera or a state machine
+    QTRY_VERIFY_WITH_TIMEOUT(fetch.isNull(), TestTimeout::shortMs());
 }
 
 // A fetch that fails leaves no file, also over HTTP where the server sends a body with its error
@@ -124,12 +131,7 @@ void VehicleFileFetchTest::_testFailedFetchLeavesNothing()
 
     QObject owner;
     Result result;
-    QVERIFY(VehicleFileFetch::start(&owner, _vehicle, uri, {.directory = directory.path()},
-                                    [&result](const QString& file, const QString& errorMsg) {
-                                        result.calls++;
-                                        result.file = file;
-                                        result.error = errorMsg;
-                                    }));
+    QVERIFY(VehicleFileFetch::start(&owner, _vehicle, uri, {.directory = directory.path()}, _record(result)));
 
     QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
     if (!ftp) {
@@ -178,11 +180,7 @@ void VehicleFileFetchTest::_testFileOverTheLimit()
     QObject owner;
     Result result;
     QVERIFY(VehicleFileFetch::start(&owner, _vehicle, uri, {.directory = directory.path(), .maxBytes = fileSize - 1},
-                                    [&result](const QString& file, const QString& errorMsg) {
-                                        result.calls++;
-                                        result.file = file;
-                                        result.error = errorMsg;
-                                    }));
+                                    _record(result)));
 
     QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
     if (!ftp) {
@@ -226,12 +224,7 @@ void VehicleFileFetchTest::_testFetchEndedWithoutCallback()
     Result result;
     auto owner = std::make_unique<QObject>();
     const QPointer<VehicleFileFetch> fetch =
-        VehicleFileFetch::start(owner.get(), _vehicle, uri, {.directory = directory.path()},
-                                [&result](const QString& file, const QString& errorMsg) {
-                                    result.calls++;
-                                    result.file = file;
-                                    result.error = errorMsg;
-                                });
+        VehicleFileFetch::start(owner.get(), _vehicle, uri, {.directory = directory.path()}, _record(result));
     QVERIFY(fetch);
 
     QTcpSocket* connection = nullptr;
@@ -261,31 +254,32 @@ void VehicleFileFetchTest::_testFetchEndedWithoutCallback()
     QCOMPARE(result.calls, 0);
 }
 
-// Fetches over MAVLink FTP from one vehicle wait for each other, and each gets its own file
-void VehicleFileFetchTest::_testFetchesOfOneVehicleQueue()
+// A MAVLink FTP URI is fetched from the component it names, or else from the one the caller gives, such as the camera
+// whose definition it is. MockLink answers as the autopilot only, so the fetch from another component fails.
+void VehicleFileFetchTest::_testFtpComponent()
 {
     _connectMockLinkNoInitialConnectSequence();
-    _mockLink->mockLinkFTP()->setSingleSessionEnforced(true);
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
+    const VehicleFileFetch::Options options{.directory = directory.path(), .ftpComponentId = MAV_COMP_ID_CAMERA};
 
     QObject owner;
-    Result first;
-    Result second;
-    for (auto [size, result] : {std::pair{3 * 1024, &first}, std::pair{2 * 1024, &second}}) {
-        QVERIFY(VehicleFileFetch::start(&owner, _vehicle, fetchTestSizeFileUri(size), {.directory = directory.path()},
-                                        [result](const QString& file, const QString& errorMsg) {
-                                            result->calls++;
-                                            result->file = file;
-                                            result->error = errorMsg;
-                                        }));
-    }
+    Result named;
+    QVERIFY(VehicleFileFetch::start(
+        &owner, _vehicle, QStringLiteral("mftp://[;comp=1]%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(1024),
+        options, _record(named)));
+    QVERIFY_TRUE_WAIT(named.calls == 1, TestTimeout::longMs());
+    QCOMPARE(named.error, QString());
+    QCOMPARE(TestFixtures::readFile(named.file), fetchTestSizeFileContent(1024));
+    QCOMPARE(mockFtp->lastRequestTargetComponent(), static_cast<int>(MAV_COMP_ID_AUTOPILOT1));
 
-    QVERIFY_TRUE_WAIT((first.calls == 1) && (second.calls == 1), TestTimeout::longMs());
-    QCOMPARE(first.error, QString());
-    QCOMPARE(second.error, QString());
-    QCOMPARE(TestFixtures::readFile(first.file), fetchTestSizeFileContent(3 * 1024));
-    QCOMPARE(TestFixtures::readFile(second.file), fetchTestSizeFileContent(2 * 1024));
+    Result given;
+    QVERIFY(VehicleFileFetch::start(&owner, _vehicle, fetchTestSizeFileUri(2 * 1024), options, _record(given)));
+    QVERIFY_TRUE_WAIT(given.calls == 1, TestTimeout::longMs());
+    QCOMPARE(given.error, QStringLiteral("Download failed"));
+    QTRY_COMPARE_WITH_TIMEOUT(mockFtp->lastRequestTargetComponent(), static_cast<int>(MAV_COMP_ID_CAMERA),
+                              TestTimeout::mediumMs());
 }
 
 // A fetch that cannot start says so at once, and calls nothing
@@ -317,8 +311,7 @@ void VehicleFileFetchTest::_testRefused()
     Result result;
     expectLogMessage("Vehicle.VehicleFileFetch", QtWarningMsg, QRegularExpression(warning));
     QVERIFY(!VehicleFileFetch::start(&owner, vehicle ? _vehicle : nullptr, fetchTestSizeFileUri(1024),
-                                     {.directory = directoryPath},
-                                     [&result](const QString&, const QString&) { result.calls++; }));
+                                     {.directory = directoryPath}, _record(result)));
     verifyExpectedLogMessage();
     QCOMPARE(_vehicle->ftpManager()->requestCount(), 0);
     QVERIFY(owner.children().isEmpty());
@@ -374,8 +367,7 @@ void VehicleFileFetchTest::_testUriOtherThanFtpOrHttpRefused()
     Result result;
     expectLogMessage("Vehicle.VehicleFileFetch", QtWarningMsg,
                      QRegularExpression(QStringLiteral("only MAVLink FTP and HTTP\\(S\\) are fetched")));
-    QVERIFY(!VehicleFileFetch::start(&owner, nullptr, uri, {.directory = directory.path()},
-                                     [&result](const QString&, const QString&) { result.calls++; }));
+    QVERIFY(!VehicleFileFetch::start(&owner, nullptr, uri, {.directory = directory.path()}, _record(result)));
     verifyExpectedLogMessage();
     QVERIFY(owner.children().isEmpty());
     QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList());
@@ -417,20 +409,15 @@ void VehicleFileFetchTest::_testHttpFileName()
 
     QObject owner;
     Result result;
-    const auto record = [&result](const QString& file, const QString& errorMsg) {
-        result.calls++;
-        result.file = file;
-        result.error = errorMsg;
-    };
     if (localName.isEmpty()) {
         expectLogMessage("Vehicle.VehicleFileFetch", QtWarningMsg, QRegularExpression("not a file name"));
         QVERIFY(!VehicleFileFetch::start(&owner, nullptr, server.url(path),
-                                         {.directory = directory, .fileName = fileName}, record));
+                                         {.directory = directory, .fileName = fileName}, _record(result)));
         verifyExpectedLogMessage();
         QCOMPARE(server.connectionCount(), 0);
     } else {
         QVERIFY(VehicleFileFetch::start(&owner, nullptr, server.url(path),
-                                        {.directory = directory, .fileName = fileName}, record));
+                                        {.directory = directory, .fileName = fileName}, _record(result)));
         QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::mediumMs());
         QCOMPARE(result.error, QString());
         QCOMPARE(result.file, QDir(directory).filePath(localName));
@@ -468,12 +455,7 @@ void VehicleFileFetchTest::_testHttpUriForms()
     QObject owner;
     Result result;
     QVERIFY(VehicleFileFetch::start(&owner, nullptr, form.arg(QStringLiteral("127.0.0.1:%1").arg(server.port())),
-                                    {.directory = directory.path()},
-                                    [&result](const QString& file, const QString& errorMsg) {
-                                        result.calls++;
-                                        result.file = file;
-                                        result.error = errorMsg;
-                                    }));
+                                    {.directory = directory.path()}, _record(result)));
     QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::mediumMs());
     QCOMPARE(result.error, QString());
     QCOMPARE(TestFixtures::readFile(result.file), body);
@@ -497,11 +479,7 @@ void VehicleFileFetchTest::_testHttpCache()
         VehicleFileFetch::Options options{.directory = directory.path(), .fileName = fileName};
         options.httpCacheDirectory = httpCache;
         if (!VehicleFileFetch::start(&owner, nullptr, server.url(QStringLiteral("/file.bin")), options,
-                                     [&result](const QString& file, const QString& errorMsg) {
-                                         result.calls++;
-                                         result.file = file;
-                                         result.error = errorMsg;
-                                     })) {
+                                     _record(result))) {
             return QByteArrayLiteral("not started");
         }
         if (!UnitTest::waitForCondition([&result]() { return result.calls > 0; }, TestTimeout::mediumMs(),
@@ -566,12 +544,7 @@ void VehicleFileFetchTest::_testServerCertificate()
     Result result;
     QVERIFY(VehicleFileFetch::start(&owner, nullptr,
                                     QStringLiteral("https://127.0.0.1:%1/file").arg(server.serverPort()),
-                                    {.directory = directory.path(), .verifyPeer = verifyPeer},
-                                    [&result](const QString& file, const QString& errorMsg) {
-                                        result.calls++;
-                                        result.file = file;
-                                        result.error = errorMsg;
-                                    }));
+                                    {.directory = directory.path(), .verifyPeer = verifyPeer}, _record(result)));
 
     QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::mediumMs());
     if (verifyPeer) {

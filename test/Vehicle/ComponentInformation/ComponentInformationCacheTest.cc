@@ -223,4 +223,36 @@ void ComponentInformationCacheTest::_incomplete_entry_test()
     QCOMPARE(TestFixtures::readFile(cached), QByteArray("fresh"));
 }
 
+// An entry that is removed, such as one whose file cannot be read, is gone at once and no longer counts: the entries
+// that are left are kept, and evicted, as if it had never been there
+void ComponentInformationCacheTest::_remove_test()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    ComponentInformationCache cache(QDir(directory.path()), 2);
+    const auto insert = [&directory, &cache](const QString& tag) {
+        const QString downloaded = directory.filePath(tag + QStringLiteral(".json"));
+        return TestFixtures::writeFile(downloaded, tag.toUtf8()) ? cache.insert(tag, downloaded) : QString();
+    };
+    const QString first = insert(QStringLiteral("first"));
+    const QString second = insert(QStringLiteral("second"));
+    QVERIFY(!first.isEmpty());
+    QVERIFY(!second.isEmpty());
+
+    cache.remove(QStringLiteral("first"));
+    QVERIFY(cache.access(QStringLiteral("first")).isEmpty());
+    QVERIFY(!QFile::exists(first));
+    QVERIFY(!QFile::exists(directory.filePath(QStringLiteral("first.meta"))));
+
+    // Two entries again, which the cache holds
+    const QString third = insert(QStringLiteral("third"));
+    QCOMPARE(cache.access(QStringLiteral("second")), second);
+    QCOMPARE(cache.access(QStringLiteral("third")), third);
+
+    // A third one, for which the entry used least recently goes
+    QVERIFY(!insert(QStringLiteral("fourth")).isEmpty());
+    QVERIFY(cache.access(QStringLiteral("second")).isEmpty());
+    QCOMPARE(cache.access(QStringLiteral("third")), third);
+}
+
 UT_REGISTER_TEST(ComponentInformationCacheTest, TestLabel::Unit, TestLabel::Vehicle)

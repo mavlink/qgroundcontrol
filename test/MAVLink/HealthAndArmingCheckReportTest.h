@@ -28,6 +28,8 @@ private slots:
     void _testAcknowledgementLastsWhileStillWarning_data();
     void _testAcknowledgementLastsWhileStillWarning();
     void _testNewWarningNotAcknowledged();
+    UT_PARAMETERIZED_TEST(_testLoadMetadata);
+    void _testSetMetadataKeepsOrReplacesDefinitions();
 
     void _testProblemConstruction();
     void _testProblemExpandedSignal();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseClasses/VehicleTestManualConnect.h"
+#include "VehicleFileFetch.h"
 
 class VehicleFileFetchTest : public VehicleTestManualConnect
 {
@@ -11,7 +12,7 @@ private slots:
     UT_PARAMETERIZED_TEST(_testFailedFetchLeavesNothing);
     UT_PARAMETERIZED_TEST(_testFileOverTheLimit);
     UT_PARAMETERIZED_TEST(_testFetchEndedWithoutCallback);
-    void _testFetchesOfOneVehicleQueue();
+    void _testFtpComponent();
     UT_PARAMETERIZED_TEST(_testRefused);
     UT_PARAMETERIZED_TEST(_testUriOtherThanFtpOrHttpRefused);
     UT_PARAMETERIZED_TEST(_testHttpFileName);
@@ -27,4 +28,7 @@ private:
         QString file;
         QString error;
     };
+
+    /// Records what a fetch calls back with in @a result
+    static VehicleFileFetch::Callback _record(Result& result);
 };

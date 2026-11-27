@@ -48,6 +48,8 @@ public:
     void loadDefinition(const QByteArray& definition) { _dataReady(definition); }
 
     void setMaxDefinitionBytes(qint64 maxBytes) { _maxDefinitionBytes = maxBytes; }
+
+    void setLocaleName(const QString& localeName) { _localeName = localeName; }
 };
 
 MockConfiguration* newMockConfiguration(const QString& name)
@@ -68,6 +70,28 @@ QByteArray cameraDefinition(const char* settingName)
            settingName +
            R"(" type="uint32" default="0"><description>Setting</description></parameter></parameters>)"
            R"(</mavlinkcamera>)";
+}
+
+/// The CAMERA_INFORMATION of a camera of vendor "Acme" and model "Cam" whose definition is at @p uri
+mavlink_camera_information_t acmeCameraInformation(const QString& uri, uint16_t definitionVersion = 0)
+{
+    const QByteArray uriBytes = uri.toUtf8();
+    mavlink_camera_information_t info{};
+    memcpy(info.vendor_name, "Acme", 5);
+    memcpy(info.model_name, "Cam", 4);
+    info.cam_definition_version = definitionVersion;
+    memcpy(info.cam_definition_uri, uriBytes.constData(),
+           qMin(static_cast<size_t>(uriBytes.size()), sizeof(info.cam_definition_uri)));
+    return info;
+}
+
+/// Where that camera caches its definition
+QString acmeCameraCacheFile(int definitionVersion = 0)
+{
+    const QString cacheDir = SettingsManager::instance()->appSettings()->parameterSavePath();
+    return QDir::cleanPath(QDir(cacheDir).filePath(
+        VehicleCameraControl::cacheFileToken(QStringLiteral("Acme"), QStringLiteral("Cam"), definitionVersion) +
+        QStringLiteral(".xml")));
 }
 
 /// Points the app save path at rootPath until the returned guard goes out of scope.
@@ -205,6 +229,25 @@ void VehicleCameraControlTest::_connectVehicle(MockConfiguration* mockConfig)
         QVERIFY2(UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete")),
                  "Timeout waiting for initial connect");
     }
+}
+
+QString VehicleCameraControlTest::_serveDefinition(bool http, const QByteArray& content,
+                                                   TestFixtures::LocalHttpTestServer& server, const QString& servedDir)
+{
+    if (http) {
+        if (!server.listen()) {
+            return QString();
+        }
+        server.installHttpResponder(content);
+        return server.url(QStringLiteral("/camera.xml.gz"));
+    }
+
+    const QString servedFile = QDir(servedDir).filePath(QStringLiteral("camera.xml.gz"));
+    if (!TestFixtures::writeFile(servedFile, content)) {
+        return QString();
+    }
+    _mockLink->mockLinkFTP()->setServedFile(QStringLiteral("/camera.xml.gz"), servedFile);
+    return QStringLiteral("mftp://[;comp=%1]/camera.xml.gz").arg(MAV_COMP_ID_AUTOPILOT1);
 }
 
 MavlinkCameraControlInterface* VehicleCameraControlTest::_firstCamera()
@@ -353,25 +396,13 @@ void VehicleCameraControlTest::_testDefinitionWithoutSaveDirectory()
                          QRegularExpression(QStringLiteral("Camera definition cache directory is not set")));
     }
 
-    const QByteArray definition = TestFixtures::gzipMember(cameraDefinition("CAM_TEMP"));
     TestFixtures::LocalHttpTestServer server;
     QTemporaryDir servedDir;
     QVERIFY(servedDir.isValid());
-    QString uri = QStringLiteral("mftp://[;comp=%1]/camera.xml.gz").arg(MAV_COMP_ID_AUTOPILOT1);
-    if (http) {
-        QVERIFY(server.listen());
-        server.installHttpResponder(definition);
-        uri = server.url(QStringLiteral("/camera.xml.gz"));
-    } else {
-        const QString servedFile = servedDir.filePath(QStringLiteral("camera.xml.gz"));
-        QVERIFY(TestFixtures::writeFile(servedFile, definition));
-        _mockLink->mockLinkFTP()->setServedFile(QStringLiteral("/camera.xml.gz"), servedFile);
-    }
-    const QByteArray uriBytes = uri.toUtf8();
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    memcpy(info.cam_definition_uri, uriBytes.constData(), static_cast<size_t>(uriBytes.size()));
+    const QString uri =
+        _serveDefinition(http, TestFixtures::gzipMember(cameraDefinition("CAM_TEMP")), server, servedDir.path());
+    QVERIFY(!uri.isEmpty());
+    const mavlink_camera_information_t info = acmeCameraInformation(uri);
 
     auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
     QTRY_VERIFY_WITH_TIMEOUT(!camera->isBasic(), TestTimeout::longMs());
@@ -412,25 +443,13 @@ void VehicleCameraControlTest::_testCamerasOfOneModelDownloadTogether()
     QVERIFY(saveRoot.isValid());
     const auto restoreSavePath = overrideSavePath(saveRoot.path());
 
-    const QByteArray definition = TestFixtures::gzipMember(cameraDefinition("CAM_TWO"));
     TestFixtures::LocalHttpTestServer server;
     QTemporaryDir servedDir;
     QVERIFY(servedDir.isValid());
-    QString uri = QStringLiteral("mftp://[;comp=%1]/camera.xml.gz").arg(MAV_COMP_ID_AUTOPILOT1);
-    if (http) {
-        QVERIFY(server.listen());
-        server.installHttpResponder(definition);
-        uri = server.url(QStringLiteral("/camera.xml.gz"));
-    } else {
-        const QString servedFile = servedDir.filePath(QStringLiteral("camera.xml.gz"));
-        QVERIFY(TestFixtures::writeFile(servedFile, definition));
-        _mockLink->mockLinkFTP()->setServedFile(QStringLiteral("/camera.xml.gz"), servedFile);
-    }
-    const QByteArray uriBytes = uri.toUtf8();
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    memcpy(info.cam_definition_uri, uriBytes.constData(), static_cast<size_t>(uriBytes.size()));
+    const QString uri =
+        _serveDefinition(http, TestFixtures::gzipMember(cameraDefinition("CAM_TWO")), server, servedDir.path());
+    QVERIFY(!uri.isEmpty());
+    const mavlink_camera_information_t info = acmeCameraInformation(uri);
 
     // Both downloads arrive before either is read, and then they are read one after the other
     QThreadPool* const pool = QThreadPool::globalInstance();
@@ -490,11 +509,12 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadFailureFallsBack_data()
 
     QTest::newRow("transfer fails") << QStringLiteral("transfer");
     QTest::newRow("file is truncated") << QStringLiteral("truncated");
-    QTest::newRow("file is larger than the limit") << QStringLiteral("limit");
+    QTest::newRow("file announced larger than the limit") << QStringLiteral("announced");
 }
 
 // A MAVLink FTP download of the definition that fails ends as one over HTTP does: the camera is initialised without
-// a definition, once, and nothing is cached
+// a definition, once, and nothing is cached. The transfer is held to the size that the definition is read with: a
+// file that announces more is refused before any of it is written.
 void VehicleCameraControlTest::_testFtpDefinitionDownloadFailureFallsBack()
 {
     QFETCH(QString, failure);
@@ -526,21 +546,16 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadFailureFallsBack()
         expectLogMessage("Camera.VehicleCameraControl", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Could not read the downloaded camera definition.*gzip")));
     } else {
-        expectLogMessage(
-            "Camera.VehicleCameraControl", QtWarningMsg,
-            QRegularExpression(QStringLiteral("Could not read the downloaded camera definition.*size limit")));
+        _mockLink->mockLinkFTP()->setAnnouncedFileLength(
+            static_cast<uint32_t>(VehicleFileFetch::kMaxSmallFileBytes + 1));
+        expectLogMessage("Camera.VehicleCameraControl", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Camera definition download failed:.*larger than")));
     }
 
-    const QByteArray uri = QStringLiteral("mftp://[;comp=%1]%2").arg(MAV_COMP_ID_AUTOPILOT1).arg(vehiclePath).toUtf8();
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    memcpy(info.cam_definition_uri, uri.constData(), static_cast<size_t>(uri.size()));
+    const mavlink_camera_information_t info =
+        acmeCameraInformation(QStringLiteral("mftp://[;comp=%1]%2").arg(MAV_COMP_ID_AUTOPILOT1).arg(vehiclePath));
 
     auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
-    if (failure == QStringLiteral("limit")) {
-        camera->setMaxDefinitionBytes(16);
-    }
     QSignalSpy readySpy(camera.get(), &CameraControlProbe::parametersReady);
     QTRY_VERIFY_WITH_TIMEOUT(camera->paramComplete(), TestTimeout::mediumMs());
     verifyExpectedLogMessage();
@@ -588,27 +603,18 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadIsSavedAsCacheFile()
     // which a second camera can load from the cache.
     QByteArray servedContent = cameraDefinition("CAM_FTP");
     if (!gzip) {
-        QFile served(QStringLiteral(":MockLink/General.MetaData.json"));
-        QVERIFY(served.open(QIODevice::ReadOnly));
-        servedContent = served.readAll();
+        servedContent = TestFixtures::readFile(QStringLiteral(":MockLink/General.MetaData.json"));
+        QVERIFY(!servedContent.isEmpty());
     }
     QTemporaryDir servedDir;
     QVERIFY(servedDir.isValid());
     if (gzip) {
         const QString gzipFile = servedDir.filePath(QStringLiteral("camera.xml.gz"));
-        QFile file(gzipFile);
-        QVERIFY(file.open(QIODevice::WriteOnly));
-        QVERIFY(file.write(TestFixtures::gzipMember(servedContent)) > 0);
-        file.close();
+        QVERIFY(TestFixtures::writeFile(gzipFile, TestFixtures::gzipMember(servedContent)));
         _mockLink->mockLinkFTP()->setServedFile(vehiclePath, gzipFile);
     }
-    const QString uri = QStringLiteral("mftp://[;comp=%1]%2").arg(MAV_COMP_ID_AUTOPILOT1).arg(vehiclePath);
-    const QByteArray uriBytes = uri.toUtf8();
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    QVERIFY(uriBytes.size() < static_cast<qsizetype>(sizeof(info.cam_definition_uri)));
-    memcpy(info.cam_definition_uri, uriBytes.constData(), static_cast<size_t>(uriBytes.size()));
+    const mavlink_camera_information_t info =
+        acmeCameraInformation(QStringLiteral("mftp://[;comp=%1]%2").arg(MAV_COMP_ID_AUTOPILOT1).arg(vehiclePath));
 
     if (!gzip) {
         expectLogMessage("default", QtCriticalMsg,
@@ -628,9 +634,7 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadIsSavedAsCacheFile()
         verifyExpectedLogMessage();
     }
 
-    const QString expectedCacheFile = QDir::cleanPath(
-        QDir(cacheDir).filePath(VehicleCameraControl::cacheFileToken(QStringLiteral("Acme"), QStringLiteral("Cam"), 0) +
-                                QStringLiteral(".xml")));
+    const QString expectedCacheFile = acmeCameraCacheFile();
     QCOMPARE(camera->cacheFile(), expectedCacheFile);
 
     if (!gzip) {
@@ -673,25 +677,30 @@ void VehicleCameraControlTest::_testHttpDefinitionIsHeldToSizeAndDecompressed_da
 
     const QByteArray definition = cameraDefinition("CAM_HTTP");
     const QByteArray oversized(8 * 1024, ' ');
-    const auto withLength = [](const QByteArray& body) {
-        return QByteArray("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: ") +
-               QByteArray::number(body.size()) + "\r\n\r\n" + body;
+    const auto withLength = [](const QByteArray& body, qint64 length) {
+        return QByteArray("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: ") + QByteArray::number(length) +
+               "\r\n\r\n" + body;
     };
-    const QByteArray withoutLength("HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n");
 
-    // The limit is set once the download has started, so it is the reading of the download that holds to it
-    const QString overLimit = QStringLiteral("Could not read the downloaded camera definition.*size limit");
-    QTest::newRow("compressed") << withLength(TestFixtures::gzipMember(definition)) << QString();
-    QTest::newRow("larger than the limit") << withLength(definition + oversized) << overLimit;
-    QTest::newRow("larger than the limit, of no announced length")
-        << (withoutLength + definition + oversized) << overLimit;
+    // The test sets the limit of the camera once the download has started, so that limit holds the reading of the
+    // download, and the transfer has the limit that every camera has
+    const QString readRefused = QStringLiteral("Could not read the downloaded camera definition.*size limit");
+    const QByteArray compressed = TestFixtures::gzipMember(definition);
+    QTest::newRow("compressed") << withLength(compressed, compressed.size()) << QString();
+    QTest::newRow("larger than the limit")
+        << withLength(definition + oversized, definition.size() + oversized.size()) << readRefused;
+    const QByteArray compressedOversized = TestFixtures::gzipMember(definition + oversized);
     QTest::newRow("larger than the limit once decompressed")
-        << withLength(TestFixtures::gzipMember(definition + oversized)) << overLimit;
+        << withLength(compressedOversized, compressedOversized.size()) << readRefused;
+    // Refused when it is announced: the body is not what the camera would have to store
+    QTest::newRow("announced larger than the limit of the transfer")
+        << withLength(definition, VehicleFileFetch::kMaxSmallFileBytes + 1)
+        << QStringLiteral("Camera definition download failed:.*larger than");
 }
 
-// A definition over HTTP(S) comes from where the camera points to. It is held to a size, also when it is not
-// compressed, and decompressed if it is, as over MAVLink FTP. A definition that is refused leaves nothing: the camera
-// is initialised without it and nothing is cached.
+// A definition over HTTP(S) comes from where the camera points to. Its transfer and its reading are held to a size,
+// also when it is not compressed, and it is decompressed if it is, as over MAVLink FTP. A definition that is refused
+// leaves nothing: the camera is initialised without it and nothing is cached.
 void VehicleCameraControlTest::_testHttpDefinitionIsHeldToSizeAndDecompressed()
 {
     QFETCH(QByteArray, response);
@@ -705,25 +714,18 @@ void VehicleCameraControlTest::_testHttpDefinitionIsHeldToSizeAndDecompressed()
     QTemporaryDir saveRoot;
     QVERIFY(saveRoot.isValid());
     const auto restoreSavePath = overrideSavePath(saveRoot.path());
-    const QString cacheFile =
-        QDir(SettingsManager::instance()->appSettings()->parameterSavePath())
-            .filePath(VehicleCameraControl::cacheFileToken(QStringLiteral("Acme"), QStringLiteral("Cam"), 1) +
-                      QStringLiteral(".xml"));
+    const QString cacheFile = acmeCameraCacheFile(1);
 
     TestFixtures::LocalHttpTestServer server;
     QVERIFY(server.listen());
     server.installRawResponder(response);
-
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    info.cam_definition_version = 1;
-    const QByteArray uri = server.url(QStringLiteral("/definition.xml")).toUtf8();
-    QVERIFY(uri.size() < static_cast<qsizetype>(sizeof(info.cam_definition_uri)));
-    memcpy(info.cam_definition_uri, uri.constData(), static_cast<size_t>(uri.size()));
+    const mavlink_camera_information_t info = acmeCameraInformation(server.url(QStringLiteral("/definition.xml")), 1);
 
     if (!refusal.isEmpty()) {
         expectLogMessage("Camera.VehicleCameraControl", QtWarningMsg, QRegularExpression(refusal));
+        // What the downloader says of a transfer that it refuses
+        ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("The file is larger than")));
     }
     // Nothing arrives before the event loop runs, so the limit is set in time
     auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
@@ -740,9 +742,7 @@ void VehicleCameraControlTest::_testHttpDefinitionIsHeldToSizeAndDecompressed()
 
     QTRY_VERIFY_WITH_TIMEOUT(!camera->isBasic(), TestTimeout::mediumMs());
     QCOMPARE(camera->activeSettings(), QStringList{QStringLiteral("CAM_HTTP")});
-    QFile cache(cacheFile);
-    QVERIFY(cache.open(QIODevice::ReadOnly));
-    QCOMPARE(cache.readAll().trimmed(), cameraDefinition("CAM_HTTP"));
+    QCOMPARE(TestFixtures::readFile(cacheFile).trimmed(), cameraDefinition("CAM_HTTP"));
 }
 
 void VehicleCameraControlTest::_testDefinitionIsReadAndParsedOnWorker_data()
@@ -769,22 +769,12 @@ void VehicleCameraControlTest::_testDefinitionIsReadAndParsedOnWorker()
     QTemporaryDir saveRoot;
     QVERIFY(saveRoot.isValid());
     const auto restoreSavePath = overrideSavePath(saveRoot.path());
-    const QString cacheFile =
-        QDir(SettingsManager::instance()->appSettings()->parameterSavePath())
-            .filePath(VehicleCameraControl::cacheFileToken(QStringLiteral("Acme"), QStringLiteral("Cam"), 1) +
-                      QStringLiteral(".xml"));
-    QFile cache(cacheFile);
-    QVERIFY(cache.open(QIODevice::WriteOnly));
-    QVERIFY(cache.write(cameraDefinition("CAM_CACHED")) > 0);
-    cache.close();
+    const QString cacheFile = acmeCameraCacheFile(1);
+    QVERIFY(TestFixtures::writeFile(cacheFile, cameraDefinition("CAM_CACHED")));
 
     // Not MAVLink FTP and cached, so nothing is downloaded
-    mavlink_camera_information_t info{};
-    memcpy(info.vendor_name, "Acme", 5);
-    memcpy(info.model_name, "Cam", 4);
-    info.cam_definition_version = 1;
-    const QByteArray uri("http://127.0.0.1:1/definition.xml");
-    memcpy(info.cam_definition_uri, uri.constData(), static_cast<size_t>(uri.size()));
+    const mavlink_camera_information_t info =
+        acmeCameraInformation(QStringLiteral("http://127.0.0.1:1/definition.xml"), 1);
 
     TestFixtures::ThreadPoolBlocker blocker;
     QVERIFY(blocker.isBlocking());
@@ -807,8 +797,7 @@ void VehicleCameraControlTest::_testDefinitionIsReadAndParsedOnWorker()
         QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
         QCoreApplication::sendPostedEvents();
         // A definition that was not read from the cache would have been written to it
-        QVERIFY(cache.open(QIODevice::ReadOnly));
-        QCOMPARE(cache.readAll(), cameraDefinition("CAM_CACHED"));
+        QCOMPARE(TestFixtures::readFile(cacheFile), cameraDefinition("CAM_CACHED"));
         return;
     }
 
@@ -817,8 +806,75 @@ void VehicleCameraControlTest::_testDefinitionIsReadAndParsedOnWorker()
     QCOMPARE(camera->activeSettings(), QStringList{newer ? QStringLiteral("CAM_NEWER") : QStringLiteral("CAM_CACHED")});
     // The cached definition that the newer one replaced was dropped unread, so the newer one is cached now
     QCOMPARE(camera->cached(), !newer);
-    QVERIFY(cache.open(QIODevice::ReadOnly));
-    QCOMPARE(cache.readAll(), cameraDefinition(newer ? "CAM_NEWER" : "CAM_CACHED"));
+    QCOMPARE(TestFixtures::readFile(cacheFile), cameraDefinition(newer ? "CAM_NEWER" : "CAM_CACHED"));
+}
+
+void VehicleCameraControlTest::_testDefinitionIsLocalised_data()
+{
+    QTest::addColumn<QString>("locale");
+    QTest::addColumn<QByteArray>("locales");
+    QTest::addColumn<QString>("description");
+    QTest::addColumn<QString>("warning");
+
+    const QByteArray french(R"(<locale name="fr_FR"><strings original="Setting" translated="Reglage"/></locale>)");
+    const QByteArray german(R"(<locale name="de_DE"><strings original="Setting" translated="Einstellung"/></locale>)");
+    const QByteArray unnamed(R"(<locale><strings original="Setting" translated="Unnamed"/></locale>)");
+
+    QTest::newRow("a locale of the definition")
+        << QStringLiteral("de_DE") << (french + german) << QStringLiteral("Einstellung") << QString();
+    QTest::newRow("the language of a locale of the definition")
+        << QStringLiteral("de_AT") << (french + german) << QStringLiteral("Einstellung") << QString();
+    QTest::newRow("a language the definition has no locale of")
+        << QStringLiteral("it_IT") << (french + german) << QStringLiteral("Setting")
+        << QStringLiteral("No match for \"it_IT\" in camera definition file");
+    QTest::newRow("after a locale without a name")
+        << QStringLiteral("de_DE") << (unnamed + german) << QStringLiteral("Einstellung")
+        << QStringLiteral("Localization entry is missing its name attribute");
+    QTest::newRow("en_US, which the definition is written in")
+        << QStringLiteral("en_US") << (french + german) << QStringLiteral("Setting") << QString();
+}
+
+// A definition holds the strings of other locales in its <localization> element. Those of the locale of the user, or
+// else of a locale of the same language, are put in before the definition is loaded, on the worker that parses it;
+// what the localization lacks is warned about afterwards. The cache keeps the definition as the camera sent it.
+void VehicleCameraControlTest::_testDefinitionIsLocalised()
+{
+    QFETCH(QString, locale);
+    QFETCH(QByteArray, locales);
+    QFETCH(QString, description);
+    QFETCH(QString, warning);
+
+    _connectVehicle(newMockConfiguration(QStringLiteral("CameraLocalisationTest")));
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QTemporaryDir saveRoot;
+    QVERIFY(saveRoot.isValid());
+    const auto restoreSavePath = overrideSavePath(saveRoot.path());
+
+    QByteArray definition = cameraDefinition("CAM_LOCALE");
+    definition.replace("</mavlinkcamera>", "<localization>" + locales + "</localization></mavlinkcamera>");
+    TestFixtures::LocalHttpTestServer server;
+    const QString uri = _serveDefinition(true, definition, server, QString());
+    QVERIFY(!uri.isEmpty());
+    const mavlink_camera_information_t info = acmeCameraInformation(uri);
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("default", QtWarningMsg, QRegularExpression(QRegularExpression::escape(warning)));
+    }
+    // Nothing arrives before the event loop runs, so the locale is set in time
+    auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
+    camera->setLocaleName(locale);
+    QTRY_VERIFY_WITH_TIMEOUT(!camera->isBasic(), TestTimeout::longMs());
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    Fact* const setting = camera->getFact(QStringLiteral("CAM_LOCALE"));
+    QVERIFY(setting);
+    QCOMPARE(setting->shortDescription(), description);
+    QCOMPARE(TestFixtures::readFile(acmeCameraCacheFile()), definition);
 }
 
 void VehicleCameraControlTest::initTestCase()

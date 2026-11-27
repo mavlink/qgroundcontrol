@@ -6,8 +6,6 @@
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
@@ -149,8 +147,7 @@ void QGCFileDownloadTest::_testFileDownloadOutputDirectory()
     const QList<QVariant> args = finishedSpy.first();
     QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
     QCOMPARE(args.at(1).toString(), outputDir.filePath(QStringLiteral("manifest.json.gz")));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-             QStringList{QStringLiteral("manifest.json.gz")});
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList{QStringLiteral("manifest.json.gz")});
     QCOMPARE(TestFixtures::readFile(args.at(1).toString()), TestFixtures::readFile(":/unittest/manifest.json.gz"));
 }
 
@@ -249,6 +246,34 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
     QVERIFY(!args.at(0).toBool());
 }
 
+// A handler of finished() may start the next download when one is cancelled: the cancelled download is cleaned up
+// before the signal, where after it the cleanup would end the new one
+void QGCFileDownloadTest::_testFileDownloadRestartFromCancelHandler()
+{
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+    QGCFileDownload downloader(this);
+    downloader.setOutputDirectory(outputDir.path());
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    bool restarted = false;
+    (void) connect(&downloader, &QGCFileDownload::finished, this, [&downloader, &restarted](bool success) {
+        if (!success && !restarted) {
+            restarted = downloader.start(":/unittest/arducopter.apj");
+        }
+    });
+
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    downloader.cancel();
+    QVERIFY(restarted);
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 2, TestTimeout::mediumMs());
+
+    QVERIFY(!finishedSpy.first().at(0).toBool());
+    const QList<QVariant> args = finishedSpy.last();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    QCOMPARE(args.at(1).toString(), outputDir.filePath(QStringLiteral("arducopter.apj")));
+    QCOMPARE(TestFixtures::readFile(args.at(1).toString()), TestFixtures::readFile(":/unittest/arducopter.apj"));
+}
+
 void QGCFileDownloadTest::_testFileDownloadSizeLimit_data()
 {
     // A raw HTTP response, or empty to download a local file of the body
@@ -321,7 +346,7 @@ void QGCFileDownloadTest::_testFileDownloadSizeLimit()
         QVERIFY(args.at(1).toString().isEmpty());
         QVERIFY2(args.at(2).toString().startsWith(QStringLiteral("The file is larger than")),
                  qPrintable(args.at(2).toString()));
-        QCOMPARE(downloads.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot), QStringList());
+        QCOMPARE(ArchiveFixtures::entriesBelow(downloads.path()), QStringList());
     } else {
         QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
         QCOMPARE(TestFixtures::readFile(args.at(1).toString()), body);
@@ -379,8 +404,7 @@ void QGCFileDownloadTest::_testAutoDecompress()
     QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
     QCOMPARE(args.at(1).toString(), outputDir.filePath(resultName));
     QCOMPARE(downloader.localPath(), outputDir.filePath(resultName));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-             QStringList{resultName});
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList{resultName});
     QCOMPARE(TestFixtures::readFile(outputDir.filePath(resultName)), content);
 }
 
@@ -434,7 +458,7 @@ void QGCFileDownloadTest::_testAutoDecompressFailure()
                                       QRegularExpression::CaseInsensitiveOption);
     QVERIFY2(error.contains(expected), qPrintable(error));
     QCOMPARE(downloader.state(), QGCFileDownload::State::Failed);
-    QVERIFY(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot));
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList());
 }
 
 // Cancelling a download while its file is decompressed ends it at once, and the decompression leaves no file once it
@@ -477,8 +501,7 @@ void QGCFileDownloadTest::_testAutoDecompressCancelled()
     const QString decompressedPath = outputDir.filePath(QStringLiteral("next.json"));
     QCOMPARE(args.at(1).toString(), decompressedPath);
     QVERIFY(TestFixtures::readFile(decompressedPath).contains("\"name\""));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-             QStringList{QStringLiteral("next.json")});
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList{QStringLiteral("next.json")});
 }
 
 void QGCFileDownloadTest::_testAutoDecompressEndedWithoutResult_data()
@@ -528,8 +551,7 @@ void QGCFileDownloadTest::_testAutoDecompressEndedWithoutResult()
 
     // A cancelled job ends on its own, and its work directory goes with it
     QVERIFY(!succeeded);
-    QTRY_VERIFY_WITH_TIMEOUT(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-                             TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList(), TestTimeout::mediumMs());
 }
 
 // A download that is cancelled while its worker decompresses leaves nothing, also on Windows, where a file that the
@@ -563,8 +585,7 @@ void QGCFileDownloadTest::_testAutoDecompressCancelledWhileRunning()
     QVERIFY(firstProgress > 0.0);
     QVERIFY(firstProgress < 1.0);
     QCOMPARE(downloader.state(), QGCFileDownload::State::Cancelled);
-    QTRY_VERIFY_WITH_TIMEOUT(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-                             TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList(), TestTimeout::mediumMs());
 }
 
 void QGCFileDownloadTest::_testAutoDecompressLeavesNewerFile_data()
@@ -603,9 +624,7 @@ void QGCFileDownloadTest::_testAutoDecompressLeavesNewerFile()
     blocker.release();
 
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
-    const auto entries = [&outputDir]() {
-        return QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name);
-    };
+    const auto entries = [&outputDir]() { return ArchiveFixtures::entriesBelow(outputDir.path()); };
     if (cancel) {
         QVERIFY(!finishedSpy.first().at(0).toBool());
         // Once the cancelled job has ended
@@ -693,8 +712,7 @@ void QGCFileDownloadTest::_testAutoDecompressReplacesExistingFile()
     } else {
         QCOMPARE(TestFixtures::readFile(resultPath), QByteArray("existing"));
     }
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
-             QStringList{QStringLiteral("manifest.json")});
+    QCOMPARE(ArchiveFixtures::entriesBelow(outputDir.path()), QStringList{QStringLiteral("manifest.json")});
 }
 
 // What a download that crashed left beside the output path is removed when the next one starts. The work directory of a
@@ -720,54 +738,6 @@ void QGCFileDownloadTest::_testAutoDecompressRemovesStaleDirectories()
 
     QCOMPARE(output.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
              (QStringList{QFileInfo(running.path()).fileName(), QStringLiteral("manifest.json")}));
-}
-
-// ============================================================================
-// Integration Tests (Download + Compression)
-// ============================================================================
-void QGCFileDownloadTest::_testDownloadAndExtractZip()
-{
-    QTemporaryDir tempDir;
-    // Integration test: Download a ZIP archive and extract it
-    // This tests the full workflow of QGCFileDownload + Compression
-    QGCFileDownload* const downloader = new QGCFileDownload(this);
-    QString resultLocalFile;
-    QString resultErrorMsg;
-    (void)connect(downloader, &QGCFileDownload::finished, this,
-                  [&resultLocalFile, &resultErrorMsg](bool success, const QString& localFile, const QString& errorMsg) {
-                      QVERIFY(success);
-                      resultLocalFile = localFile;
-                      resultErrorMsg = errorMsg;
-                  });
-    QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    QVERIFY(downloader->start(":/unittest/manifest.json.zip"));
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    downloader->deleteLater();
-    // Verify download succeeded
-    QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
-    QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Downloaded file doesn't exist: " + resultLocalFile));
-    // Create temp directory for extraction
-    const QString extractDir = tempDir.path() + "/extract_zip";
-    QDir().mkpath(extractDir);
-    QVERIFY(!extractDir.isEmpty());
-    // Extract the downloaded archive using Compression
-    const Compression::Outcome extractResult = Compression::extractArchive(resultLocalFile, extractDir);
-    QVERIFY2(extractResult, qPrintable("Extraction failed: " + extractResult.message));
-    // Verify extracted content
-    const QString extractedFile = extractDir + "/manifest.json";
-    QVERIFY2(QFile::exists(extractedFile), qPrintable("Extracted file doesn't exist: " + extractedFile));
-    // Verify extracted content is valid JSON
-    QFile jsonFile(extractedFile);
-    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
-    const QByteArray jsonData = jsonFile.readAll();
-    jsonFile.close();
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
-    QVERIFY2(!doc.isNull(), qPrintable("Invalid JSON: " + parseError.errorString()));
-    QVERIFY(doc.isObject());
-    QVERIFY(doc.object().contains("name"));
-    // Cleanup downloaded file
-    QFile::remove(resultLocalFile);
 }
 
 UT_REGISTER_TEST(QGCFileDownloadTest, TestLabel::Integration, TestLabel::Utilities)

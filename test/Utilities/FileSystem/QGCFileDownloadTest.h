@@ -18,6 +18,7 @@ private slots:
     void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();
+    void _testFileDownloadRestartFromCancelHandler();
     UT_PARAMETERIZED_TEST(_testFileDownloadSizeLimit);
     UT_PARAMETERIZED_TEST(_testAutoDecompress);
     UT_PARAMETERIZED_TEST(_testAutoDecompressFailure);
@@ -27,7 +28,4 @@ private slots:
     UT_PARAMETERIZED_TEST(_testAutoDecompressLeavesNewerFile);
     void _testAutoDecompressRemovesStaleDirectories();
     UT_PARAMETERIZED_TEST(_testAutoDecompressReplacesExistingFile);
-
-    // Integration tests (download + compression)
-    void _testDownloadAndExtractZip();
 };

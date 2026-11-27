@@ -20,6 +20,7 @@ target_sources(
         QGCTileCacheDatabaseTest.h
         QGCTileSetTest.cc
         QGCTileSetTest.h
+        TileSetFixtures.h
         UrlFactoryTest.cc
         UrlFactoryTest.h
 )
