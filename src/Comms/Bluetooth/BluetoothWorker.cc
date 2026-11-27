@@ -138,7 +138,7 @@ void BluetoothWorker::_serviceDiscoveryTimeout()
     qCWarning(BluetoothWorkerLog) << "Service discovery timed out after" << SERVICE_DISCOVERY_TIMEOUT_MS << "ms";
     _consecutiveFailures++;
 
-    onServiceDiscoveryTimeout();
-
     emit errorOccurred(tr("Service discovery timed out"));
+
+    onServiceDiscoveryTimeout();
 }

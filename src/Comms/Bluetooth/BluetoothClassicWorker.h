@@ -9,6 +9,7 @@
 class BluetoothClassicWorker : public BluetoothWorker
 {
     Q_OBJECT
+    friend class BluetoothWorkerTest;
 
 public:
     explicit BluetoothClassicWorker(const BluetoothConfiguration *config, QObject *parent = nullptr);
@@ -37,10 +38,13 @@ private:
     void _setupClassicSocket();
     void _startClassicServiceDiscovery();
     void _writeClassicData(const QByteArray &data);
+    void _finishConnectionAttempt();
 
     QPointer<QBluetoothSocket> _socket;
     QPointer<QBluetoothServiceDiscoveryAgent> _classicDiscovery;
     QBluetoothServiceInfo _classicDiscoveredService;
+    bool _connectionPending = false;
+    bool _serviceDiscoveryAttempted = false;
 
     static inline const QBluetoothUuid SPP_UUID{QBluetoothUuid::ServiceClassUuid::SerialPort};
 };

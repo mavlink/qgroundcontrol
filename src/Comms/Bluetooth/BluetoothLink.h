@@ -13,6 +13,7 @@ class QThread;
 class BluetoothLink : public LinkInterface
 {
     Q_OBJECT
+    friend class BluetoothWorkerTest;
 
 public:
     explicit BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
@@ -38,6 +39,9 @@ private:
     BluetoothConfiguration *_bluetoothConfig = nullptr;
     QPointer<BluetoothWorker> _worker;
     QPointer<QThread> _workerThread;
+    bool _connectPending = false;
+    bool _permissionRequestPending = false;
+    bool _workerReady = false;
     std::atomic<bool> _connectedCache{false};
     std::atomic<bool> _disconnectedEmitted{false};
 };
