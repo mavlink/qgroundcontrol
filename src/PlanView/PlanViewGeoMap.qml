@@ -8,8 +8,9 @@ import QGroundControl.GeoMap
 
 /// GeoMap-engine drop-in for the QtLocation FlightMap of Plan View. GeoMapView provides the editorMap contract Plan
 /// View and its panels consume (center, zoomLevel, toCoordinate/fromCoordinate, setVisibleRegion, mapClicked, ...).
-/// The plan is displayed, and the current simple mission item and rally point can be dragged. Editing fence points
-/// and pattern items on this map is not supported yet.
+/// The plan is displayed; the current simple mission item and rally point can be dragged, a fence is selected by
+/// clicking it, and the selected fence and the breach return point can be edited. Editing pattern items on this map
+/// is not supported yet.
 GeoMapView {
     id: root
 
@@ -19,6 +20,8 @@ GeoMapView {
     property bool missionInteractive: false                    ///< The current mission item can be dragged on the map
     property real rallyOpacity: 1                              ///< Dims the rally points while another layer is edited
     property bool rallyInteractive: false                      ///< Rally points can be selected and the current one dragged
+    property real fenceOpacity: 1                              ///< Dims the fence while another layer is edited
+    property bool fenceInteractive: false                      ///< The selected fence can be edited on the map
     property real _nonInteractiveOpacity: 0.5                  ///< Consumed by the Plan View panels
 
     readonly property var _missionController: planMasterController ? planMasterController.missionController : null
@@ -30,10 +33,61 @@ GeoMapView {
 
     /// A mission item marker was picked on the map
     signal itemSelected(int sequenceNumber)
+    /// The breach return point marker was picked on the map
+    signal breachReturnPointSelected()
+    /// A fence was picked on the map and is now the selected one
+    signal fenceSelected()
 
     function _closeMissionItemSelectionPanel() {
         if (_missionItemSelectionPanel) {
             _missionItemSelectionPanel.close()
+        }
+    }
+
+    /// Makes the fence under a map click the selected one; the smallest when fences overlap, so a fence nested in
+    /// another can be picked
+    function _selectFenceAt(position) {
+        const controller = _geoFenceController
+        if (!controller) {
+            return
+        }
+        const coordinate = toCoordinate(position, false /* clipToViewPort */)
+        if (!coordinate.isValid) {
+            return
+        }
+        let picked = null
+        let pickedArea = Infinity
+        for (let i = 0; i < controller.polygons.count; i++) {
+            const polygon = controller.polygons.get(i)
+            // Clicks while tracing add vertices to the traced polygon
+            if (polygon.traceMode) {
+                return
+            }
+            const area = Math.abs(polygon.area)
+            if (area < pickedArea && polygon.containsCoordinate(coordinate)) {
+                picked = polygon
+                pickedArea = area
+            }
+        }
+        for (let i = 0; i < controller.circles.count; i++) {
+            const circle = controller.circles.get(i)
+            const radius = circle.radius.rawValue
+            const area = Math.PI * radius * radius
+            if (area < pickedArea && circle.center.distanceTo(coordinate) <= radius) {
+                picked = circle
+                pickedArea = area
+            }
+        }
+        if (picked && !picked.interactive && mainWindow.allowViewSwitch()) {
+            controller.clearAllInteractive()
+            picked.interactive = true
+            fenceSelected()
+        }
+    }
+
+    onMapClicked: (position) => {
+        if (fenceInteractive) {
+            _selectFenceAt(position)
         }
     }
 
@@ -102,10 +156,16 @@ GeoMapView {
     }
 
     GeoMapGeoFenceVisuals {
+        objectName: "planView_geoFenceMapVisuals"
         scene: root.scene
         surfaceModel: root.surfaceModel
         geoFenceController: root._geoFenceController
         homePosition: root._plannedHomePosition
+        opacity: root.fenceOpacity
+        interactive: root.fenceInteractive
+        mapView: root
+
+        onBreachReturnPointClicked: root.breachReturnPointSelected()
     }
 
     Repeater {

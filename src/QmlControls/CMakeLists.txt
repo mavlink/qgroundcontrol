@@ -95,6 +95,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 qt_add_library(QGroundControlControlsModule STATIC)
 
 set_source_files_properties(
+    MapViewportTools.qml
     ScreenTools.qml
     PROPERTIES
         QT_QML_SINGLETON_TYPE TRUE
@@ -138,6 +139,7 @@ qt_add_qml_module(
         LabelledComboBox.qml
         LabelledLabel.qml
         LogReplayStatusBar.qml
+        MapViewportTools.qml
         MissionCommandDialog.qml
         MvPanelPage.qml
         OfflineMapButton.qml

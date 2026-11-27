@@ -6,7 +6,7 @@ import QGroundControl.Controls
 
 /// Column of tab pills, styled like QGCGroupBox header buttons. Pills show vertical text when there is room and icons
 /// otherwise. The right side of each pill is padding meant to sit under the panel it is attached to.
-Column {
+Item {
     id: root
 
     property var    model:          []  ///< Entries from PlanPanelLogic.tabModel()
@@ -29,77 +29,93 @@ Column {
         "rally":    qsTr("Rally")
     })
 
-    spacing: ScreenTools.defaultFontPixelWidth / 2
+    implicitWidth: pillColumn.implicitWidth
+    implicitHeight: pillColumn.implicitHeight
 
-    Repeater {
-        model: root.model
+    // Disabled pills and the gaps between them would otherwise pass clicks through to the map underneath. Every button,
+    // since right and middle drags orbit the GeoMap camera, and no stealing: the map's drag handlers take the drag over
+    // once it moves.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        preventStealing: true
+    }
 
-        AbstractButton {
-            id: pill
+    Column {
+        id: pillColumn
 
-            required property var modelData
+        spacing: ScreenTools.defaultFontPixelWidth / 2
 
-            readonly property bool current: modelData.id === root.currentTab
+        Repeater {
+            model: root.model
 
-            objectName:     "planPanel_tab_" + modelData.id
-            text:           root._labels[modelData.id]
-            enabled:        modelData.enabled
-            implicitWidth:  ScreenTools.defaultFontPixelHeight * 2.2
-            implicitHeight: root._textStyle ? ScreenTools.defaultFontPixelHeight * 1.5 + tabText.implicitWidth : ScreenTools.defaultFontPixelHeight * 2.6
-            rightPadding:   ScreenTools.defaultBorderRadius * 2
-            hoverEnabled:   !ScreenTools.isMobile
-            focusPolicy:    Qt.ClickFocus
+            AbstractButton {
+                id: pill
 
-            Accessible.name: text
+                required property var modelData
 
-            onClicked: root.tabClicked(modelData.id)
+                readonly property bool current: modelData.id === root.currentTab
 
-            QGCPalette { id: pillPal; colorGroupEnabled: pill.enabled }
+                objectName:     "planPanel_tab_" + modelData.id
+                text:           root._labels[modelData.id]
+                enabled:        modelData.enabled
+                implicitWidth:  ScreenTools.defaultFontPixelHeight * 2.2
+                implicitHeight: root._textStyle ? ScreenTools.defaultFontPixelHeight * 1.5 + tabText.implicitWidth : ScreenTools.defaultFontPixelHeight * 2.6
+                rightPadding:   ScreenTools.defaultBorderRadius * 2
+                hoverEnabled:   !ScreenTools.isMobile
+                focusPolicy:    Qt.ClickFocus
 
-            background: Rectangle {
-                radius:         ScreenTools.defaultBorderRadius
-                color:          pill.current ? pillPal.accentSubtle : pillPal.windowPanel
-                border.width:   1
-                border.color:   pill.current || pill.hovered || pill.pressed ? pillPal.accent : pillPal.borderSubtle
-            }
+                Accessible.name: text
 
-            contentItem: Item {
-                QGCColoredImage {
-                    anchors.centerIn:       parent
-                    width:                  ScreenTools.defaultFontPixelHeight
-                    height:                 width
-                    visible:                !root._textStyle
-                    source:                 root._icons[pill.modelData.id]
-                    color:                  pillPal.textPrimary
-                    fillMode:               Image.PreserveAspectFit
-                    sourceSize.height:      height
+                onClicked: root.tabClicked(modelData.id)
+
+                QGCPalette { id: pillPal; colorGroupEnabled: pill.enabled }
+
+                background: Rectangle {
+                    radius:         ScreenTools.defaultBorderRadius
+                    color:          pill.current ? pillPal.accentSubtle : pillPal.windowPanel
+                    border.width:   1
+                    border.color:   pill.current || pill.hovered || pill.pressed ? pillPal.accent : pillPal.borderSubtle
                 }
 
-                QGCLabel {
-                    id:                 tabText
-                    anchors.centerIn:   parent
-                    rotation:           -90
-                    visible:            root._textStyle
-                    text:               pill.text
-                    color:              pillPal.textPrimary
+                contentItem: Item {
+                    QGCColoredImage {
+                        anchors.centerIn:       parent
+                        width:                  ScreenTools.defaultFontPixelHeight
+                        height:                 width
+                        visible:                !root._textStyle
+                        source:                 root._icons[pill.modelData.id]
+                        color:                  pillPal.textPrimary
+                        fillMode:               Image.PreserveAspectFit
+                        sourceSize.height:      height
+                    }
+
+                    QGCLabel {
+                        id:                 tabText
+                        anchors.centerIn:   parent
+                        rotation:           -90
+                        visible:            root._textStyle
+                        text:               pill.text
+                        color:              pillPal.textPrimary
+                    }
                 }
-            }
 
-            // Warning dot at the top-left corner of the pill, overlapping the icon or the end of the text a little
-            Rectangle {
-                id: badge
+                // Warning dot at the top-left corner of the pill, overlapping the icon or the end of the text a little
+                Rectangle {
+                    id: badge
 
-                readonly property real margin: ScreenTools.defaultFontPixelHeight * 0.25
+                    readonly property real margin: ScreenTools.defaultFontPixelHeight * 0.25
 
-                objectName:         "planPanel_tabBadge_" + pill.modelData.id
-                x:                  margin
-                y:                  margin
-                z:                  1
-                width:              ScreenTools.defaultFontPixelHeight * 0.6
-                height:             width
-                radius:             width / 2
-                visible:            pill.modelData.warn
-                color:              pillPal.colorOrange
+                    objectName:         "planPanel_tabBadge_" + pill.modelData.id
+                    x:                  margin
+                    y:                  margin
+                    z:                  1
+                    width:              ScreenTools.defaultFontPixelHeight * 0.6
+                    height:             width
+                    radius:             width / 2
+                    visible:            pill.modelData.warn
+                    color:              pillPal.colorOrange
+                }
             }
         }
     }

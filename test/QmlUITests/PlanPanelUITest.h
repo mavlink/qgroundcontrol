@@ -23,6 +23,8 @@ private slots:
     void _testFlagOffShowsTreeView();
     void _testEmptyPlanStartsOnPlanTab();
     void _testTabSelectionDrivesEditingLayer();
+    void _testDisabledTabsDoNotPassClicksToTheMap_data();
+    void _testDisabledTabsDoNotPassClicksToTheMap();
     void _testDefaultAltitudeChipOpensPlanTab();
     void _testMissionListFollowsItemsAndSelection();
     void _testItemsAddedOnPlanTabSwitchToMission();
@@ -45,6 +47,17 @@ private slots:
     void _testGeoMapControlsReceiveClicksOverMissionMarkers();
     void _testGeoMapDimsMissionOutsideTheMissionLayer();
     void _testGeoMapDimsLandingPatternOutsideTheMissionLayer();
+    void _testGeoMapFenceIsEditedOnlyOnTheFenceLayer_data();
+    void _testGeoMapFenceIsEditedOnlyOnTheFenceLayer();
+    void _testGeoMapFencePolygonSplitHandleInsertsVertex();
+    void _testGeoMapFencePolygonMenuActsOnClickedHandle_data();
+    void _testGeoMapFencePolygonMenuActsOnClickedHandle();
+    void _testGeoMapFencePolygonToolsReshapeThePolygon_data();
+    void _testGeoMapFencePolygonToolsReshapeThePolygon();
+    void _testGeoMapBreachReturnPointDragsOnlyOnTheFenceLayer_data();
+    void _testGeoMapBreachReturnPointDragsOnlyOnTheFenceLayer();
+    void _testGeoMapFenceClickSelectsTheFenceUnderIt_data();
+    void _testGeoMapFenceClickSelectsTheFenceUnderIt();
     void _testGeoMapMarkerClickOutsideTheMissionLayerReachesTheMap();
     void _testGeoMapMarkerDragMovesOnlyTheCurrentItem_data();
     void _testGeoMapMarkerDragMovesOnlyTheCurrentItem();
@@ -62,6 +75,8 @@ private slots:
     void _testOpenedPlanShowsMissionTab();
     void _testConnectedVehicleFixesVehicleChoiceAndEnablesVehicleActions();
     void _testFenceTabAddsSelectsAndEditsFences();
+    void _testBreachReturnPointOnlyForArduPilotPlanes_data();
+    void _testBreachReturnPointOnlyForArduPilotPlanes();
     void _testFenceInspectorStepsAcrossEntriesInDrillIn();
     void _testRallyTabListsSelectsAndDeletesPoints();
     void _testRallyInspectorStepsInDrillIn();

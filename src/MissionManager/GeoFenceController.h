@@ -28,6 +28,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  circles                 READ circles                                            CONSTANT)
     Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
     Q_PROPERTY(Fact*                breachReturnAltitude    READ breachReturnAltitude                               CONSTANT)
+    Q_PROPERTY(bool breachReturnSupported READ breachReturnSupported NOTIFY breachReturnSupportedChanged)
 
     // Radius of the "paramCircularFence" which is called the "Geofence Failsafe" in PX4 and the "Circular Geofence" on ArduPilot
     Q_PROPERTY(double               paramCircularFence      READ paramCircularFence                                 NOTIFY paramCircularFenceChanged)
@@ -54,6 +55,10 @@ public:
     Q_INVOKABLE void clearAllInteractive(void);
 
     double  paramCircularFence  (void);
+
+    /// Only ArduPilot Plane (including QuadPlane) flies to the breach return point. PX4 ignores it, and ArduPilot keeps
+    /// no altitude for it: Plane returns at FENCE_RET_ALT instead.
+    bool breachReturnSupported(void) const;
     Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
 
     // Overrides from PlanElementController
@@ -83,6 +88,7 @@ signals:
     void editorQmlChanged               (QString editorQml);
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
+    void breachReturnSupportedChanged(void);
 
 private slots:
     void _fenceListDirtyChanged     (bool dirty);
