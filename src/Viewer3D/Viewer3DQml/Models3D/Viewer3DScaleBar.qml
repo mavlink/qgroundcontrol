@@ -19,6 +19,7 @@ Item {
     readonly property real _sceneToMeters: 0.1
     property var _scaleLengthsMeters: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
     property var _scaleLengthsFeet: [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
+    property var _scaleLengthsNauticalMiles: [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
     function formatDistanceMeters(meters) {
         var dist = Math.round(meters)
@@ -49,6 +50,27 @@ Item {
             dist = dist + qsTr(" ft")
         }
         return dist
+    }
+
+    function _formatNumberTrimZeros(value, maxDecimals) {
+        var s = value.toFixed(maxDecimals)
+        while (s.length > 0 && s[s.length - 1] === '0') {
+            s = s.substring(0, s.length - 1)
+        }
+        if (s.length > 0 && s[s.length - 1] === '.') {
+            s = s.substring(0, s.length - 1)
+        }
+        return s
+    }
+
+    function formatDistanceNauticalMiles(nauticalMiles) {
+        var text
+        if (nauticalMiles >= 1) {
+            text = Math.round(nauticalMiles)
+        } else {
+            text = _formatNumberTrimZeros(nauticalMiles, 4)
+        }
+        return text + qsTr(" NM")
     }
 
     function _applyNiceLength(scaleLineLength, scaleLinePixelLength, scaleLengths) {
@@ -89,6 +111,9 @@ Item {
         if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsFeet) {
             var niceFeet = _applyNiceLength(scaleLineMeters * 3.2808399, scaleLinePixelLength, _scaleLengthsFeet)
             scaleText.text = formatDistanceFeet(niceFeet)
+        } else if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsNauticalMiles) {
+            var niceNauticalMiles = _applyNiceLength(scaleLineMeters / 1852.0, scaleLinePixelLength, _scaleLengthsNauticalMiles)
+            scaleText.text = formatDistanceNauticalMiles(niceNauticalMiles)
         } else {
             var niceMeters = _applyNiceLength(scaleLineMeters, scaleLinePixelLength, _scaleLengthsMeters)
             scaleText.text = formatDistanceMeters(niceMeters)

@@ -33,7 +33,7 @@ ColumnLayout {
         const distance = _missionController.missionPlannedDistance
         const parts = []
         if (!isNaN(distance)) {
-            parts.push(QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(distance).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
+            parts.push(QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(distance).toFixed(QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsDecimalPlaces()) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
         }
         parts.push(Logic.formatDuration(_missionController.missionTime))
         if (incompleteCount > 0) {
