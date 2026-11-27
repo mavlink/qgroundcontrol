@@ -66,9 +66,7 @@ void GPSNMEAStream::reset(GPSStreamDemux& stream)
 
 GPSReceiveUpdates GPSNMEAStream::_decodeRTCM(const GPSFrame& frame, GPSDecodeContext& context)
 {
-    if (_rtcmEnabled) {
-        context.publishRTCM(frame.bytes);
-    }
+    context.publishRTCM(frame.bytes);
     return {};
 }
 
@@ -133,7 +131,7 @@ void GPSNMEAStream::flush(GPSDecodeContext& context)
 std::chrono::milliseconds GPSNMEAStream::limitReceiveTimeout(std::chrono::milliseconds timeout, uint64_t nowUs) const
 {
     if (const auto deadline = _satelliteAssembler.deadlineUs()) {
-        timeout = std::min(timeout, GPSDeadline{*deadline}.remaining(nowUs));
+        timeout = (std::min) (timeout, GPSDeadline{*deadline}.remaining(nowUs));
     }
     return timeout;
 }

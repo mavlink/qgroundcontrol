@@ -4,10 +4,15 @@
 #include <chrono>
 #include <utility>
 
+#include <QtCore/QDateTime>
+#include <QtCore/QStringList>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
+#include "RTCMFramer.h"
+#include "RTCMStationPosition.h"
 #include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
@@ -55,13 +60,16 @@ void GPSCorrectionSourceHandle::submit(const QByteArray& data, qint64 receivedAt
     }
 }
 
-GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler)
+GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler,
+                                           const Dependencies& dependencies)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _refreshTask(_scheduler, this)
     , _tickTask(_scheduler, this)
     , _selectedRate([scheduler = _scheduler]() { return scheduler->nowUs(); })
     , _udpInput(this, _scheduler)
+    , _logDirectory(dependencies.logDirectory)
+    , _log(dependencies.maxLogFileBytes)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
     connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
@@ -74,6 +82,9 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
         _retryUdpInput();
         _selectedRate.refresh();
         _refresh();
+        if (_log.isOpen() && !_log.flush()) {
+            emit logChanged();
+        }
     });
     _refresh();
 }
@@ -97,17 +108,85 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     }
     const std::optional<Configuration> previous = std::exchange(_configuration, configuration);
     _selector.configure(configuration.source, _scheduler->nowMs());
+    _rtcmMavlink.setVehicles(configuration.vehicles);
     const bool inputChanged = !previous || previous->udpInput != configuration.udpInput;
     const bool enabledChanged = (previous && previous->udpInput.enabled) != configuration.udpInput.enabled;
     const bool inputNotified = inputChanged && (_applyUdpInput() || enabledChanged);
     // The output also depends on the input port, which it must not feed back into.
     const bool outputNotified = (inputChanged || previous->udpOutput != configuration.udpOutput) && _applyUdpOutput();
+    if (!previous || previous->messageFilter != configuration.messageFilter) {
+        _applyMessageFilter(configuration.messageFilter);
+    }
     _refresh();
     if (inputNotified) {
         emit udpInputChanged();
     }
     if (outputNotified) {
         emit udpOutputChanged();
+    }
+}
+
+void GPSCorrectionManager::_applyMessageFilter(const QString& filter)
+{
+    _messageFilter.clear();
+    _leftOutMessages.clear();
+    QString error;
+    for (const auto& token : filter.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        const QString entry = token.trimmed();
+        if (entry.isEmpty()) {
+            continue;
+        }
+        bool isNumber = false;
+        const int id = entry.toInt(&isNumber);
+        if (!isNumber || id < 1 || id > MAX_MESSAGE_ID) {
+            // Skipping the entry could leave an empty filter, which takes every message.
+            qCWarning(GPSCorrectionManagerLog) << "Invalid RTCM message filter entry" << entry;
+            //: %1 is the text the user entered, %2 the largest message ID
+            error = tr("No corrections are sent: the RTCM message filter entry \"%1\" is not a message ID. Enter "
+                       "message IDs from 1 to %2, separated by commas.")
+                        .arg(entry, QString::number(MAX_MESSAGE_ID));
+            break;
+        }
+        _messageFilter.insert(id);
+    }
+    _messageFilterInvalid = error;
+}
+
+void GPSCorrectionManager::_refreshVehiclesWarning()
+{
+    const bool shared = _configuration && _configuration->vehicles == GPSCorrectionSettings::ActiveVehicle &&
+                        RTCMMAVLink::activeVehicleLinkShared();
+    //: Shown while corrections are set to go to the active vehicle only
+    const QString warning =
+        shared ? tr("The other vehicles on the active vehicle's link receive the corrections as well.") : QString();
+    if (std::exchange(_vehiclesWarning, warning) != warning) {
+        emit vehiclesWarningChanged();
+    }
+}
+
+void GPSCorrectionManager::_refreshMessageFilterError(bool streamSelected, qint64 now)
+{
+    const auto age = MonotonicClock::age(std::chrono::milliseconds(_leftOutAtMs), std::chrono::milliseconds(now));
+    if (streamSelected || !age || *age >= GPSCorrectionSelector::FRESHNESS_TIMEOUT) {
+        _leftOutMessages.clear();
+    }
+    QString error = _messageFilterInvalid;
+    if (error.isEmpty() && !_leftOutMessages.isEmpty()) {
+        QList<int> ids(_leftOutMessages.cbegin(), _leftOutMessages.cend());
+        std::ranges::sort(ids);
+        QStringList names;
+        for (const int id : ids.first((std::min) (ids.size(), MAX_LEFT_OUT_NAMED))) {
+            names.append(QString::number(id));
+        }
+        if (ids.size() > MAX_LEFT_OUT_NAMED) {
+            names.append(QStringLiteral("…"));
+        }
+        //: %1 is a list of RTCM message IDs, such as 1074, 1084, 1230
+        error = tr("No corrections are sent: the RTCM message filter takes none of the messages that arrive (%1).")
+                    .arg(names.join(QStringLiteral(", ")));
+    }
+    if (std::exchange(_messageFilterError, error) != error) {
+        emit messageFilterChanged();
     }
 }
 
@@ -123,10 +202,10 @@ bool GPSCorrectionManager::_applyUdpOutput()
             reachesThisHost(QHostAddress(address))) {
             qCWarning(GPSCorrectionManagerLog)
                 << "Not forwarding corrections to this host's own UDP input port" << output.port;
+            // A second arg() pass would take an IPv6 zone such as "%1" in the address for a place marker.
             //: %1 is an IP address, %2 a UDP port
             error = tr("Not forwarding to %1 port %2: this computer's UDP input receives on that port.")
-                        .arg(address)
-                        .arg(output.port);
+                        .arg(address, QString::number(output.port));
         } else if (!_udpOutput.configure(address, output.port)) {
             error = tr("Enter an IP address and a port for UDP output.");
         }
@@ -194,14 +273,91 @@ void GPSCorrectionManager::_endSource(GPSCorrectionSettings::CorrectionSource so
 void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance,
                                    const QByteArray& data, qint64 receivedAtMs)
 {
-    if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+    const bool filterValid = _messageFilterInvalid.isEmpty();
+    const int messageId = _messageFilter.isEmpty() ? 0 : RTCMFramer::frameMessageId(data);
+    const bool taken = filterValid && (_messageFilter.isEmpty() || _messageFilter.contains(messageId));
+    if (!taken) {
+        // Named to the user should the filter leave the routing no stream to select.
+        if (filterValid && _state != State::Fresh && _selector.routes(source)) {
+            _leftOutMessages.insert(messageId);
+            _leftOutAtMs = _scheduler->nowMs();
+        }
+    } else if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+        _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data, receivedAtMs);
         _selectedRate.recordBytes(data.size());
         if (_rtcmMavlink.submitToOutputs(data) > 0) {
             emit vehicleBytesSubmittedChanged();
         }
-        (void) _udpOutput.forward(data);
+        _forwardToUdpOutput(data);
+        if (_log.isOpen() && !_log.write(data)) {
+            emit logChanged();
+        }
     }
     _scheduleRefresh();
+}
+
+void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, const QByteArray& data,
+                                           qint64 receivedAtMs)
+{
+    if (stream != _recordedStream) {
+        _forgetSelected();
+        _recordedStream = stream;
+    }
+    _messageCounts.record(RTCMFramer::frameMessageId(data), receivedAtMs);
+    if (const auto station = RTCMStationPosition::fromFrame(data)) {
+        const GPSEllipsoidPosition& position = station->position;
+        _setBasePosition(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees, position.altitudeMeters));
+    }
+}
+
+void GPSCorrectionManager::_forgetSelected()
+{
+    _recordedStream = {};
+    _messageCounts.clear();
+    _setBasePosition(QGeoCoordinate());
+}
+
+void GPSCorrectionManager::_setBasePosition(const QGeoCoordinate& position)
+{
+    if (std::exchange(_basePosition, position) != position) {
+        emit basePositionChanged();
+    }
+}
+
+void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
+{
+    if (!_udpOutput.isEnabled() || data.isEmpty()) {
+        return;
+    }
+    QString error;
+    // forward() returns the bytes sent and keeps the socket's reason when a datagram was not.
+    if (_udpOutput.forward(data) <= 0) {
+        //: %1 is an IP address, %2 a UDP port, %3 the reason the system gives
+        error = tr("Not forwarding to %1 port %2: %3")
+                    .arg(_udpOutput.address(), QString::number(_udpOutput.port()), _udpOutput.errorString());
+    }
+    if (std::exchange(_udpOutputError, error) != error) {
+        emit udpOutputChanged();
+    }
+}
+
+void GPSCorrectionManager::setLogToFile(bool log)
+{
+    if (_shutdown || log == _log.isOpen()) {
+        return;
+    }
+    if (log) {
+        const QString directory = _logDirectory ? _logDirectory() : QString();
+        if (directory.isEmpty()) {
+            qCWarning(GPSCorrectionManagerLog) << "No folder to log the corrections to";
+        } else {
+            _log.open(RTCMLogFile::fileName(directory, QDateTime::currentDateTimeUtc()));
+        }
+    } else {
+        _log.close();
+    }
+    // Also for a log that could not start, so that a switch bound to the property goes back to off.
+    emit logChanged();
 }
 
 QString GPSCorrectionManager::sourceName(int source)
@@ -221,7 +377,12 @@ QString GPSCorrectionManager::sourceName(int source)
 
 void GPSCorrectionManager::_refresh()
 {
-    const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(_scheduler->nowMs());
+    const qint64 now = _scheduler->nowMs();
+    const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(now);
+    if (selected != _recordedStream) {
+        _forgetSelected();
+    }
+    _messageCounts.expireIntervals(now);
     State state = State::Inactive;
     if (selected) {
         state = State::Fresh;
@@ -241,6 +402,8 @@ void GPSCorrectionManager::_refresh()
     if (rateChanged) {
         emit selectedBytesPerSecondChanged();
     }
+    _refreshMessageFilterError(selected.has_value(), now);
+    _refreshVehiclesWarning();
 }
 
 void GPSCorrectionManager::_scheduleRefresh()
@@ -260,6 +423,7 @@ void GPSCorrectionManager::shutdown()
     _refreshTask.cancel();
     _rtcmMavlink.setOutputProvider({});
     _udpOutput.stop();
+    _log.close();
     _udpSource.reset();
     _selector.shutdown();
     _udpInput.stop();

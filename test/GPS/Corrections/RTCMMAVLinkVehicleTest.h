@@ -9,4 +9,6 @@ class RTCMMAVLinkVehicleTest : public CommsTest
 private slots:
     void _admissionFollowsLinkLifetime();
     void _replayExcludedFromLiveAdmissions();
+    void _highLatencyLinkExcluded();
+    void _settingSelectsVehicles();
 };

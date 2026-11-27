@@ -55,8 +55,8 @@ platform builds. The [CI overview](../ci-overview.md) has the contributor-facing
 - **Unity builds**: Linux coverage and sanitizer builds and the iOS simulator build inherit the
   hidden `lean-debug` preset (`-g1` plus `QGC_UNITY_BUILD=ON`); the macOS Debug leg passes
   `-DQGC_UNITY_BUILD=ON`. Unity batches halve compile CPU (measured for pull request 15370,
-  October 2026). Bundled third-party code, the GPS
-  protocol and GStreamer libraries, and files marked `SKIP_UNITY_BUILD_INCLUSION` stay per-file;
+  October 2026). Bundled third-party code, the GStreamer library, and files marked
+  `SKIP_UNITY_BUILD_INCLUSION` stay per-file;
   Release jobs stay per-file. A redefinition or ambiguity error means two `.cc` files in one batch
   share file-local names or a file-scope `using namespace`: rename them or mark the file, and
   reproduce with `-DQGC_UNITY_BUILD=ON`. Apple builds batch a different source list than Linux, and

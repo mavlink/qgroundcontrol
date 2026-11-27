@@ -16,6 +16,7 @@ class GPSCorrectionManagerTest : public UnitTest
 private slots:
     void _sourcesShareForwarder();
     void _udpOutputForwardsSelectedStream();
+    void _udpOutputReportsSendFailure();
     void _udpOutputSkipsOwnInput();
     void _udpOutputSkipsHostTargets_data();
     void _udpOutputSkipsHostTargets();
@@ -26,4 +27,13 @@ private slots:
     void _udpInputRetriesUnavailablePort();
     void _settingsOwnRouting_data();
     void _settingsOwnRouting();
+    void _messageFilter_data();
+    void _messageFilter();
+    void _messageFilterGovernsRouting();
+    void _messageFilterLeavesNoStream();
+    void _logsRoutedStream();
+    void _logThatCannotStart_data();
+    void _logThatCannotStart();
+    void _logKeepsExistingFile();
+    void _logEndsAtSizeLimit();
 };

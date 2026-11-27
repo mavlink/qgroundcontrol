@@ -14,8 +14,9 @@ private slots:
     void _testPendingWriteDeadline();
     void _inputBudgetEndsStream();
     void _consecutiveWrites();
-    void _refusedBaudrateKeepsLink();
+    void _refusedBaudRateKeepsLink();
     void _openRetriesUntilTimeout_data();
     void _openRetriesUntilTimeout();
+    void _openRetriesUntilReleased_data();
     void _openRetriesUntilReleased();
 };

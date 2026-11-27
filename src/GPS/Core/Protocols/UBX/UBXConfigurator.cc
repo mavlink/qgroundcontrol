@@ -23,6 +23,13 @@ using Plan::NakPolicy;
 
 namespace UBX {
 
+namespace {
+
+/// A base whose RTCM activation failed; the streaming service adds what the activation followed.
+constexpr QLatin1StringView RTCM_ACTIVATION_FAILURE("u-blox receiver did not start RTCM output");
+
+}  // namespace
+
 bool Protocol::_baseStationUnsupported() const
 {
     const auto& identity = _identity;
@@ -30,7 +37,7 @@ bool Protocol::_baseStationUnsupported() const
     if (identity.timeModeUnsupported) {
         return true;
     }
-    if (identity.board == UBX::Board::u_blox8) {
+    if (identity.board == UBX::Board::UBlox8) {
         return !identity.isM8p && !identity.model.isEmpty();
     }
     const auto profile = UBX::receiverProfile(identity.board);
@@ -40,13 +47,6 @@ bool Protocol::_baseStationUnsupported() const
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
     _base = config.base;
-    _valsetAckAmbiguous = false;
-    _legacyRTCM = {};
-    _ready = false;
-    _setMode({}, channel.stream());
-    _controller = {};
-    _requests = {};
-
     const unsigned requestedBaud = baud;
     const auto detection = channel.detectBaud(Plan::BAUD_RATES, requestedBaud, [this, &channel]() -> GPSBaudProbe {
         channel.stream().reset(GPSFrameKind::UBX);
@@ -64,7 +64,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
         channel.failNoAnswer(detection.probed);
         return false;
     }
-    if (identity.board == UBX::Board::unknown) {
+    if (identity.board == UBX::Board::Unknown) {
         QString detail = QStringLiteral("Unsupported u-blox receiver: hardware version %1")
                              .arg(QString::fromLatin1(identity.hardware));
         if (!identity.protocolVersion.isEmpty()) {
@@ -106,7 +106,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 bool Protocol::_identify(GPSCommandChannel& channel)
 {
     const auto scope = channel.deadlineScope(Plan::IDENTITY_TIMEOUT);
-    _identity.board = UBX::Board::unknown;
+    _identity.board = UBX::Board::Unknown;
     if (!_send(channel, Msg::MON_VER, {}, {{}, Plan::IDENTITY_TIMEOUT})) {
         return false;
     }
@@ -133,12 +133,12 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     const UBX::Board identifiedBoard = _identity.board;
     const UBX::MessageId command = modern ? Msg::CFG_VALSET : Msg::CFG_PRT;
     if (modern) {
-        if (!_writeValset(channel, Plan::uart1Baudrate(desiredBaud))) {
+        if (!_writeValset(channel, Plan::uart1BaudRate(desiredBaud))) {
             return false;
         }
     } else {
         const auto ports = Plan::legacyPorts(desiredBaud);
-        if (!_send(channel, Msg::CFG_PRT, ports, {{}, Plan::CONFIG_TIMEOUT, false})) {
+        if (!_send(channel, Msg::CFG_PRT, ports, {.command = {}, .timeout = Plan::CONFIG_TIMEOUT, .required = false})) {
             return false;
         }
     }
@@ -147,7 +147,7 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     if (channel.failed() || result.outcome == GPSCommandOutcome::Rejected) {
         return false;
     }
-    if (!channel.setBaudrate(desiredBaud)) {
+    if (!channel.setBaudRate(desiredBaud)) {
         channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(desiredBaud));
         return false;
     }
@@ -159,7 +159,13 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     if (!_identify(channel)) {
         return false;
     }
-    if (_identity.board != identifiedBoard || _identity.protocol27 != modern || _controller.lateRejection()) {
+    if (_controller.lateRejection()) {
+        channel.failControl(QStringLiteral("u-blox receiver rejected the change to %1 baud").arg(desiredBaud));
+        return false;
+    }
+    if (_identity.board != identifiedBoard || _identity.protocol27 != modern) {
+        channel.failControl(
+            QStringLiteral("u-blox receiver reported a different identity at %1 baud").arg(desiredBaud));
         return false;
     }
     if (modern && !acknowledged) {
@@ -178,7 +184,6 @@ bool Protocol::_configureDevice(GPSCommandChannel& channel)
     if (!_configureJammingDetection(channel)) {
         return false;
     }
-    _secSigSeen = false;
     const auto messageOutput = Plan::messageOutput(profile);
     return _runPlan(channel, messageOutput);
 }
@@ -228,7 +233,7 @@ bool Protocol::_restartSurveyIn(GPSCommandChannel& channel)
         if (!_transactValset(channel, Plan::fixedBase(*fixed)).succeeded()) {
             return false;
         }
-        return _activateRTCMOutput(channel) == RTCMActivation::Active;
+        return _startFixedBase(channel, *fixed) == RTCMActivation::Active;
     }
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!survey) {
@@ -258,7 +263,12 @@ bool Protocol::_restartLegacySurveyIn(GPSCommandChannel& channel)
         if (!_sendAcknowledged(channel, Msg::CFG_TMODE3, timeMode)) {
             return false;
         }
-        return _activateRTCMOutput(channel) == RTCMActivation::Active;
+        // The legacy activation fails on the outputs it confirmed, so its last command need not have failed.
+        const auto activation = _startFixedBase(channel, *fixed);
+        if (activation == RTCMActivation::Failed) {
+            channel.failControl(QString(RTCM_ACTIVATION_FAILURE));
+        }
+        return activation == RTCMActivation::Active;
     }
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!survey) {
@@ -328,6 +338,15 @@ bool Protocol::_waitForSurveyStop(GPSCommandChannel& channel)
     return true;
 }
 
+Protocol::RTCMActivation Protocol::_startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed)
+{
+    const auto activation = _activateRTCMOutput(channel);
+    if (activation == RTCMActivation::Active) {
+        channel.context().publishBaseStatus(GPSBaseState::Valid, {}, fixed.position);
+    }
+    return activation;
+}
+
 Protocol::RTCMActivation Protocol::_activateRTCMOutput(GPSCommandChannel& channel)
 {
     if (!_identity.protocol27) {
@@ -340,6 +359,16 @@ Protocol::RTCMActivation Protocol::_activateRTCMOutput(GPSCommandChannel& channe
 Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& channel)
 {
     auto& progress = _legacyRTCM;
+    // An unanswered activation is left to a later service, unless activations keep ending without another output
+    // settled: a receiver that stopped answering would otherwise be asked forever while RTCM never starts.
+    const auto resumeLater = [&progress, resumedAt = progress.next] {
+        progress.stalled = progress.next == resumedAt ? progress.stalled + 1 : 0;
+        if (progress.stalled < Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS) {
+            return RTCMActivation::Unanswered;
+        }
+        progress = {};
+        return RTCMActivation::Failed;
+    };
     const auto rate = Wire::encode(Plan::LEGACY_BASE_RATE);
     if (!_send(channel, Msg::CFG_RATE, rate, {{}, Plan::LEGACY_REPLY_TIMEOUT})) {
         progress = {};
@@ -352,7 +381,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
     // base rate leaves activation to a later service; a rejected one leaves RTCM at the survey rate.
     const auto baseRate = _waitForAck(channel, Msg::CFG_RATE).outcome;
     if (baseRate == GPSCommandOutcome::TimedOut) {
-        return RTCMActivation::Unanswered;
+        return resumeLater();
     }
     if (baseRate != GPSCommandOutcome::Acknowledged && baseRate != GPSCommandOutcome::Rejected) {
         progress = {};
@@ -367,7 +396,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
         if (channel.operationDeadline().remaining(channel.nowUs()) <
             Plan::CONFIG_TIMEOUT + Plan::LEGACY_REPLY_TIMEOUT) {
             qCDebug(UBXProtocolLog) << "Service budget spent; RTCM activation resumes in the next service";
-            return RTCMActivation::Unanswered;
+            return resumeLater();
         }
         const auto output = progress.next < status.size()
                                 ? Plan::RTCMOutput{status[progress.next], Plan::RTCMContent::Optional}
@@ -397,7 +426,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
         qCWarning(UBXProtocolLog) << "Receiver did not answer a CFG-MSG rate or its poll; later RTCM messages are not"
                                      " configured";
         if (!active) {
-            return RTCMActivation::Unanswered;
+            return resumeLater();
         }
     } else if (!active) {
         qCWarning(UBXProtocolLog) << "Receiver rejected the RTCM station position or every observation message";
@@ -412,10 +441,10 @@ void Protocol::serviceStreaming(GPSCommandChannel& channel)
     if (requests.rtcmActivation) {
         const auto activation = _activateRTCMOutput(channel);
         // A slow receiver keeps its session and finished survey: the next service resumes activation. Survey reports
-        // decoded meanwhile do not request another.
+        // decoded meanwhile do not request another. One that stopped answering fails as one that rejects the outputs.
         requests.rtcmActivation = activation == RTCMActivation::Unanswered;
         if (activation == RTCMActivation::Failed) {
-            channel.failControl(QStringLiteral("u-blox receiver did not start RTCM output after the survey-in"));
+            channel.failControl(QStringLiteral("%1 after the survey-in").arg(RTCM_ACTIVATION_FAILURE));
         }
     }
     if (const uint16_t message = std::exchange(requests.disableMessage, 0)) {
@@ -482,7 +511,7 @@ GPSConfigurationEvidence Protocol::_waitForAck(GPSCommandChannel& channel, UBX::
         return _verifyValset(channel,
                              {"UBX-CFG-VALSET readback", commandDeadline.remaining(channel.nowUs()), command.required});
     }
-    const auto result = channel.awaitReply([&controller] { return controller.acknowledgement(); });
+    auto result = channel.awaitReply([&controller] { return controller.acknowledgement(); });
     controller.finishAcknowledgement();
     if (valset && result.outcome == GPSCommandOutcome::TimedOut) {
         _valsetAckAmbiguous = true;
@@ -567,9 +596,6 @@ void Protocol::_load(const UBX::Plan::ValsetBatch& batch)
 {
     _valset = {};
     for (const auto& item : batch.items) {
-        if (!item.included) {
-            continue;
-        }
         if (item.msgOut) {
             const UBX::MsgOutKey family{{item.key}};
             (void) _valset.append(family.port(UBX::MsgOutPort::UART1).id, item.value);
@@ -615,7 +641,8 @@ GPSConfigurationEvidence Protocol::_awaitValsetAck(GPSCommandChannel& channel)
     // receiver answers in order: the readback reply follows any late reply to this batch, so a late ACK and matching
     // values accept it, a late NAK, other values or a NAK of the readback reject it, and either way nothing of it is
     // left to arrive. Required batches still fail on the timeout.
-    result = _verifyValset(channel, {"UBX-CFG-VALSET readback", Plan::CONFIG_TIMEOUT, false});
+    result = _verifyValset(channel,
+                           {.command = "UBX-CFG-VALSET readback", .timeout = Plan::CONFIG_TIMEOUT, .required = false});
     if (result.outcome == GPSCommandOutcome::ReadbackVerified || result.outcome == GPSCommandOutcome::Rejected) {
         _valsetAckAmbiguous = false;
     }
@@ -631,21 +658,26 @@ GPSConfigurationEvidence Protocol::_verifyValset(GPSCommandChannel& channel, GPS
     while (!cursor.empty()) {
         UBX::ConfigurationValues expected;
         std::array<uint32_t, UBX::ConfigurationValues::MAX_KEYS> keys{};
-        std::array<uint8_t, 4 + UBX::ConfigurationValues::MAX_KEYS * sizeof(uint32_t)> request{};
+        std::array<uint8_t, UBX::CONFIGURATION_HEADER_SIZE + UBX::ConfigurationValues::MAX_KEYS * sizeof(uint32_t)>
+            request{};
         while (!cursor.empty() && expected.count < expected.values.size()) {
             const auto entry = cursor.next();
             if (!entry) {
                 channel.beginCommand(step);
-                return channel.completeCommand(GPSCommandOutcome::Rejected);
+                result = channel.completeCommand(GPSCommandOutcome::Rejected);
+                return result;
             }
-            (void) LittleEndian::write(request, 4 + expected.count * sizeof(uint32_t), entry->key);
+            (void) LittleEndian::write(request, UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t),
+                                       entry->key);
             keys[expected.count] = entry->key;
             expected.values[expected.count++] = *entry;
         }
         controller.beginReadback(std::span(keys).first(expected.count));
-        if (!_send(channel, Msg::CFG_VALGET, std::span(request).first(4 + expected.count * sizeof(uint32_t)), step)) {
+        const size_t requestSize = UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t);
+        if (!_send(channel, Msg::CFG_VALGET, std::span(request).first(requestSize), step)) {
             controller.finishReadback();
-            return channel.completeCommand(GPSCommandOutcome::TransportError);
+            result = channel.completeCommand(GPSCommandOutcome::TransportError);
+            return result;
         }
         result = channel.awaitReply([&controller, &expected] {
             if (controller.lateRejection() || controller.readbackRejected()) {
@@ -702,7 +734,7 @@ bool Protocol::probe(GPSCommandChannel& channel)
 }
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::ublox,
+    .type = GPSType::UBlox,
     .logCategory = &UBXProtocolLog,
     .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX},
     .baudCandidates = Plan::BAUD_RATES,

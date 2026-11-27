@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "GPSFamilyProtocol.h"
+#include "GPSReceiverFamilies.h"
 #include "GPSTime.h"
 
 namespace UBX {
@@ -11,8 +12,22 @@ EpochAssembler::Epoch* EpochAssembler::find(uint32_t tow, GPSDecodeContext& cont
 {
     const uint64_t now = context.nowUs();
     expire(context);
-    if (tow >= GPSTime::WEEK_MS || (_lastPublished && !GPSTime::towAdvances(tow, *_lastPublished))) {
+    if (tow >= GPSTime::WEEK_MS) {
         return nullptr;
+    }
+    if (_lastPublished && !GPSTime::towAdvances(tow, *_lastPublished)) {
+        if ((*_lastPublished + GPSTime::WEEK_MS - tow) % GPSTime::WEEK_MS <= REORDER_WINDOW_MS) {
+            return nullptr;
+        }
+        // Neither an advance nor a late message: the receiver's time of week stepped.
+        qCDebug(UBXProtocolLog) << "New time base, last published time of week:" << *_lastPublished
+                                << "received:" << tow;
+        for (auto& epoch : _epochs) {
+            if (epoch) {
+                _finish(epoch, context);
+            }
+        }
+        _lastPublished.reset();
     }
     for (auto& epoch : _epochs) {
         if (epoch && epoch->tow == tow) {

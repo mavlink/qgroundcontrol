@@ -109,7 +109,7 @@ private:
     GPSNMEAStream _nmea;
 };
 
-constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::passive, .stream = GPSNMEAStream::STREAM};
+constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::Passive, .stream = GPSNMEAStream::STREAM};
 
 /// A receiver on a virtual clock. Each command write schedules its scripted replies after their latency, unsolicited
 /// output arrives at scheduled times, and time only passes while a read waits for data.
@@ -167,14 +167,14 @@ private:
         return {GPSWriteStatus::Completed, static_cast<int>(command.size()), static_cast<int>(command.size())};
     }
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate) override
     {
         Q_UNUSED(receiver)
-        bauds.append(baudrate);
-        if (unsupportedRates.contains(baudrate)) {
+        bauds.append(baudRate);
+        if (unsupportedRates.contains(baudRate)) {
             return false;
         }
-        baud = baudrate;
+        baud = baudRate;
         return true;
     }
 
@@ -430,7 +430,7 @@ QList<Scenario> scenarios()
              notes += summary(c.transact({"A", 100ms}, "A\r\n", GPSTextMatcher(lineReply)));
              notes += summary(c.transact({"B", 100ms}, "B\r\n", GPSTextMatcher(lineReply)));
              notes += summary(c.transact({"C", 100ms}, "C\r\n", GPSTextMatcher(lineReply)));
-             notes += QString::number(c.setBaudrate(9600));
+             notes += QString::number(c.setBaudRate(9600));
              c.wait(1s);
              std::array<uint8_t, 1> byte{};
              notes += QString::number(c.read(byte, 100ms));
@@ -747,6 +747,44 @@ void GPSCommandChannelTest::_sequenceEndsOnWriteFailure()
         QStringList{QStringLiteral("sequence step=0 label=A outcome=%1").arg(int(GPSCommandOutcome::TransportError))});
     QCOMPARE(run.writes, QByteArrayList{"A\r\n"});
     QCOMPARE(run.error, GPSProtocolError::Transport);
+}
+
+void GPSCommandChannelTest::_invalidRawReply_data()
+{
+    QTest::addColumn<QByteArray>("accepted");
+    QTest::addColumn<QByteArray>("rejected");
+    const QByteArray overlong(GPSRawAckMatcher::WINDOW_SIZE + 1, 'A');
+    QTest::newRow("no-accepted-pattern") << QByteArray() << QByteArray("ERR");
+    QTest::newRow("accepted-beyond-window") << overlong << QByteArray("ERR");
+    QTest::newRow("rejected-beyond-window") << QByteArray("OK!") << overlong;
+}
+
+void GPSCommandChannelTest::_invalidRawReply()
+{
+    QFETCH(QByteArray, accepted);
+    QFETCH(QByteArray, rejected);
+    const Run run = runChannel(
+        {.setup = [](LatencyModel& model) { model.script("A\r\n", {{"OK!"}, {"OK!"}, {"OK!"}}); },
+         .channel = [&](GPSCommandChannel& c, ChannelHarness&, unsigned&, QStringList& notes) -> bool {
+             const GPSCommandSequence sequence{{
+                 GPSCommandSequence::Command{.step = {"A", 100ms},
+                                             .wire = "A\r\n",
+                                             .reply = GPSCommandSequence::RawReply{accepted, rejected},
+                                             .attempts = 3},
+                 GPSCommandSequence::Command{.step = {"B", 100ms}, .wire = "B\r\n", .reply = GPSTextMatcher(lineReply)},
+             }};
+             notes += note(c.runSequence(sequence));
+             return false;
+         }});
+    // No reply could resolve the command, so it fails as a driver error before any I/O instead of timing out.
+    QCOMPARE(run.writes, QByteArrayList{});
+    QCOMPARE(run.clockUs, GPSTestClock::START_US);
+    QCOMPARE(run.error, GPSProtocolError::InvalidArgument);
+    QCOMPARE(run.detail, QStringLiteral("Invalid reply pattern for the 'A' command"));
+    QCOMPARE(
+        run.notes,
+        QStringList{QStringLiteral("sequence step=0 label=A outcome=%1").arg(int(GPSCommandOutcome::TransportError))});
+    QCOMPARE(run.evidence, QStringList{command("A", TransportError, GPSTestClock::START_US, 0)});
 }
 
 void GPSCommandChannelTest::_writeResults_data()

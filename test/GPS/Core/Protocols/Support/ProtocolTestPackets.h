@@ -51,6 +51,24 @@ inline std::string nmeaSentence(std::string_view body, std::string_view lineEndi
     return result;
 }
 
+/// @a sentence as a valid frame with its checksum and CRLF; a short or malformed one is only terminated.
+inline QByteArray repairChecksum(const QByteArray& sentence)
+{
+    constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
+    const auto wire = NMEA::frame(QByteArrayView(sentence));
+    if (wire && wire->body.size() + NMEA::Sentence::PREFIX_LENGTH >= MIN_REPAIRABLE_SENTENCE_LENGTH) {
+        return NMEAUtils::frame(QByteArrayView(wire->body));
+    }
+    QByteArray line = sentence;
+    if (line.endsWith('\n')) {
+        line.chop(1);
+        if (line.endsWith('\r')) {
+            line.chop(1);
+        }
+    }
+    return line + "\r\n";
+}
+
 /// Whether @a sentence is one NMEA frame with a matching checksum.
 inline bool checksumValid(const QByteArray& sentence)
 {

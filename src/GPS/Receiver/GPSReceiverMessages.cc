@@ -35,7 +35,7 @@ QString reconnectingMessage(GPSConnectionError error, const QString& detail)
 namespace GPSReceiverMessages {
 
 QString sessionEnded(GPSReceiverSessionOutcome outcome, GPSConnectionError error, const QString& detail,
-                     bool portRemoved)
+                     GPSReceiverSessionEnd end)
 {
     switch (outcome) {
         case GPSReceiverSessionOutcome::Unplugged:
@@ -48,7 +48,7 @@ QString sessionEnded(GPSReceiverSessionOutcome outcome, GPSConnectionError error
         case GPSReceiverSessionOutcome::None:
             break;
     }
-    if (portRemoved) {
+    if (end == GPSReceiverSessionEnd::Unplugged) {
         return GPSReceiver::tr("Receiver unplugged. Select a device and reconnect.");
     }
     switch (error) {
@@ -104,17 +104,23 @@ QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, c
         case GPSInputProblem::NotGNSS:
             return GPSReceiver::tr("Receiving data that isn't GNSS output. Check the device and baud rate.");
         case GPSInputProblem::NoPositions:
-            switch (detected.value_or(GPSType::passive)) {
-                case GPSType::ublox:
+            switch (detected.value_or(GPSType::Passive)) {
+                case GPSType::UBlox:
                     return GPSReceiver::tr(
                         "Receiving u-blox UBX data without position messages. Enable NAV-PVT or NMEA output.");
-                case GPSType::septentrio:
+                case GPSType::Septentrio:
                     return GPSReceiver::tr(
                         "Receiving Septentrio SBF data without position messages. Enable PVTGeodetic or NMEA "
                         "output.");
-                default:
+                case GPSType::Trimble:
+                case GPSType::Femto:
+                case GPSType::Unicore:
+                case GPSType::Quectel:
+                case GPSType::Passive:
+                case GPSType::Automatic:
                     return GPSReceiver::tr("Receiving NMEA data without position messages. Enable GGA output.");
             }
+            break;
         case GPSInputProblem::CorrectionsOnly:
             // Forwarding them is all a corrections-only receiver needs to do.
             return forwardingCorrections ? QString()
@@ -166,24 +172,51 @@ QString fixLabel(GPSFixQuality fixType)
     return {};
 }
 
+QString constellationName(GPSConstellation constellation)
+{
+    switch (constellation) {
+        case GPSConstellation::GPS:
+            return GPSReceiver::tr("GPS");
+        case GPSConstellation::GLONASS:
+            return GPSReceiver::tr("GLONASS");
+        case GPSConstellation::Galileo:
+            return GPSReceiver::tr("Galileo");
+        case GPSConstellation::BeiDou:
+            return GPSReceiver::tr("BeiDou");
+        case GPSConstellation::QZSS:
+            return GPSReceiver::tr("QZSS");
+        case GPSConstellation::SBAS:
+            return GPSReceiver::tr("SBAS");
+        case GPSConstellation::NavIC:
+            return GPSReceiver::tr("NavIC");
+        case GPSConstellation::Unknown:
+            break;
+    }
+    return GPSReceiver::tr("Other", "Satellites of a constellation the receiver does not identify");
+}
+
 QString receiverStatus(const ReceiverStatus& status)
 {
     using Mode = BaseModeDefinition::Mode;
-    if (!status.configured) {
-        if (status.hasReceiver) {
+    switch (status.state) {
+        case GPSReceiver::State::Disconnected:
+            return {};
+        case GPSReceiver::State::Reconnecting:
+            return GPSReceiver::tr("Connecting automatically...");
+        case GPSReceiver::State::Connecting:
             return status.identifying ? GPSReceiver::tr("Identifying receiver...")
                                       : GPSReceiver::tr("Connecting to receiver...");
-        }
-        return status.reconnecting ? GPSReceiver::tr("Connecting automatically...") : QString();
+        case GPSReceiver::State::Connected:
+            break;
     }
     if (status.role == RTKSettings::Passive) {
         return status.forwardingCorrections ? GPSReceiver::tr("Passive receiver connected; forwarding its RTCM")
                                             : GPSReceiver::tr("Passive receiver connected; position only");
     }
-    if (status.baseMode == static_cast<int>(Mode::BaseReceiverAveraging)) {
+    if (status.baseMode == Mode::BaseReceiverAveraging) {
         return GPSReceiver::tr("Receiver-managed averaging — no accuracy guarantee");
     }
-    if (status.baseMode == static_cast<int>(Mode::BaseFixed)) {
+    if (status.baseMode == Mode::BaseFixed) {
         return GPSReceiver::tr("Fixed position");
     }
     return status.surveyActive ? GPSReceiver::tr("Survey-In active") : GPSReceiver::tr("Receiver connected");

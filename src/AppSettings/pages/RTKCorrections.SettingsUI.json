@@ -67,17 +67,6 @@
             ]
         },
         {
-            "heading": "NTRIP Message Filter",
-            "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
-            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
-            "controls": [
-                {
-                    "setting": "ntripSettings.ntripWhitelist",
-                    "placeholder": "e.g. 1005,1077,1087"
-                }
-            ]
-        },
-        {
             "heading": "UDP RTCM Input",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
             "keywords": ["udp rtcm", "udp input", "corrections"],
@@ -112,10 +101,21 @@
         {
             "heading": "Correction Routing",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
-            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority"],
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority", "active vehicle", "whitelist", "message filter", "log"],
             "controls": [
                 {
                     "setting": "gpsCorrectionSettings.correctionSource"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.correctionVehicles"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.ntripWhitelist",
+                    "placeholder": "e.g. 1005,1077,1087"
+                },
+                {
+                    "control": "component",
+                    "component": "CorrectionsLogSwitch"
                 }
             ]
         }

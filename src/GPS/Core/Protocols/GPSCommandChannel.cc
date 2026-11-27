@@ -42,7 +42,7 @@ GPSDeadlineScope::~GPSDeadlineScope()
 
 void GPSDeadlineScope::_limitUntil(uint64_t untilUs)
 {
-    _channel._operationDeadline.untilUs = std::min(_channel._operationDeadline.untilUs, untilUs);
+    _channel._operationDeadline.untilUs = (std::min) (_channel._operationDeadline.untilUs, untilUs);
 }
 
 GPSCommandChannel::GPSCommandChannel(GPSProtocolRuntime& runtime)
@@ -146,7 +146,7 @@ void GPSCommandChannel::beginCommand(GPSConfigurationStep step)
     _command.command = std::move(step.command);
     _command.required = step.required;
     _commandDeadline.untilUs =
-        std::min(_operationDeadline.untilUs, GPSDeadline::after(_command.startedAtUs, step.timeout).untilUs);
+        (std::min) (_operationDeadline.untilUs, GPSDeadline::after(_command.startedAtUs, step.timeout).untilUs);
     _commandCompleted = false;
 }
 
@@ -158,7 +158,7 @@ GPSConfigurationEvidence GPSCommandChannel::completeCommand(GPSCommandOutcome ou
     _command.outcome = outcome;
     _commandCompleted = true;
     // Completion observers may finish evidence again or begin another attempt.
-    const auto result = _command;
+    auto result = _command;
     _runtime._commandFinished(result);
     return result;
 }
@@ -168,8 +168,8 @@ int GPSCommandChannel::read(std::span<uint8_t> buffer, std::chrono::milliseconds
     if (failed() || !buffer.data() || buffer.empty()) {
         return failed() ? -1 : 0;
     }
-    const auto result =
-        _runtime._io.read(buffer, {std::min(_operationDeadline.untilUs, GPSDeadline::after(nowUs(), timeout).untilUs)});
+    const auto result = _runtime._io.read(
+        buffer, {(std::min) (_operationDeadline.untilUs, GPSDeadline::after(nowUs(), timeout).untilUs)});
     _errorDetail = result.detail;
     if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 &&
         static_cast<size_t>(result.bytesRead) <= buffer.size()) {
@@ -208,7 +208,7 @@ bool GPSCommandChannel::write(QByteArrayView bytes)
         return false;
     }
     const uint64_t deadline =
-        std::min(_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs);
+        (std::min) (_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs);
     // A late command that wrote nothing just times out. A late later part goes to the transport, whose sticky failure
     // stops the session rather than leave a torn frame on the link.
     if (nowUs() >= deadline && (_commandCompleted || _command.acceptedBytes == 0)) {
@@ -258,24 +258,24 @@ bool GPSCommandChannel::write(QByteArrayView bytes)
     return false;
 }
 
-bool GPSCommandChannel::setBaudrate(unsigned baudrate)
+bool GPSCommandChannel::setBaudRate(unsigned baudRate)
 {
-    return _setBaudrate(baudrate) == GPSBaudStatus::Configured;
+    return _setBaudRate(baudRate) == GPSBaudStatus::Configured;
 }
 
-GPSBaudStatus GPSCommandChannel::_setBaudrate(unsigned baudrate)
+GPSBaudStatus GPSCommandChannel::_setBaudRate(unsigned baudRate)
 {
     if (failed()) {
         return GPSBaudStatus::Error;
     }
     _errorDetail.clear();
     const auto status =
-        _runtime._io.cancelToken.isCancelled() ? GPSBaudStatus::Cancelled : _runtime._io.setBaudrate(baudrate);
+        _runtime._io.cancelToken.isCancelled() ? GPSBaudStatus::Cancelled : _runtime._io.setBaudRate(baudRate);
     if (status == GPSBaudStatus::Cancelled) {
         _error = GPSProtocolError::Cancelled;
     } else if (status == GPSBaudStatus::Error) {
         _error = GPSProtocolError::Transport;
-        _errorDetail = QStringLiteral("Cannot set the receiver link to %1 baud").arg(baudrate);
+        _errorDetail = QStringLiteral("Cannot set the receiver link to %1 baud").arg(baudRate);
     }
     return status;
 }
@@ -288,7 +288,7 @@ void GPSCommandChannel::wait(std::chrono::microseconds duration)
     const auto now = nowUs();
     const auto remaining = _operationDeadline.untilUs > now ? _operationDeadline.untilUs - now : 0;
     const auto untilDeadline = std::chrono::microseconds(std::min<uint64_t>(remaining, INT64_MAX));
-    if (!_runtime._io.clock.wait(std::min(duration, untilDeadline))) {
+    if (!_runtime._io.clock.wait((std::min) (duration, untilDeadline))) {
         _error = GPSProtocolError::Cancelled;
         _errorDetail.clear();
     }
@@ -376,6 +376,14 @@ GPSConfigurationEvidence GPSCommandChannel::transact(const GPSCommandSequence::C
 {
     if (const auto* raw = std::get_if<GPSCommandSequence::RawReply>(&command.reply)) {
         GPSRawAckMatcher matcher(raw->accepted, raw->rejected);
+        if (!failed() && !matcher.valid()) {
+            // No reply could resolve the command: writing it would only wait out its timeout on every attempt.
+            beginCommand(command.step);
+            _error = GPSProtocolError::InvalidArgument;
+            _errorDetail = QStringLiteral("Invalid reply pattern for the '%1' command")
+                               .arg(QString::fromUtf8(command.step.command));
+            return completeCommand(failureOutcome());
+        }
         return _transact(command.step, command.wire, &matcher);
     }
     return transact(command.step, command.wire, std::get<GPSTextMatcher>(command.reply));
@@ -426,7 +434,7 @@ GPSBaudDetection GPSCommandChannel::detectBaud(std::span<const unsigned> candida
     GPSBaudDetection result{.baud = baud};
     for (const unsigned candidate : order) {
         result.baud = candidate;
-        const GPSBaudStatus status = _setBaudrate(candidate);
+        const GPSBaudStatus status = _setBaudRate(candidate);
         if (status == GPSBaudStatus::Unsupported && !baud) {
             continue;
         }

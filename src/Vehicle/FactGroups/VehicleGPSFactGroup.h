@@ -48,7 +48,9 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(bool authenticationReported READ authenticationReported NOTIFY resilienceChanged)
     /// The worse of the reported spoofing and jamming states, or 0 when neither is reported.
     Q_PROPERTY(int interferenceState READ interferenceState NOTIFY resilienceChanged)
-    /// Ranks the reported authentication state, from 0 when unreported through Disabled, Initializing and Ok to Error.
+    /// Ranks the reported authentication state from 0 when unreported through Disabled, Ok and Initializing to Error,
+    /// so that the larger of two receivers' ranks is the worse state. Disabled ranks below Ok: a receiver that does
+    /// not authenticate says nothing about one that does.
     Q_PROPERTY(int authenticationSeverity READ authenticationSeverity NOTIFY resilienceChanged)
 
 public:

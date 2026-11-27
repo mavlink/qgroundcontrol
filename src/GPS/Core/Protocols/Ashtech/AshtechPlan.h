@@ -62,7 +62,7 @@ inline constexpr std::array STATION{
     Setting{"$PASHS,STI,0001"},             // base station ID
 };
 
-/// RTCM3 output once the base position is known.
+/// RTCM3 output once the base position is known: each constellation's observations once, as MSM4.
 inline constexpr std::array RTCM_OUTPUTS{
     Setting{"$PASHS,NME,POS,{port},ON,0.2"},  // position output reduced to 5 Hz
     Setting{"$PASHS,RT3,1074,{port},ON,1"},   // GPS observations
@@ -70,15 +70,10 @@ inline constexpr std::array RTCM_OUTPUTS{
     Setting{"$PASHS,RT3,1094,{port},ON,1"},   // Galileo observations
     Setting{"$PASHS,RT3,1114,{port},ON,1"},   // QZSS observations
     Setting{"$PASHS,RT3,1124,{port},ON,1"},   // BeiDou observations
-    Setting{"$PASHS,RT3,1006,{port},ON,1"},   // static position
+    Setting{"$PASHS,RT3,1005,{port},ON,1"},   // station position
+    Setting{"$PASHS,RT3,1006,{port},ON,1"},   // station position with antenna height
     Setting{"$PASHS,RT3,1033,{port},ON,31"},  // antenna and receiver name
-    Setting{"$PASHS,RT3,1013,{port},ON,1"},   // system parameters
-    Setting{"$PASHS,RT3,1029,{port},ON,1"},   // ASCII message
     Setting{"$PASHS,RT3,1230,{port},ON"},     // GLONASS code-phase biases
-    // The u-blox base messages; possibly redundant for these receivers.
-    Setting{"$PASHS,RT3,1005,{port},ON,1"},
-    Setting{"$PASHS,RT3,1077,{port},ON,1"},
-    Setting{"$PASHS,RT3,1087,{port},ON,1"},
 };
 
 /// A NAK rejects any command.

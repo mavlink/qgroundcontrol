@@ -27,5 +27,5 @@ private slots:
     void _satelliteSnapshotExpiry();
     void _satelliteReceipts();
     void _satelliteUsageCombination();
-    void _satelliteUsageExpiryFallback();
+    void _satelliteUsageExpiry();
 };

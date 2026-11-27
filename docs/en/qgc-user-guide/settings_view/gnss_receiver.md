@@ -8,9 +8,21 @@ Corrections from NTRIP casters and UDP are configured in [RTK Corrections](ntrip
 
 The receiver status shows the connection, the receiver's fix and satellites, and any jamming or spoofing it reports.
 An identified receiver family or output protocol is shown as _Detected_.
+**Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.
+The row is not shown when the receiver does not report which system its satellites belong to.
 The **Antenna** is shown as _OK_, _Open_ or _Short_ when the receiver supervises its antenna and reports it (u-blox MON-RF or MON-HW, also from a passive receiver); an open or shorted antenna turns the GNSS indicator orange, as jamming does.
 
 ## GNSS Receiver {#receiver}
+
+The settings page shows the receiver settings in four groups.
+Each is a section of **GNSS Receiver** in the settings sidebar, and the settings search finds each one:
+
+- **GNSS Receiver:** The receiver role, manufacturer and connection.
+- **RTK Base Station** (_Configured base_ only): The base mode and its settings.
+- **Saved Base Sites** (_Fixed position_ only): The [saved base sites](#base_sites).
+- **Connect:** The remaining settings and the **Connect** button.
+
+The GNSS indicator's drop-down shows the same settings as one form.
 
 The settings are:
 
@@ -34,14 +46,24 @@ The settings are:
     **Survey-In accuracy** (u-blox) is the position accuracy the survey must reach, and **Min observation time** how long it lasts at least.
     A Quectel receiver shows **Observation accuracy limit**, which filters each 1 Hz observation, and **Accepted observation time**, which counts the accepted observations.
   - **Fixed position:** The base starts from a known position: **Base Position Latitude**, **Base Position Longitude**, **Base Position Alt (WGS84)** and, for u-blox, **Base Position Accuracy**.
+    [Saved base sites](#base_sites) keep several such positions under a name.
   - **Receiver-managed averaging:** The receiver averages its position for up to **Maximum averaging time**, without an accuracy guarantee (Unicore).
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
 - **Allow flash save and restart** (Quectel): For the next connection only, lets QGroundControl save base settings to the receiver's flash and restart it.
 - **Connect automatically:** On by default. QGroundControl connects the saved receiver when it starts, reconnects it with increasing delays when the connection is lost, and reconnects a serial receiver as soon as it is plugged back in.
+  Settings that cannot connect, such as a base mode the selected receiver does not support, are reported once and not retried until you change them.
   With _Any RTK receiver on USB_ selected, it connects to an RTK receiver detected on USB instead.
   **Disconnect** pauses automatic connection until you select **Connect** again or turn the setting back on.
   When off, the receiver connects only when you select **Connect**, and a lost connection is only reported.
   Automatic connections never save settings to the receiver's flash.
+- **Record receiver data:** Records every connection that starts while it is on, to send with a problem report.
+  It is off each time QGroundControl starts, and a receiver that is already connected is recorded from its next connection.
+  Each connection gets a file in the `GPSReceiver` folder of the [Application Load/Save Path](general.md#load_save_path), named with the UTC time it started and the receiver type, such as `20260102T030405.006Z-ublox.log`.
+  The file's path is shown below the switch while the connection lasts.
+  The file holds the raw receiver input and output: every byte the receiver sent and every byte QGroundControl sent to it, with the baud rate changes.
+  It therefore includes the receiver's positions and the base station location, so share it only where that is acceptable.
+  It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, or `BAUD` and the new baud rate.
+  A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.
 - **Connect** / **Disconnect** (button): Connects the receiver with these settings, or disconnects it.
 
 A message below the settings, also shown in the GNSS indicator's drop-down, explains a failed or lost connection.
@@ -50,6 +72,13 @@ When a u-blox receiver reports that it produces more output than its connection 
 ### RTK Base Station {#base_station}
 
 A configured base can survey its own position, or start from a known position for the base station.
+Its corrections are sent while the receiver reports a valid base position: once the survey completes, or once the receiver uses the fixed position.
+A Septentrio receiver is the exception: its corrections are sent as soon as it is configured.
+The corrections pass the [RTCM message filter](ntrip_rtk.md#correction-routing) before they reach vehicles.
+
+Connecting configures the receiver again, which restarts a survey.
+So when a configured base stops sending, QGroundControl reports after a few seconds that no data arrives and keeps the connection for 30 seconds.
+Only if the receiver stays silent that long does the connection end and, with **Connect automatically**, get made again.
 
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
@@ -63,6 +92,21 @@ Survey-In is time consuming, so save its result: when a survey completes, the re
 Select **Fixed position** to start the base from the saved position next time.
 The values persist across QGC reboots until they are changed.
 :::
+
+#### Saved Base Sites {#base_sites}
+
+The fixed position settings hold one base position, which **Save Survey Position** replaces.
+To work from several places, keep each position as a named site:
+
+- When a survey completes, enter a **Site name** before you select **Save Survey Position**.
+  The surveyed position becomes the fixed base position and is also kept under that name.
+- With **Fixed position** selected, enter a name under **Save base position as site** and select **Save Site** to keep the base position the settings show.
+- Under **Saved base sites**, select a site and **Use Site** to make it the fixed base position, or **Delete Site** to remove it.
+  Selecting a site changes nothing until you use it.
+  A connected base keeps the position it started from, so disconnect the receiver to use a site.
+
+Saving under a name that is already saved replaces that site.
+Up to 50 sites are kept; when the list is full, delete a site before you save another, or save a survey without a site name.
 
 ### Passive Receiver {#passive}
 
@@ -84,6 +128,9 @@ In that case the RTK base station stays the receiver; select the NMEA device aga
 
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
+
+Vehicles take the altitudes they are sent as above mean sea level, so _Follow Me_ and [Update return to home position based on device location](fly_view.md) send the ground station's altitude only when it is known to be that, as a GNSS receiver and macOS and iOS devices report it.
+An ellipsoid height, as Android devices report, an altitude of unknown reference, or a position without an altitude is not sent. The vehicle's own home altitude is sent instead: home moves only horizontally, and a followed target is taken to be at home altitude.
 
 A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that.
 The settings are:

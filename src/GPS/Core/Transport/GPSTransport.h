@@ -16,7 +16,7 @@ enum class GPSOpenStatus
     TimedOut,
     Cancelled,
     Error,
-    Unsupported
+    Unsupported,
 };
 
 enum class GPSReadStatus
@@ -26,7 +26,7 @@ enum class GPSReadStatus
     Cancelled,
     Closed,
     Error,
-    Overflow
+    Overflow,
 };
 
 enum class GPSWriteStatus
@@ -35,7 +35,7 @@ enum class GPSWriteStatus
     TimedOut,
     Cancelled,
     Error,
-    Unsupported
+    Unsupported,
 };
 
 struct [[nodiscard]] GPSOpenResult
@@ -77,6 +77,7 @@ class GPSTransport
 public:
     explicit GPSTransport(GPSCancelToken cancelToken);
     virtual ~GPSTransport();
+    Q_DISABLE_COPY_MOVE(GPSTransport)
 
     virtual GPSOpenResult open() = 0;
     virtual bool fatalError() const = 0;
@@ -86,11 +87,11 @@ public:
     const GPSCancelToken& cancelToken() const { return _cancelToken; }
 
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
-    virtual unsigned fixedBaudrate() const { return 0; }
+    virtual unsigned fixedBaudRate() const { return 0; }
 
     /// Line rate that TCP and UDP links report. Drivers still program the receiver's serial port with it (UBX CFG-PRT
     /// sets UART1 to it), so the serial side of a network bridge and its receiver must run at this rate.
-    static constexpr unsigned BRIDGE_BAUDRATE = 115200;
+    static constexpr unsigned BRIDGE_BAUD_RATE = 115200;
     /// Received bytes a link buffers before it stops taking more (TCP), retires the session (serial) or drops the
     /// oldest (UDP).
     static constexpr qint64 READ_BUFFER_BYTES = 64 * 1024;
@@ -110,7 +111,7 @@ public:
 
     /// Sets the link baud rate. Returns true on success. By default only a healthy link's fixed rate succeeds, as a
     /// network bridge cannot change it. A refused rate leaves the link usable unless fatalError() reports otherwise.
-    virtual bool setBaudrate(unsigned baudrate);
+    virtual bool setBaudRate(unsigned baudRate);
 
 protected:
     /// Receives non-empty bytes and an unexpired, capped deadline that implementations must honor.
@@ -118,4 +119,6 @@ protected:
 
 private:
     GPSCancelToken _cancelToken;
+
+    static constexpr std::chrono::milliseconds DEFAULT_WRITE_TIMEOUT{500};
 };

@@ -56,10 +56,23 @@ void NTRIPManagerTest::_stopFromIdleIsNoop()
 {
     NTRIPManager manager;
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    QCOMPARE(manager.connectionStatusText(), NTRIPManager::tr("Disconnected"));
-    QCOMPARE(manager.property("connectionStatusText").toString(), NTRIPManager::tr("Disconnected"));
     manager._stop();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+}
+
+void NTRIPManagerTest::_statusMessageNamesStateWithoutDetail()
+{
+    // The panel shows the message alone, so it is never empty: not before the first connection, and not after a
+    // failure that gives no reason.
+    NTRIPManager manager;
+    QCOMPARE(manager.property("statusMessage").toString(), NTRIPManager::tr("Disconnected"));
+    auto* transport = injectMockTransport(manager);
+    initialize(manager);
+    QSignalSpy messages(&manager, &NTRIPManager::statusMessageChanged);
+    _fail(transport, QString(), NTRIPError::AuthFailed);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Error"));
+    QCOMPARE(messages.size(), 1);
 }
 
 void NTRIPManagerTest::_transportFactory()
@@ -172,10 +185,11 @@ void NTRIPManagerTest::_newSessionRetryBudget()
         QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
         manager.setConfiguration(mockCasterConfiguration(false));
         transport = injectMockTransport(manager);
-        QVERIFY(manager.metaObject()->indexOfMethod("retryNTRIP()") >= 0);
-        QSignalSpy enableRequested(&manager, &NTRIPManager::enableRequested);
-        manager.retryNTRIP();
-        QCOMPARE(enableRequested.count(), 1);
+        QVERIFY(manager.metaObject()->indexOfMethod("connectCaster()") >= 0);
+        QSignalSpy enabledRequested(&manager, &NTRIPManager::enabledRequested);
+        manager.connectCaster();
+        QCOMPARE(enabledRequested.count(), 1);
+        QVERIFY(enabledRequested.constFirst().constFirst().toBool());
     }
     QCOMPARE(transport->startCount, 1);
     QVERIFY(manager.configuration().enabled);
@@ -211,9 +225,22 @@ void NTRIPManagerTest::_statusCallbackStopsTransition()
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
 }
 
+void NTRIPManagerTest::_connectedCallbackStopsTransition_data()
+{
+    QTest::addColumn<bool>("position");
+    QTest::newRow("no-position") << false;
+    // The first position report publishes the connected state while the reporter is still starting.
+    QTest::newRow("position-reported-at-once") << true;
+}
+
 void NTRIPManagerTest::_connectedCallbackStopsTransition()
 {
+    QFETCH(bool, position);
     NTRIPManager manager;
+    if (position) {
+        manager.setGgaPositionProvider(NTRIPGgaReporter::PositionSource::VehicleGPS,
+                                       []() { return ggaObservation(QGeoCoordinate(47, 8, 500)); });
+    }
     auto* transport = injectMockTransport(manager);
     initialize(manager);
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
@@ -223,7 +250,9 @@ void NTRIPManagerTest::_connectedCallbackStopsTransition()
     });
     transport->simulateConnect();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Disconnected"));
     QCOMPARE(transport->stopCount, 1);
+    QCOMPARE(transport->sentNmea.size(), position ? 1 : 0);
     QVERIFY(manager.ggaSource().isEmpty());
 }
 
@@ -584,6 +613,52 @@ void NTRIPManagerTest::_retryPolicy()
     QVERIFY(manager.statusMessage().contains(QStringLiteral("1s")));
 }
 
+void NTRIPManagerTest::_unusableMountpointRetriedOnlyAfterCorrections_data()
+{
+    QTest::addColumn<NTRIPError>("code");
+    // The caster answers with its source table, or with data that holds no RTCM message.
+    QTest::newRow("source-table") << NTRIPError::InvalidMountpoint;
+    QTest::newRow("other-format") << NTRIPError::InvalidStream;
+}
+
+void NTRIPManagerTest::_unusableMountpointRetriedOnlyAfterCorrections()
+{
+    QFETCH(NTRIPError, code);
+    const QString detail = QStringLiteral("unusable mountpoint");
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto* transport = injectMockTransport(manager, true);
+    initialize(manager);
+
+    // Before any corrections the mountpoint is wrong, and asking again only counts against the client at the caster.
+    _fail(transport, detail, code);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(manager.statusMessage(), detail);
+
+    // A mountpoint that has served corrections has only gone offline.
+    transport = injectMockTransport(manager, true);
+    manager.connectCaster();
+    transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+    deliverQueuedCalls();
+    _fail(transport, detail, code);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    transport = injectMockTransport(manager, true);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(transport->startCount, 1);
+    _fail(transport, detail, code);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+
+    // Another mountpoint has served nothing yet.
+    auto changed = manager.configuration();
+    changed.connection.mountpoint = QStringLiteral("OTHER");
+    transport = injectMockTransport(manager, true);
+    manager.setConfiguration(changed);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(transport->startCount, 1);
+    _fail(transport, detail, code);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+}
+
 void NTRIPManagerTest::_httpRetryAfterReachesManager()
 {
     // Compressed error bodies and authentication failures are NTRIPHttpCodecTest's and _retryPolicy's.
@@ -609,6 +684,50 @@ void NTRIPManagerTest::_httpRetryAfterReachesManager()
     QCOMPARE(retry->startCount, 0);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QCOMPARE(retry->startCount, 1);
+}
+
+void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser_data()
+{
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<QString>("logged");
+    QTest::addColumn<QString>("message");
+    QTest::newRow("redirect") << QByteArray(
+                                     "HTTP/1.1 301 Moved Permanently\r\nLocation: https://caster.example:2102/TEST\r\n"
+                                     "Content-Length: 0\r\n\r\n")
+                              << QStringLiteral("301")
+                              << QStringLiteral("redirected the request to https://caster.example:2102/TEST");
+    // A mountpoint the caster does not have, before it served any corrections.
+    QTest::newRow("not-found") << QByteArray("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n")
+                               << QStringLiteral("404") << QStringLiteral("no such mountpoint");
+}
+
+void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser()
+{
+    QFETCH(QByteArray, response);
+    QFETCH(QString, logged);
+    QFETCH(QString, message);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = mockCasterConfiguration();
+    configuration.connection = caster.connectionConfig();
+    manager.setConfiguration(configuration);
+    manager._start();
+    auto* connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*") + logged));
+    QCOMPARE(connection->write(response), response.size());
+    // The request is not repeated: the caster would answer it the same way every time.
+    QTRY_VERIFY_WITH_TIMEOUT(manager.connectionStatus() != NTRIPManager::ConnectionStatus::Connecting,
+                             TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QVERIFY2(manager.statusMessage().contains(message), qPrintable(manager.statusMessage()));
+    auto* retry = injectMockTransport(manager);
+    QVERIFY(scheduler.advanceBy(NTRIPFailure::MAX_RETRY_AFTER));
+    QCOMPARE(retry->startCount, 0);
 }
 
 void NTRIPManagerTest::_retryPublicationSuperseded()
@@ -682,7 +801,7 @@ void NTRIPManagerTest::_correctionIngressKeepsSessionAndIdentity()
     QCOMPARE(result.data, frame);
     QCOMPARE(result.messageId, 1005);
     QCOMPARE(result.receivedAtMs, receivedAtMs);
-    QVERIFY(result.valid && !result.filtered);
+    QVERIFY(result.valid);
     QVERIFY(routed.isEmpty());
     deliverQueuedCalls();
     QCOMPARE(routed.size(), 1);
@@ -725,13 +844,6 @@ void NTRIPManagerTest::_correctionIngressKeepsSessionAndIdentity()
     QVERIFY(!mgr.connectionStats()->dataStale());
 }
 
-void NTRIPManagerTest::_factChangesReconfigureTransport_data()
-{
-    QTest::addColumn<QString>("setting");
-    QTest::newRow("cold-whitelist") << QStringLiteral("whitelist");
-    QTest::newRow("hot-mountpoint") << QStringLiteral("mountpoint");
-}
-
 void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
 {
     using Source = NTRIPGgaReporter::PositionSource;
@@ -763,14 +875,49 @@ void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
     manager._stop();
 }
 
-void NTRIPManagerTest::_factChangesReconfigureTransport()
+void NTRIPManagerTest::_connectedWithoutPositionSaysSo_data()
 {
-    QFETCH(QString, setting);
+    QTest::addColumn<bool>("positionArrives");
+    QTest::newRow("position-arrives") << true;
+    // A mountpoint of a single base needs no position.
+    QTest::newRow("corrections-arrive") << false;
+}
+
+void NTRIPManagerTest::_connectedWithoutPositionSaysSo()
+{
+    QFETCH(bool, positionArrives);
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    std::optional<GPSObservation> position;
+    manager.setGgaPositionProvider(NTRIPGgaReporter::PositionSource::VehicleGPS, [&position]() { return position; });
+    auto* transport = injectMockTransport(manager, true);
+    initialize(manager);
+
+    // A network RTK (VRS) mountpoint sends nothing until it is told a position, so the silence is explained.
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Connected, waiting for a position to report"));
+    QVERIFY(transport->sentNmea.isEmpty());
+
+    QSignalSpy messages(&manager, &NTRIPManager::statusMessageChanged);
+    if (positionArrives) {
+        position = ggaObservation(QGeoCoordinate(47, 8, 500));
+        QVERIFY(scheduler.advanceBy(NTRIPGgaReporter::FAST_RETRY_INTERVAL));
+        QCOMPARE(transport->sentNmea.size(), 1);
+    } else {
+        transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+        deliverQueuedCalls();
+    }
+    QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Connected"));
+    QCOMPARE(messages.size(), 1);
+    manager._stop();
+}
+
+void NTRIPManagerTest::_mountpointChangeReconnects()
+{
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     NTRIPManager mgr(nullptr, &scheduler, {.corrections = &corrections});
-    auto configuration = mockCasterConfiguration();
-    configuration.filter.whitelist = QStringLiteral("1005");
+    const auto configuration = mockCasterConfiguration();
     mgr.setConfiguration(configuration);
     auto* first = injectMockTransport(mgr, true);
     int stops = 0;
@@ -785,34 +932,21 @@ void NTRIPManagerTest::_factChangesReconfigureTransport()
     QCOMPARE(routed.size(), 1);
 
     auto* second = injectMockTransport(mgr, true);
-    const bool reconnect = setting == QStringLiteral("mountpoint");
     auto changed = configuration;
-    if (reconnect) {
-        changed.connection.mountpoint = QStringLiteral("REPLACEMENT");
-    } else {
-        changed.filter.whitelist = QStringLiteral("1077");
-    }
+    changed.connection.mountpoint = QStringLiteral("REPLACEMENT");
     mgr.setConfiguration(changed);
     QVERIFY(scheduler.advanceBy(SettingsDebounce));
-    QCOMPARE(second->startCount, reconnect ? 1 : 0);
-    QCOMPARE(stops, reconnect ? 1 : 0);
-    auto* active = reconnect ? second : first;
-    QCOMPARE(active->startCount, 1);
-    QCOMPARE(active->stopCount, 0);
-    if (setting == QStringLiteral("whitelist")) {
-        QCOMPARE(active->lastWhitelist, QVector<int>{1077});
-        active->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
-    }
+    QCOMPARE(second->startCount, 1);
+    QCOMPARE(stops, 1);
+    QCOMPARE(second->stopCount, 0);
     const auto frame = GPSTest::rtcmMessage(1077);
-    active->simulateRtcmData(frame, 1077, scheduler.nowMs() - 10);
+    second->simulateRtcmData(frame, 1077, scheduler.nowMs() - 10);
     deliverQueuedCalls();
     QCOMPARE(routed.size(), 2);
     QCOMPARE(routed[1], frame);
-    // Only a reconnect names a new stream.
+    // The reconnect names a new stream.
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(100)));
-    QCOMPARE(corrections.selectedStream().instanceId,
-             reconnect ? QStringLiteral("ntrip://caster.example.com:2101/REPLACEMENT")
-                       : QStringLiteral("ntrip://caster.example.com:2101/TEST"));
+    QCOMPARE(corrections.selectedStream().instanceId, QStringLiteral("ntrip://caster.example.com:2101/REPLACEMENT"));
     changed.enabled = false;
     mgr.setConfiguration(changed);
     mgr.setConfiguration(changed);
@@ -830,8 +964,8 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     NTRIPManager mgr(nullptr, nullptr, {.corrections = &corrections});
     auto configuration = mockCasterConfiguration();
     configuration.connection = caster.connectionConfig();
-    configuration.filter.whitelist = QStringLiteral("1005");
     mgr.setConfiguration(configuration);
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005")});
     QList<QByteArray> routed;
     captureVehicleFrames(corrections, routed);
     mgr._start();
@@ -845,10 +979,12 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));
     const QByteArray response = okChunkedResponse(accepted + filtered + rejected, false);
     QCOMPARE(connection->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(mgr.connectionStats()->messagesReceived(), quint32(1), TestTimeout::shortMs());
+    // The connection counts every valid frame the caster sends, whatever the routing's message filter takes of them.
+    QTRY_COMPARE_WITH_TIMEOUT(mgr.connectionStats()->messagesReceived(), quint32(2), TestTimeout::shortMs());
     verifyExpectedLogMessage();
     deliverQueuedCalls();
-    // Only the whitelisted valid frame reaches vehicles; the filtered and the corrupt one do not.
+    QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(accepted.size() + filtered.size()));
+    // Only the valid frame the filter takes reaches vehicles; the filtered and the corrupt one do not.
     QCOMPARE(routed, QList<QByteArray>{accepted});
     mgr._stop();
 }

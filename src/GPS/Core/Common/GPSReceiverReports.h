@@ -1,9 +1,13 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
+#include <span>
 
 #include <QtCore/QObject>
 
@@ -47,7 +51,7 @@ enum class GPSConstellation
     BeiDou,
     QZSS,
     SBAS,
-    NavIC
+    NavIC,
 };
 
 struct GPSIntegrityReport
@@ -57,14 +61,14 @@ struct GPSIntegrityReport
         Unknown,
         Ok,
         Warning,
-        Critical
+        Critical,
     };
     enum class SpoofingState
     {
         Unknown,
         None,
         Indicated,
-        Multiple
+        Multiple,
     };
     /// Ordered by severity, so the worst of several reports is the greatest.
     enum class AntennaState
@@ -72,7 +76,7 @@ struct GPSIntegrityReport
         Unknown,
         Ok,
         Open,
-        Short
+        Short,
     };
 
     [[nodiscard]] static constexpr JammingState jammingStateFromValue(int value)
@@ -167,21 +171,66 @@ struct GPSPositionReport
 
 struct GPSSatelliteReport
 {
+    /// A constellation with satellites in view.
+    struct Constellation
+    {
+        GPSConstellation constellation = GPSConstellation::Unknown;
+        int inView = 0;
+        /// Empty when the receiver does not report which of them it uses.
+        std::optional<int> used = std::nullopt;
+
+        bool operator==(const Constellation&) const = default;
+    };
+
+    /// One entry for each GPSConstellation value.
+    static constexpr size_t MAX_CONSTELLATIONS = 8;
+
+    /// The constellations with satellites in view, in GPSConstellation order. Their in-view counts sum to inView.
+    [[nodiscard]] std::span<const Constellation> constellationsInView() const
+    {
+        return std::span(constellations).first(std::min<size_t>(constellationCount, constellations.size()));
+    }
+
+    /// Appends to constellationsInView(); ignored once MAX_CONSTELLATIONS are listed.
+    void addConstellation(const Constellation& constellation)
+    {
+        if (constellationCount < constellations.size()) {
+            constellations[constellationCount++] = constellation;
+        }
+    }
+
     // Latest accepted view receipt. Zero plus absent inView means no view coverage.
     uint64_t timestampUs = 0;
     std::optional<int> inView = std::nullopt;
     std::optional<int> used = std::nullopt;
+    /// Backs constellationsInView() with its first constellationCount entries. The others stay default, so that
+    /// equal reports compare equal.
+    std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
+    uint8_t constellationCount = 0;
 
     bool operator==(const GPSSatelliteReport&) const = default;
 };
 
-struct GPSSurveyReport
+enum class GPSBaseState
+{
+    /// No base position: none is being determined, determining it failed, or it was lost.
+    Inactive,
+    /// A survey or the receiver's own averaging is determining the base position.
+    Active,
+    /// The base position holds: a survey finished, or the receiver uses the fixed position.
+    Valid,
+};
+
+/// What a configured base station reports about its position, in every base mode.
+struct GPSBaseStatus
 {
     /// Receipt of this status; a status a family buffered keeps its original receipt.
     uint64_t timestampUs = 0;
+    GPSBaseState state = GPSBaseState::Inactive;
+    /// The base position once the receiver reports it; its coordinates are NaN until then.
     GPSEllipsoidPosition position{};
+    /// The accuracy a survey measured; empty for a fixed position and where the receiver reports none.
     std::optional<double> meanAccuracyMeters = std::nullopt;
+    /// How long a survey has run or ran; zero for a fixed position.
     std::chrono::seconds duration{0};
-    bool valid = false;
-    bool active = false;
 };

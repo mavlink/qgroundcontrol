@@ -12,6 +12,8 @@ private slots:
     void _utcMilliseconds_data();
     void _utcMilliseconds();
     void _qtTimestampEquivalence();
+    void _zdaDate_data();
+    void _zdaDate();
     void _makeGga_data();
     void _makeGga();
     void _repairChecksum_data();
@@ -24,6 +26,8 @@ private slots:
     void _navigationFreshnessBoundaries();
     void _navigationFixLoss_data();
     void _navigationFixLoss();
+    void _expiredMetadataEpoch_data();
+    void _expiredMetadataEpoch();
     void _fixQuality_data();
     void _fixQuality();
     void _ggaHdopValidation_data();

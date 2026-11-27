@@ -41,6 +41,8 @@ public:
 
     static constexpr qsizetype MAX_HEADER_BYTES = 32768;
     static constexpr qsizetype MAX_LINE_BYTES = 8192;
+    static constexpr qsizetype MAX_HEADER_COUNT = 128;
+    static constexpr int MAX_INFORMATIONAL_RESPONSES = 4;
     static constexpr quint64 MAX_CHUNK_BYTES = 16 * 1024 * 1024;
     static constexpr qsizetype MAX_ERROR_BODY_BYTES = 500;
     static constexpr qsizetype MAX_ERROR_PREVIEW_CHARS = 200;
@@ -80,13 +82,15 @@ private:
         ChunkEnd,
         Trailers,
         Complete,
-        Failed
+        Failed,
     };
 
     void _lineReceived(Result& result, const QDateTime& utcNow);
     void _beginBody(Result& result);
     void _beginIcyBody(Result& result);
     void _finishError(Result& result);
+    /// What a 3xx answer means for the user, naming the Location target when the caster gave one.
+    static QString _redirectDetail(int status, const QHttpHeaders& headers);
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
 
     QHttpHeaders _headers;

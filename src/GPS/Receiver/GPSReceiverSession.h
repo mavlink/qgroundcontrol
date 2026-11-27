@@ -24,13 +24,14 @@ struct GPSBaseStationState
 {
     /// Base mode of a configured base; empty for a passive receiver.
     std::optional<BaseModeDefinition::Mode> mode;
-    /// Antenna position and its accuracy in meters once known; the receiver then reports only a time fix.
+    /// Antenna position and its accuracy in meters while the receiver reports it valid; the receiver then reports only
+    /// a time fix.
     std::optional<std::pair<GPSEllipsoidPosition, double>> position;
-    /// Assumed accuracy of a survey-in result that reports none.
-    std::optional<double> surveyAccuracyLimitMeters;
+    /// Accuracy of a base position reported without one: the fixed position's, or the limit of a survey-in.
+    std::optional<double> assumedAccuracyMeters;
 
-    /// A surveying base adopts a valid, located result and otherwise has no position.
-    void applySurvey(const GPSSurveyReport& report);
+    /// A base in any mode adopts a valid, located position and otherwise has none.
+    void applyStatus(const GPSBaseStatus& status);
 };
 
 /// Builds the receiver request for one connection: a passive receiver gets no base settings, and compact
@@ -39,7 +40,7 @@ struct GPSBaseStationState
 [[nodiscard]] GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType type, uint32_t baudRate,
                                                      bool allowPersistentChanges, QString* error);
 
-/// The state a session starts from; a fixed base knows its position before the receiver reports.
+/// The state a session starts from: its base mode, without a position until the receiver reports one.
 [[nodiscard]] GPSBaseStationState gpsBaseStationStateFor(GPSType type, const GPSReceiverConfig& config);
 
 /// One receiver connection of GPSReceiver: its worker, correction and position registrations, and identity.
@@ -52,7 +53,7 @@ class GPSReceiverSession : public QObject
 public:
     struct Connection
     {
-        GPSType type = GPSType::ublox;
+        GPSType type = GPSType::UBlox;
         RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
         /// The receiver's RTCM output is a correction source.
         bool forwardsCorrections = true;
@@ -92,15 +93,15 @@ public:
     int manufacturer() const
     {
         return gpsReceiverManufacturerForType(
-            _connection.type == GPSType::automatic ? _detectedType.value_or(GPSType::automatic) : _connection.type);
+            _connection.type == GPSType::Automatic ? _detectedType.value_or(GPSType::Automatic) : _connection.type);
     }
 
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries: the family
-    /// whose native protocol it is, or GPSType::passive for standard NMEA. Empty until then and for a selected family.
+    /// whose native protocol it is, or GPSType::Passive for standard NMEA. Empty until then and for a selected family.
     std::optional<GPSType> detectedType() const { return _detectedType; }
 
-    /// BaseModeDefinition::Mode of a configured base, or -1 for a passive receiver.
-    int baseMode() const { return _base.mode ? static_cast<int>(*_base.mode) : -1; }
+    /// Base mode of a configured base; empty for a passive receiver.
+    std::optional<BaseModeDefinition::Mode> baseMode() const { return _base.mode; }
 
     const QString& serialDevice() const { return _connection.serialDevice; }
 
@@ -114,8 +115,8 @@ public:
 signals:
     void satelliteInfoUpdated(const GPSSatelliteReport& report);
     void positionUpdated(const GPSPositionReport& report);
-    /// Survey progress of a configured base.
-    void surveyInStatusUpdated(const GPSSurveyReport& report);
+    /// The base position status of a configured base, in every base mode.
+    void surveyInStatusUpdated(const GPSBaseStatus& report);
     void receiverReady(const QString& identity);
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries.
     void receiverDetected(GPSType type);
@@ -125,7 +126,7 @@ signals:
     void ended(GPSConnectionError error, const QString& detail);
 
 private:
-    void _onSurvey(const GPSSurveyReport& report);
+    void _onSurvey(const GPSBaseStatus& report);
     void _onReady(const QString& identity);
     void _onDetected(GPSType type);
     void _forwardCorrection(const QByteArray& data, qint64 receivedAtMs);

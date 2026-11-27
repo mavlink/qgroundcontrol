@@ -17,8 +17,10 @@ QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIPManager")
 
 namespace {
 
-bool isRetryable(NTRIPError error)
+/// @a streamServed: the running connection has delivered corrections since it was started.
+bool isRetryable(NTRIPError error, bool streamServed)
 {
+    // No default, so a new code is reported (-Wswitch) until it is classified.
     switch (error) {
         case NTRIPError::AuthFailed:
         case NTRIPError::InvalidConfig:
@@ -26,9 +28,24 @@ bool isRetryable(NTRIPError error)
         // TLS failures recur the same way until the user changes the TLS settings.
         case NTRIPError::SslError:
             return false;
-        default:
+        // A caster answers with its source table, or with 404 or 410, for a mountpoint it does not have. Before any
+        // corrections that is a wrong mountpoint, and casters count repeated requests for a missing one towards a ban.
+        // After them, the mountpoint has only gone offline.
+        case NTRIPError::InvalidMountpoint:
+        // Data without a valid RTCM message is, before any corrections, a mountpoint that sends another format.
+        case NTRIPError::InvalidStream:
+            return streamServed;
+        case NTRIPError::ConnectionTimeout:
+        case NTRIPError::DataWatchdog:
+        case NTRIPError::SocketError:
+        case NTRIPError::ServerDisconnected:
+        case NTRIPError::InvalidHttpResponse:
+        case NTRIPError::HttpError:
+        case NTRIPError::HeaderTooLarge:
+        case NTRIPError::Unknown:
             return true;
     }
+    return true;
 }
 
 QString correctionSourceInstance(const NTRIPConnectionConfig& connection)
@@ -39,19 +56,6 @@ QString correctionSourceInstance(const NTRIPConnectionConfig& connection)
 }
 
 }  // namespace
-
-QVector<int> NTRIPRTCMFilterConfig::messageIds() const
-{
-    QVector<int> ids;
-    for (const auto& token : whitelist.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
-        bool ok = false;
-        const int id = token.trimmed().toInt(&ok);
-        if (ok && id > 0) {
-            ids.append(id);
-        }
-    }
-    return ids;
-}
 
 // -----------------------------------------------------------------------------
 // Lifecycle
@@ -71,7 +75,7 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
 {
     qCDebug(NTRIPManagerLog) << this;
 
-    connect(&_ggaReporter, &NTRIPGgaReporter::sourceChanged, this, &NTRIPManager::ggaSourceChanged);
+    connect(&_ggaReporter, &NTRIPGgaReporter::sourceChanged, this, &NTRIPManager::_onGgaSourceChanged);
 
     connect(&_sourceTableController, &NTRIPSourceTableController::certificatePinned, this,
             &NTRIPManager::_setPinnedCertificate);
@@ -102,21 +106,10 @@ QString NTRIPManager::securityWarning() const
                                                             : QString();
 }
 
-QString NTRIPManager::connectionStatusText() const
+QString NTRIPManager::statusMessage() const
 {
-    switch (_connectionStatus) {
-        case ConnectionStatus::Disconnected:
-            return tr("Disconnected");
-        case ConnectionStatus::Connecting:
-            return tr("Connecting");
-        case ConnectionStatus::Connected:
-            return tr("Connected");
-        case ConnectionStatus::Reconnecting:
-            return tr("Reconnecting");
-        case ConnectionStatus::Error:
-            break;
-    }
-    return tr("Error");
+    // No state has been entered before the first connection.
+    return _statusMessage.isEmpty() ? _defaultMessageFor(_connectionStatus) : _statusMessage;
 }
 
 void NTRIPManager::init()
@@ -136,9 +129,8 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         return;
     }
     const bool ggaChanged = configuration.gga != _configuration.gga;
-    const bool streamChanged = configuration.enabled != _configuration.enabled ||
-                               configuration.connection != _configuration.connection ||
-                               configuration.filter != _configuration.filter;
+    const bool streamChanged =
+        configuration.enabled != _configuration.enabled || configuration.connection != _configuration.connection;
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
     QString& pin = _configuration.connection.pinnedCertificate;
@@ -171,14 +163,24 @@ void NTRIPManager::setGgaPositionProvider(NTRIPGgaReporter::PositionSource sourc
 // Public control surface
 // -----------------------------------------------------------------------------
 
-void NTRIPManager::retryNTRIP()
+void NTRIPManager::connectCaster()
 {
-    if (_shutdown || _connectionStatus != ConnectionStatus::Error) {
+    if (_shutdown) {
         return;
     }
-    _configuration.enabled = true;
-    _start();
-    emit enableRequested();
+    // After an error the setting is still on, and storing it again would start nothing.
+    if (_connectionStatus == ConnectionStatus::Error) {
+        _configuration.enabled = true;
+        _start();
+    }
+    emit enabledRequested(true);
+}
+
+void NTRIPManager::disconnectCaster()
+{
+    if (!_shutdown) {
+        emit enabledRequested(false);
+    }
 }
 
 void NTRIPManager::shutdown()
@@ -212,6 +214,7 @@ void NTRIPManager::_start()
     _settingsDebounceTask.cancel();
     _cancelReconnect();
     _reconnectBackoff.reset();
+    _streamServed = false;
     _dispatch(Event::StartRequested);
     _publish();
 }
@@ -325,9 +328,24 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
         case ConnectionStatus::Reconnecting:
             return tr("Reconnecting...");
         case ConnectionStatus::Error:
-            return {};  // Error always carries a detail from the caller.
+            break;
     }
-    return {};
+    return tr("Error");
+}
+
+QString NTRIPManager::_connectedMessage() const
+{
+    const bool waiting = _ggaReporter.currentSource().isEmpty() && _stats.messagesReceived() == 0;
+    return waiting ? tr("Connected, waiting for a position to report")
+                   : _defaultMessageFor(ConnectionStatus::Connected);
+}
+
+void NTRIPManager::_refreshConnectedMessage()
+{
+    if (_connectionStatus == ConnectionStatus::Connected) {
+        _statusMessage = _connectedMessage();
+        _publish();
+    }
 }
 
 void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds retryAfter)
@@ -349,8 +367,10 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
             break;
 
         case ConnectionStatus::Connected:
-            _ggaReporter.start(_transport);
             _stats.start();
+            _statusMessage = _connectedMessage();
+            // Last, because a position reported at once publishes this state.
+            _ggaReporter.start(_transport);
             break;
 
         case ConnectionStatus::Reconnecting:
@@ -443,7 +463,8 @@ void NTRIPManager::_openSession()
             _correctionManager->openSource(GPSCorrectionSettings::Ntrip, correctionSourceInstance(connection));
     }
 
-    if (const QString err = connection.streamValidationError(); !err.isEmpty()) {
+    const QString err = connection.streamValidationError();
+    if (!err.isEmpty()) {
         qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << connection.host
                                    << " port=" << connection.port;
         _dispatch(Event::ConfigInvalid, err);
@@ -461,7 +482,7 @@ void NTRIPManager::_openSession()
 
     NTRIPTransport* transport = _transportFactory ? _transportFactory(_configuration, this) : nullptr;
     if (!transport) {
-        transport = new NTRIPHttpTransport(connection, config.filter.messageIds(), this, _scheduler);
+        transport = new NTRIPHttpTransport(connection, this, _scheduler);
     }
     _transport = transport;
 
@@ -506,6 +527,12 @@ void NTRIPManager::_openSession()
 // Signal handlers
 // -----------------------------------------------------------------------------
 
+void NTRIPManager::_onGgaSourceChanged()
+{
+    emit ggaSourceChanged();
+    _refreshConnectedMessage();
+}
+
 void NTRIPManager::_onTransportConnected()
 {
     _dispatch(Event::TransportConnected);
@@ -522,7 +549,7 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << code << detail;
     _lastFailureDetail = detail;
 
-    if (_isEnabled() && isRetryable(code)) {
+    if (_isEnabled() && isRetryable(code, _streamServed)) {
         const auto backoffMs = _reconnectBackoff.peek(failure.retryAfter).count();
         qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
                                  << (_reconnectBackoff.attempts() + 1) << ")";
@@ -556,10 +583,15 @@ void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)
     if (_correctionSource) {
         _correctionSource->submit(frame.data, frame.receivedAtMs);
     }
-    _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
+    const bool first = _stats.messagesReceived() == 0;
+    _stats.recordMessage(frame.data.size(), frame.receivedAtMs);
+    if (first) {
+        _refreshConnectedMessage();
+    }
 
     // Only corrections show the caster serves this stream; one that accepts and then drops must keep backing off.
     _reconnectBackoff.reset();
+    _streamServed = true;
 }
 
 void NTRIPManager::_applyConfiguration()
@@ -580,13 +612,8 @@ void NTRIPManager::_applyConfiguration()
         _start();
     } else if (newConfig.connection != _running.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
+        _streamServed = false;
         _dispatch(Event::HotReconfigure);
-    } else {
-        if (newConfig.filter != _running.filter && _transport) {
-            qCDebug(NTRIPManagerLog) << "NTRIP RTCM whitelist changed, applying to live parser";
-            _transport->setRtcmWhitelist(newConfig.filter.messageIds());
-        }
-        _running = newConfig;
     }
     _publish();
 }

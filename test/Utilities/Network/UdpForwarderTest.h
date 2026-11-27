@@ -11,6 +11,7 @@ private slots:
     void testConfigureValid();
     void testConfigureInvalid();
     void testForward();
+    void testForwardFailure();
     void testStop();
     void testReconfigure_data();
     void testReconfigure();

@@ -102,11 +102,11 @@ public:
     /// Every host write, parsed or not.
     std::vector<QByteArray> writes;
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate) override
     {
         // Output queued at the previous rate is lost with the rate change.
         receiver.clearReplies();
-        return _model.handleBaudrate(receiver, baudrate);
+        return _model.handleBaudRate(receiver, baudRate);
     }
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override

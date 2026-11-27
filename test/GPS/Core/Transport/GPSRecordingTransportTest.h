@@ -2,13 +2,17 @@
 
 #include "UnitTest.h"
 
-/// The developer recording tee keeps the link working when its files fail or reach their size cap.
+/// The session recorder writes what crossed the link in order, in a file that replays to the same decoded events and
+/// is written out while the session runs, and keeps the link working when the file fails or reaches its size cap.
 class GPSRecordingTransportTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+    void _recordsLinkTrafficInOrder();
+    void _recordingReplaysToSameEvents();
     void _fileErrorKeepsLink_data();
     void _fileErrorKeepsLink();
-    void _filesStopAtSizeCap();
+    void _flushesWhileRecording();
+    void _fileStopsAtSizeCap();
 };

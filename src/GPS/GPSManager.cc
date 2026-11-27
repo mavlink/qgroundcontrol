@@ -1,8 +1,10 @@
 #include "GPSManager.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
 #include <QtCore/QPointer>
 
+#include "AppSettings.h"
 #include "GPSCorrectionManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
@@ -34,7 +36,19 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
 #ifndef QGC_NO_SERIAL_LINK
     dependencies.serialPorts = SerialPortManager::instance();
 #endif
+    // Beside the other files the application saves, and following a save location changed while it runs.
+    dependencies.recordingDirectory = []() {
+        const QString savePath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString();
+        return savePath.isEmpty() ? QString() : QDir(savePath).filePath(QStringLiteral("GPSReceiver"));
+    };
     return dependencies;
+}
+
+/// Beside the receiver recordings; see receiverDependencies().
+QString correctionLogDirectory()
+{
+    const QString savePath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString();
+    return savePath.isEmpty() ? QString() : QDir(savePath).filePath(QStringLiteral("GPSCorrections"));
 }
 
 }  // namespace
@@ -42,7 +56,7 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
 GPSManager::GPSManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, nullptr))
-    , _corrections(new GPSCorrectionManager(this, _scheduler))
+    , _corrections(new GPSCorrectionManager(this, _scheduler, {.logDirectory = correctionLogDirectory}))
     , _positionManager(new PositionManager(this, _scheduler))
     , _receiver(new GPSReceiver(this, _scheduler, receiverDependencies(_corrections, _positionManager)))
     , _ntripManager(new NTRIPManager(this, _scheduler,
@@ -69,15 +83,22 @@ GPSManager* GPSManager::instance()
     return _gpsManager();
 }
 
-bool GPSManager::saveCurrentBasePosition()
+bool GPSManager::saveCurrentBasePosition(const QString& siteName)
 {
     // A copy: a settings observer may reconfigure the receiver, which rewrites the receiver Facts.
     const std::optional<GPSBaseStationConfig::Fixed> base = _receiver->facts()->currentBasePosition();
     if (!base) {
         return false;
     }
-    _receiver->facts()->_setCurrentBasePositionSaved(true);
     RTKSettings* settings = SettingsManager::instance()->rtkSettings();
+    if (!siteName.trimmed().isEmpty() && !settings->saveBaseSite({.name = siteName,
+                                                                  .latitude = base->position.latitudeDegrees,
+                                                                  .longitude = base->position.longitudeDegrees,
+                                                                  .altitude = base->position.altitudeMeters,
+                                                                  .accuracy = base->accuracyMeters})) {
+        return false;
+    }
+    _receiver->facts()->_setCurrentBasePositionSaved(true);
     settings->fixedBasePositionLatitude()->setRawValue(base->position.latitudeDegrees);
     settings->fixedBasePositionLongitude()->setRawValue(base->position.longitudeDegrees);
     settings->fixedBasePositionAltitude()->setRawValue(base->position.altitudeMeters);

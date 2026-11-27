@@ -19,32 +19,52 @@ QGCGroupBox {
     property bool showWhenDisconnected: false
     property string disconnectedText: qsTr("No GNSS receiver connected.")
 
-    readonly property bool _connected: root.facts.telemetryAvailable
+    readonly property bool _connected: root.receiver.state === GPSReceiver.Connected
     readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     // A finished survey is the moment to keep its position, so the next connection can start as a fixed base.
     readonly property bool _surveyComplete: root._connected && root._surveyConnected && !root.facts.active.value
                                             && root.facts.canSaveCurrentBasePosition
     readonly property bool _surveySaved: root.facts.currentBasePositionSaved
+    readonly property list<gpsConstellationSatellites> _constellations: root.receiver.constellations
+
+    /// "GPS 8/10, Galileo 6/7": the satellites each constellation uses of those in view. No-break spaces keep a
+    /// constellation and its counts on one line.
+    function _constellationsText(constellations) {
+        const texts = []
+        for (let i = 0; i < constellations.length; i++) {
+            const used = constellations[i].used
+            //: %1 is a satellite constellation, such as Galileo; %2 the number of its satellites the receiver uses,
+            //: or a dash when unknown; %3 the number in view. The space between them is a no-break space.
+            texts.push(qsTr("%1\u00A0%2/%3").arg(constellations[i].name).arg(used >= 0 ? used : "–")
+                                            .arg(constellations[i].inView))
+        }
+        return texts.join(", ")
+    }
 
     heading: qsTr("GNSS Receiver Status")
-    visible: root._connected || root.receiver.hasReceiver || root.receiver.reconnecting || root.showWhenDisconnected
+    visible: root.receiver.state !== GPSReceiver.Disconnected || root.showWhenDisconnected
 
     /// A status Fact, labelled with its description.
     component FactRow: LabelledLabel {
         required property Fact fact
         label: fact.shortDescription
         labelText: fact.enumOrValueString
+        labelTextFormat: Text.PlainText
     }
 
     /// A label and a value reported from outside, such as a long endpoint, which wraps instead of widening the panel.
     component WrappingRow: RowLayout {
         property alias label: rowLabel.text
         property alias labelText: rowValue.text
+        property alias labelWrapMode: rowValue.wrapMode
 
         spacing: ScreenTools.defaultFontPixelWidth * 2
 
-        QGCLabel { id: rowLabel }
+        QGCLabel {
+            id: rowLabel
+            textFormat: Text.PlainText
+        }
         GPSNoteLabel {
             id: rowValue
             horizontalAlignment: Text.AlignRight
@@ -59,7 +79,7 @@ QGCGroupBox {
 
     LabelledLabel {
         objectName: "rtkDetectedReceiver"
-        visible: root.receiver.hasReceiver && root.receiver.detectedReceiver.length > 0
+        visible: root.receiver.detectedReceiver.length > 0
         label: qsTr("Detected")
         labelText: root.receiver.detectedReceiver
         labelTextFormat: Text.PlainText
@@ -74,7 +94,7 @@ QGCGroupBox {
 
     WrappingRow {
         objectName: "rtkReceiverEndpoint"
-        visible: root.receiver.hasReceiver && root.receiver.activeEndpoint.length > 0
+        visible: root.receiver.activeEndpoint.length > 0
         label: qsTr("Connection")
         labelText: root.receiver.activeEndpoint
     }
@@ -96,6 +116,15 @@ QGCGroupBox {
         objectName: "rtkSatellitesUsed"
         fact: root.facts.numSatellitesUsed
         visible: root._connected && root.facts.numSatellitesUsed.value >= 0
+    }
+
+    WrappingRow {
+        objectName: "rtkConstellations"
+        visible: root._connected && root._constellations.length > 0
+        //: Label of the satellites used and in view of each satellite constellation, such as GPS and Galileo
+        label: qsTr("Constellations")
+        labelText: root._constellationsText(root._constellations)
+        labelWrapMode: Text.Wrap
     }
 
     FactRow {
@@ -132,19 +161,53 @@ QGCGroupBox {
 
     GPSNoteLabel {
         objectName: "rtkSurveyCompletePrompt"
-        visible: root._surveyComplete
+        visible: surveySave.offered
         text: root._surveySaved
               ? qsTr("Survey position saved. Select Fixed position to start from it next time.")
-              : qsTr("Survey complete. Save this position to start the base from it next time.")
+              : qsTr("Survey complete. Save this position to start the base from it next time. A site name also keeps it as a saved base site.")
     }
 
-    QGCButton {
-        objectName: "rtkSurveySaveButton"
-        Layout.fillWidth: true
+    ColumnLayout {
+        id: surveySave
+
+        // GPSManager saves the position of the application's receiver, so only a panel that shows it offers the save.
+        readonly property bool offered: root._surveyComplete && root.receiver === QGroundControl.gpsManager.receiver
+                                        && root.facts === root.receiver.facts
+        property bool failed: false
+
         Layout.minimumWidth: 0
-        wrapMode: Text.Wrap
-        visible: root._surveyComplete && !root._surveySaved
-        text: qsTr("Save Survey Position")
-        onClicked: QGroundControl.gpsManager.saveCurrentBasePosition()
+        spacing: ScreenTools.defaultFontPixelHeight / 4
+        visible: offered && !root._surveySaved
+        onVisibleChanged: failed = false
+
+        QGCTextField {
+            id: surveySiteName
+            objectName: "rtkSurveySiteName"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            maximumLength: RTKSettings.MaxBaseSiteNameLength
+            placeholderText: qsTr("Site name (optional)")
+        }
+
+        QGCButton {
+            objectName: "rtkSurveySaveButton"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
+            text: qsTr("Save Survey Position")
+            onClicked: surveySave.failed = !QGroundControl.gpsManager.saveCurrentBasePosition(surveySiteName.text)
+        }
+
+        GPSNoteLabel {
+            objectName: "rtkSurveySaveFailed"
+            visible: surveySave.failed
+            warning: true
+            text: qsTr("The survey position was not saved. The list of saved base sites is full: delete a site in the receiver settings, or save without a site name.")
+        }
+
+        Connections {
+            target: QGroundControl.settingsManager.rtkSettings
+            function onBaseSitesChanged() { surveySave.failed = false }
+        }
     }
 }

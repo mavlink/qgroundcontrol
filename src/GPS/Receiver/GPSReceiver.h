@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -18,10 +19,12 @@
 #include "GPSReceiverReports.h"
 #include "ScheduledTask.h"
 
+struct GPSConstellationSatellites;
 class GPSCorrectionManager;
 class GPSReceiverConnectionPolicy;
 class GPSReceiverFactGroup;
 class GPSReceiverSession;
+enum class GPSReceiverSessionEnd;
 class GPSSourceHealth;
 class PositionManager;
 class RuntimeScheduler;
@@ -39,6 +42,9 @@ struct GPSReceiverDependencies
     /// session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists its device.
     SerialPortManager* serialPorts = nullptr;
 #endif
+    /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
+    /// an empty path, sessions are not recorded.
+    std::function<QString()> recordingDirectory = nullptr;
 };
 
 /// A serial device the receiver settings offer.
@@ -71,20 +77,19 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_MOC_INCLUDE("GPSReceiverFactGroup.h")
 
     Q_PROPERTY(GPSReceiverFactGroup* facts READ facts CONSTANT FINAL)
+    /// GPSReceiverFactGroup::constellations(): the satellites used and in view of each constellation in view.
+    /// Notified only when a count or the constellations in view change.
+    Q_PROPERTY(QList<GPSConstellationSatellites> constellations READ constellations NOTIFY constellationsChanged FINAL)
     Q_PROPERTY(QList<GPSSerialPortEntry> serialPortEntries READ serialPortEntries NOTIFY serialPortEntriesChanged FINAL)
     Q_PROPERTY(QList<int> serialBaudRates READ serialBaudRates CONSTANT FINAL)
-    Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged FINAL)
+    Q_PROPERTY(State state READ state NOTIFY receiverChanged FINAL)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT FINAL)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged FINAL)
     Q_PROPERTY(int activeBaseMode READ activeBaseMode NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString activeEndpoint READ activeEndpoint NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString receiverIdentity READ receiverIdentity NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString detectedReceiver READ detectedReceiver NOTIFY receiverChanged FINAL)
-    Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged FINAL)
     Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged FINAL)
-    Q_PROPERTY(RTKSettings::ReceiverRole activeRole READ activeRole NOTIFY receiverChanged FINAL)
-    /// The active receiver's RTCM output is a correction source.
-    Q_PROPERTY(bool forwardingCorrections READ forwardingCorrections NOTIFY receiverChanged FINAL)
     /// The one-use permission to write receiver flash, for the configuration currently selected.
     Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
                    persistentChangesAllowedChanged FINAL)
@@ -99,6 +104,12 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(bool baseModeSupported READ baseModeSupported NOTIFY configurationChanged FINAL)
     /// Connect may start the configured receiver: a selected receiver type, base mode and connection it supports.
     Q_PROPERTY(bool canConnect READ canConnect NOTIFY configurationChanged FINAL)
+    /// Records the receiver's raw input and output of every session that starts while this is on. Off at startup and
+    /// never saved.
+    Q_PROPERTY(bool recordSessions READ recordSessions WRITE setRecordSessions NOTIFY recordSessionsChanged FINAL)
+    /// The file the current session is recorded to; empty when it is not recorded, and from the receiver's next
+    /// report on once the recording stopped after a file error or at its size limit.
+    Q_PROPERTY(QString recordingFile READ recordingFile NOTIFY recordingFileChanged FINAL)
 
     friend class GPSReceiverTest;
     friend class GPSReceiverSettingsBindingTest;
@@ -116,6 +127,20 @@ public:
     static constexpr std::chrono::seconds SHUTDOWN_TIMEOUT{2};
 
     using Dependencies = GPSReceiverDependencies;
+
+    /// How far the connection to the receiver has got.
+    enum class State
+    {
+        /// No receiver is connected, and none is about to be.
+        Disconnected,
+        /// The saved receiver is waiting to be connected automatically, at startup or after its connection was lost.
+        Reconnecting,
+        /// A connection is being opened, and the receiver identified and configured.
+        Connecting,
+        /// The receiver finished configuration.
+        Connected,
+    };
+    Q_ENUM(State)
 
     explicit GPSReceiver(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
                          const Dependencies& dependencies = {});
@@ -149,13 +174,18 @@ public:
     /// One step of automatic connection: connections due, reconnections, and USB discovery.
     void tick();
     /// Stops polling and disconnects, then waits up to SHUTDOWN_TIMEOUT for the workers of retired sessions, which
-    /// otherwise finish on their own once the event loop delivers their exit.
+    /// otherwise finish on their own once the event loop delivers their exit. An observer's connectReceiver() from a
+    /// signal emitted meanwhile is refused.
     void shutdown();
 
     /// The receiver's reported state; with no receiver, every Fact is at its metadata default.
     GPSReceiverFactGroup* facts() const { return _facts; }
 
-    bool hasReceiver() const override;
+    QList<GPSConstellationSatellites> constellations() const;
+
+    State state() const;
+
+    bool hasReceiver() const final;
 
     bool serialSupported() const
     {
@@ -169,6 +199,7 @@ public:
     /// The connection or input problem, else a recent report that the receiver dropped output.
     QString errorMessage() const;
 
+    /// BaseModeDefinition::Mode of the connected configured base, or -1 for a passive receiver or without one.
     int activeBaseMode() const;
 
     /// Serial device or TCP host:port of the active receiver.
@@ -180,9 +211,9 @@ public:
     /// receiver's output carries, such as "u-blox (UBX)" or "NMEA"; empty until detected.
     QString detectedReceiver() const;
 
-    QString summaryLabel() const { return _summaryLabel; }
+    QString summaryLabel() const;
 
-    QString statusText() const { return _statusText; }
+    QString statusText() const;
 
     /// The saved receiver is being connected automatically, at startup or after its connection was lost.
     bool reconnecting() const;
@@ -190,11 +221,12 @@ public:
     /// Editable settings for a role; configured bases also depend on the manufacturer.
     Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const;
 
-    /// Presentation capabilities of the connected receiver family.
+    /// Presentation capabilities of the connected receiver family; those of Automatic without a receiver.
     GPSReceiverPresentation activePresentation() const;
 
     RTKSettings::ReceiverRole activeRole() const;
 
+    /// The active receiver's RTCM output is a correction source.
     bool forwardingCorrections() const;
 
     bool persistentChangesAllowed() const { return _persistentChangesAllowed; }
@@ -211,8 +243,18 @@ public:
 
     bool canConnect() const;
 
+    bool recordSessions() const { return _recordSessions; }
+
+    /// Applies to the sessions that start from now on; the current session stays as it started.
+    void setRecordSessions(bool record);
+
+    /// The recording is a GPSRecordingTransport file in the Dependencies' recording folder, named with the UTC time
+    /// the session started at and the receiver type.
+    QString recordingFile() const;
+
 signals:
     void receiverChanged();
+    void constellationsChanged();
     void errorMessageChanged();
     void configurationChanged();
     void persistentChangesAllowedChanged();
@@ -222,6 +264,8 @@ signals:
     void serialDeviceRenamed(const QString& device);
     void summaryLabelChanged();
     void statusTextChanged();
+    void recordSessionsChanged();
+    void recordingFileChanged();
 
 private slots:
     void _onSatelliteInfoUpdated(const GPSSatelliteReport& msg);
@@ -229,21 +273,18 @@ private slots:
     void _onGPSConnect();
     void _onReceiverDetected();
     void _onInputProblem(GPSInputProblem problem);
-    void _onGPSSurveyReport(const GPSSurveyReport& status);
+    void _onGPSSurveyReport(const GPSBaseStatus& status);
 
 private:
     /// The values behind receiverChanged.
     struct ReceiverState
     {
-        bool hasReceiver = false;
-        int baseMode = -1;
+        State state = State::Disconnected;
+        std::optional<BaseModeDefinition::Mode> baseMode;
         QString endpoint;
         QString identity;
         QString detected;
-        bool reconnecting = false;
         GPSReceiverPresentation presentation;
-        RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
-        bool forwardingCorrections = false;
         bool operator==(const ReceiverState&) const = default;
     };
 
@@ -254,13 +295,18 @@ private:
         bool persistentChangesAllowed = false;
         QString errorMessage;
         ReceiverState receiver;
+        QString statusText;
+        QString summaryLabel;
     };
 
+    /// The connected receiver's manufacturer; GPS_AUTOMATIC_MANUFACTURER without one.
     int _activeManufacturer() const;
+    /// Base mode of the connected configured base; empty for a passive receiver or without one.
+    std::optional<BaseModeDefinition::Mode> _activeBaseMode() const;
 
     void setConnectionError(const QString& message) override { _setError(message); }
 
-    void endConnection(bool clearError) override;
+    void endConnection(ShownError error) override;
     bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override;
     bool connectUdp(quint16 port, GPSType type) override;
 #ifndef QGC_NO_SERIAL_LINK
@@ -282,13 +328,24 @@ private:
     /// and that names the port by another.
     void _usePersistentSerialDevice();
 #endif
+    /// Scans the serial ports, when a scan is due, before the connection policy asks for them.
+    void _scanSerialPorts();
 
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                           const QString& serialDevice = {}, const QString& endpoint = {});
-    void _endSession(GPSConnectionError error, const QString& detail, bool portRemoved);
+    /// Names the new session's recording and returns @a transportFactory wrapped to record the link it opens, or
+    /// unchanged when sessions are not recorded.
+    GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type);
+    void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();
+    /// The first half of _retireSession(), which notifies nobody: the receiver has no session from here on.
+    /// @return the session to _retire() once the caller's own state is settled; null without one.
+    [[nodiscard]] GPSReceiverSession* _detachSession();
+    /// The second half: ends @a session's registrations and the position it published, whose observers may connect
+    /// or disconnect as they are notified.
+    void _retire(GPSReceiverSession* session);
     /// Waits for the workers of retired sessions and deletes those that have exited.
     void _joinRetiredWorkers();
 
@@ -298,7 +355,6 @@ private:
     void _updateOutputOverflow(uint64_t receiptUs);
     void _setPersistentChangesAllowed(bool allowed);
     void _resetStatus();
-    void _updateLabels();
     /// Clears the receiver's fix, satellites, and integrity once it stops reporting position.
     void _clearStaleSolution();
     ReceiverState _receiverState() const;
@@ -317,8 +373,6 @@ private:
     ScheduledTask _pollTask;
     quint64 _sessionCount = 0;
     QString _errorMessage;
-    QString _summaryLabel;
-    QString _statusText;
     QString _outputOverflowWarning;
     uint64_t _outputOverflowUs = 0;
     std::unique_ptr<GPSReceiverConnectionPolicy> _connection;
@@ -336,4 +390,15 @@ private:
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _serialClaims;
     std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> _serialTransportFactory;
 #endif
+    /// The constellations last notified, as the values in Notified are.
+    QList<GPSConstellationSatellites> _notifiedConstellations;
+    /// shutdown() is running.
+    bool _shuttingDown = false;
+    const std::function<QString()> _recordingDirectory;
+    /// The recording of the latest session.
+    QString _recordingFile;
+    /// Set on the worker thread when that recording stopped before its session.
+    std::shared_ptr<std::atomic_bool> _recordingStopped;
+    QString _notifiedRecordingFile;
+    bool _recordSessions = false;
 };

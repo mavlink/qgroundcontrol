@@ -180,7 +180,7 @@ std::vector<StreamStep> unicoreStream()
         {nmea("GPGGA,123519.00,4700.00000,N,00800.00000,E,1,12,0.9,450.000,M,50.000,M,,") +
              nmea("GPGSV,1,1,03,01,40,083,46,02,17,308,41,12,07,344,39"),
          2000ms},
-        // Corrections before the averaged base is valid are withheld; later ones pass through.
+        // Corrections before the averaged base is valid are decoded like later ones; GPSDriver withholds them.
         {rtcm1005() + rtcm1077(), 5000ms},
         {rtcm1005(), 2000ms},
     };
@@ -253,7 +253,7 @@ Rule ubxNak(uint32_t key)
 BenchFactory ubxWire(std::function<void(UBXBench&)> setup)
 {
     return bench<UBXBench>([setup = std::move(setup)](UBXBench& b) {
-        b.setFixedBaudrate(0);
+        b.setFixedBaudRate(0);
         if (setup) {
             setup(b);
         }
@@ -292,8 +292,8 @@ BenchFactory passive(std::function<void(PassiveBench&)> setup)
 
 void enforceBaud(ReceiverBench& b, unsigned baud)
 {
-    b.setReceiverBaudrate(baud);
-    b.setBaudrateEnforced(true);
+    b.setReceiverBaudRate(baud);
+    b.setBaudRateEnforced(true);
 }
 
 const std::vector<ScenarioDef>& scenarios()

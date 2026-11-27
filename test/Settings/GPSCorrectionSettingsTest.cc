@@ -22,6 +22,9 @@ void GPSCorrectionSettingsTest::_storageNamespace_data()
     QTest::addColumn<QVariant>("replacement");
     QTest::newRow("udp-enabled") << "rtcmUdpInputEnabled" << QVariant(false) << QVariant(true);
     QTest::newRow("udp-port") << "rtcmUdpInputPort" << QVariant(13321U) << QVariant(13322U);
+    // The message filter was an NTRIP setting; a filter saved then is the routing filter now.
+    QTest::newRow("message-filter") << "ntripWhitelist" << QVariant(QStringLiteral("1005,1077"))
+                                    << QVariant(QStringLiteral("1005"));
 }
 
 void GPSCorrectionSettingsTest::_storageNamespace()
@@ -67,8 +70,9 @@ void GPSCorrectionSettingsTest::_metadataPartition()
         return result;
     };
     const QStringList corrections = names(QStringLiteral(":/json/GPSCorrection.SettingsGroup.json"));
-    QCOMPARE(corrections, QStringList({"correctionSource", "rtcmUdpInputEnabled", "rtcmUdpInputPort",
-                                       "rtcmUdpOutputAddress", "rtcmUdpOutputEnabled", "rtcmUdpOutputPort"}));
+    QCOMPARE(corrections,
+             QStringList({"correctionSource", "correctionVehicles", "ntripWhitelist", "rtcmUdpInputEnabled",
+                          "rtcmUdpInputPort", "rtcmUdpOutputAddress", "rtcmUdpOutputEnabled", "rtcmUdpOutputPort"}));
     const QStringList ntrip = names(QStringLiteral(":/json/NTRIP.SettingsGroup.json"));
     QVERIFY(!ntrip.isEmpty());
     NTRIPSettings ntripSettings;
@@ -154,6 +158,10 @@ void GPSCorrectionSettingsTest::_routingDefaults()
     GPSCorrectionSettings corrections;
     QCOMPARE(corrections.correctionSource()->rawValue().toInt(), int(GPSCorrectionSettings::HighestPriority));
     QCOMPARE(corrections.correctionSource()->enumValues(), QVariantList({0U, 1U, 2U, 3U}));
+    // Every vehicle receives corrections unless the user narrows it.
+    QCOMPARE(corrections.correctionVehicles()->rawValue().toInt(), int(GPSCorrectionSettings::AllVehicles));
+    QCOMPARE(corrections.correctionVehicles()->enumValues(),
+             QVariantList({uint(GPSCorrectionSettings::AllVehicles), uint(GPSCorrectionSettings::ActiveVehicle)}));
 }
 
 UT_REGISTER_TEST(GPSCorrectionSettingsTest, TestLabel::Unit)

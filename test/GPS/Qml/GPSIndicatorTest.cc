@@ -64,7 +64,7 @@ QColor colorOf(const QObject* item)
 void GPSIndicatorTest::_pagePanelUsesApplicationReceiver()
 {
     // GPSReceiverSettingsTest covers the panel; the drawer shows it for the application's receiver and settings.
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::quectel));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
     GPSReceiver* const receiver = GPSManager::instance()->receiver();
     GPSTest::QmlWindowFixture window;
     GPSTest::QmlEngine engine;
@@ -93,7 +93,7 @@ void GPSIndicatorTest::_pageFitsWidth_data()
 void GPSIndicatorTest::_pageFitsWidth()
 {
     QFETCH(int, width);
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::quectel));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(!GPSManager::instance()->receiver()->hasReceiver());
     AppReceiver base;
     GPSReceiverFactGroup* const facts = base.facts();
@@ -152,6 +152,76 @@ void GPSIndicatorTest::_pageFitsWidth()
              qPrintable(QStringLiteral("panel width %1").arg(panel->width())));
     QTRY_VERIFY_WITH_TIMEOUT(item->width() <= width + 1, TestTimeout::mediumMs());
     QVERIFY(panel->mapRectToItem(item, panel->boundingRect()).right() <= width + 1);
+}
+
+void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
+{
+    // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of a passive receiver.
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Passive));
+    NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
+    settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
+    settings.saved.setFactValue(ntrip->ntripServerHostAddress(), QStringLiteral("caster.example"));
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = vehicle.gpsFactGroup();
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX,
+                                                         .eph = 80,
+                                                         .epv = 120,
+                                                         .cog = 100,
+                                                         .satellitesVisible = 10,
+                                                         .horizontalAccuracyMm = 2500,
+                                                         .verticalAccuracyMm = 4500}));
+    AppReceiver base;
+    QVERIFY(base.connect());
+    GPSReceiverFactGroup* const facts = base.facts();
+    for (Fact* reported : {facts->fixType(), facts->numSatellites(), facts->numSatellitesUsed(), facts->jammingState(),
+                           facts->spoofingState(), facts->antennaState()}) {
+        settings.saved.setFactValue(reported, 1);
+    }
+    base.survey(0.75);
+
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto* item = qobject_cast<QQuickItem*>(page.get());
+    QVERIFY(item);
+    // The widest layout that still replaces status with the settings.
+    const qreal sideBySideWidth = page->property("_sideBySideWidth").toReal();
+    QVERIFY(page->setProperty("availableWidth", sideBySideWidth - 1));
+    QVERIFY(window.show());
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    const qreal statusHeight = item->implicitHeight();
+
+    QVERIFY(page->setProperty("expanded", true));
+    QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
+                             TestTimeout::shortMs());
+    auto* panel = page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings"));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    const qreal settingsHeight = panel->height();
+    QVERIFY2(settingsHeight > 0 && statusHeight > settingsHeight,
+             qPrintable(QStringLiteral("status %1, settings %2").arg(statusHeight).arg(settingsHeight)));
+    // The drawer takes the page's implicit size, which the hidden status must not add to: neither its height, nor
+    // the spacing and the divider that separate it from the settings.
+    QVERIFY2(qAbs(item->implicitHeight() - settingsHeight) <= 1,
+             qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitHeight()).arg(settingsHeight)));
+    QVERIFY2(qAbs(item->implicitWidth() - panel->width()) <= 1,
+             qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitWidth()).arg(panel->width())));
+    QCOMPARE(panel->mapToItem(item, QPointF()).x(), 0.0);
+
+    // Narrower than the settings prefer, they take the whole width.
+    const qreal narrowWidth = page->property("_preferredSettingsWidth").toReal() * 0.75;
+    QVERIFY(page->setProperty("availableWidth", narrowWidth));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY2(qAbs(panel->width() - narrowWidth) <= 1,
+             qPrintable(QStringLiteral("settings %1, available %2").arg(panel->width()).arg(narrowWidth)));
+
+    // Widened to fit both, status and the divider return beside the settings.
+    QVERIFY(page->setProperty("availableWidth", sideBySideWidth));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY2(qAbs(item->implicitWidth() - sideBySideWidth) <= 1,
+             qPrintable(QStringLiteral("page %1, side by side %2").arg(item->implicitWidth()).arg(sideBySideWidth)));
 }
 
 void GPSIndicatorTest::_pageOffersNtripConnect()
@@ -289,6 +359,13 @@ void GPSIndicatorTest::_resilienceIcon_data()
                                  << QByteArrayLiteral("colorRed");
     QTest::newRow("worse-second") << 1 << 2 << int(Auth::Ok) << int(Auth::Error) << QByteArrayLiteral("colorOrange")
                                   << QByteArrayLiteral("colorRed");
+    // Still initializing is worse than authenticated; a receiver with authentication disabled does not count.
+    QTest::newRow("initializing-with-ok")
+        << NONE << NONE << int(Auth::Ok) << int(Auth::Initializing) << QByteArray() << QByteArrayLiteral("colorYellow");
+    QTest::newRow("disabled-with-ok") << NONE << NONE << int(Auth::Disabled) << int(Auth::Ok) << QByteArray()
+                                      << QByteArrayLiteral("colorGreen");
+    // A value above those MAVLink defines today counts as worse, as VehicleGPSFactGroup ranks within one receiver.
+    QTest::newRow("undefined-interference") << 4 << 1 << NONE << NONE << QByteArrayLiteral("colorRed") << QByteArray();
 }
 
 void GPSIndicatorTest::_resilienceIcon()
@@ -382,10 +459,13 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     QCOMPARE(rtkLabel->property("visible").toBool(), correctionState != int(GPSCorrectionManager::State::Inactive));
     QVERIFY(!satellites->property("visible").toBool());
 
-    workers.current()->ready();
-    facts.fixType()->setRawValue(fixType);
-    facts.numSatellitesUsed()->setRawValue(9);
-    facts.active()->setRawValue(surveying);
+    ScriptedReceiverWorker* const worker = workers.current();
+    worker->ready();
+    worker->position(fixReport(gpsFixQualityFromValue(fixType)));
+    GPSSatelliteReport used;
+    used.used = 9;
+    worker->satellites(used);
+    worker->baseStatus({.state = surveying ? GPSBaseState::Active : GPSBaseState::Inactive});
     QVERIFY(rtkLabel->property("visible").toBool());
     QCOMPARE(rtkLabel->property("text").toString(), label);
     QVERIFY(satellites->property("visible").toBool());

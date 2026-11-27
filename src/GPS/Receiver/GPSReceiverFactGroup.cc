@@ -5,6 +5,12 @@
 #include <utility>
 
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverMessages.h"
+
+QString GPSConstellationSatellites::name() const
+{
+    return GPSReceiverMessages::constellationName(constellation);
+}
 
 GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/GPS/GPSReceiverFact.json"), parent)
@@ -41,18 +47,19 @@ void GPSReceiverFactGroup::_restoreDefaults(std::initializer_list<Fact*> facts)
     }
 }
 
-void GPSReceiverFactGroup::_setSurvey(const GPSSurveyReport& report)
+void GPSReceiverFactGroup::_setSurvey(const GPSBaseStatus& report)
 {
     const double accuracy = report.meanAccuracyMeters.value_or(qQNaN());
     _update(_currentDurationFact, static_cast<qint64>(report.duration.count()));
     _update(_currentAccuracyFact, accuracy);
-    _update(_validFact, report.valid);
-    _update(_activeFact, report.active);
-    if (report.active) {
+    const bool valid = report.state == GPSBaseState::Valid;
+    const bool active = report.state == GPSBaseState::Active;
+    _update(_validFact, valid);
+    if (active) {
         _setCurrentBasePositionSaved(false);
     }
     std::optional<GPSBaseStationConfig::Fixed> base;
-    if (report.valid && std::isfinite(accuracy) && accuracy >= 0 && accuracy <= (std::numeric_limits<float>::max)()) {
+    if (valid && std::isfinite(accuracy) && accuracy >= 0 && accuracy <= (std::numeric_limits<float>::max)()) {
         const GPSBaseStationConfig::Fixed fixed{.position = report.position,
                                                 .accuracyMeters = static_cast<float>(accuracy)};
         if (gpsValidateBaseStationConfig({.mode = fixed}) == GPSReceiverConfigError::None) {
@@ -60,26 +67,43 @@ void GPSReceiverFactGroup::_setSurvey(const GPSSurveyReport& report)
         }
     }
     _setCurrentBasePosition(base);
+    // Last: an observer of the survey state may end the session, which resets this status.
+    _update(_activeFact, active);
 }
 
-void GPSReceiverFactGroup::_setSatellites(int inView, int used)
+void GPSReceiverFactGroup::_setSatellites(const GPSSatelliteReport& report)
 {
-    _update(_numSatellitesFact, inView);
-    _update(_numSatellitesUsedFact, used);
+    QList<GPSConstellationSatellites> constellations;
+    bool identified = false;
+    for (const GPSSatelliteReport::Constellation& reported : report.constellationsInView()) {
+        constellations.append(
+            {.constellation = reported.constellation, .used = reported.used.value_or(-1), .inView = reported.inView});
+        identified = identified || reported.constellation != GPSConstellation::Unknown;
+    }
+    // Satellites the receiver assigns to no constellation are listed beside the others, never alone.
+    if (!identified) {
+        constellations.clear();
+    }
+    // Before the Facts, which notify as they are written.
+    _constellations = std::move(constellations);
+    _update(_numSatellitesFact, report.inView.value_or(-1));
+    _update(_numSatellitesUsedFact, report.used.value_or(-1));
 }
 
 void GPSReceiverFactGroup::_setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity)
 {
-    _update(_fixTypeFact, static_cast<int>(fixType));
     _update(_jammingStateFact, static_cast<int>(integrity.jamming.state));
     _update(_spoofingStateFact, static_cast<int>(integrity.spoofing.state));
     _update(_antennaStateFact, static_cast<int>(integrity.antenna.state));
+    // Last, as the survey state is, for an observer of the fix.
+    _update(_fixTypeFact, static_cast<int>(fixType));
 }
 
 void GPSReceiverFactGroup::_clearSolution()
 {
     _restoreDefaults({&_numSatellitesFact, &_numSatellitesUsedFact, &_fixTypeFact, &_jammingStateFact,
                       &_spoofingStateFact, &_antennaStateFact});
+    _constellations.clear();
 }
 
 void GPSReceiverFactGroup::_reset()
@@ -87,6 +111,7 @@ void GPSReceiverFactGroup::_reset()
     _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_validFact, &_activeFact, &_numSatellitesFact,
                       &_numSatellitesUsedFact, &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact,
                       &_antennaStateFact});
+    _constellations.clear();
     _setCurrentBasePosition(std::nullopt);
     _setTelemetryAvailable(false);
 }

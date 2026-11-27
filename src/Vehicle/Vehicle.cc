@@ -2773,16 +2773,23 @@ void Vehicle::_updateHomepoint()
     const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
     const bool updateHomeActivated = SettingsManager::instance()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
     if(setHomeCmdSupported && updateHomeActivated){
-        QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
-        if (coordinate().isValid() && gcsPosition.isValid()) {
+        PositionManager* const positionManager = GPSManager::instance()->positionManager();
+        QGeoCoordinate gcsPosition = positionManager->gcsPosition();
+        // The command takes an altitude above mean sea level and has no value for an unknown one, which ArduPilot
+        // before 4.5 does not reject. The ground station's is sent only when it is known to be that. Otherwise, as for
+        // an ellipsoid height, home keeps the altitude the vehicle reports and moves only horizontally.
+        const auto gcsObservation = positionManager->acceptedObservation();
+        const double homeAltitude = homePosition().altitude();
+        const double altitude =
+            gcsObservation ? gcsObservation->altitudeMslMeters().value_or(homeAltitude) : homeAltitude;
+        if (coordinate().isValid() && gcsPosition.isValid() && qIsFinite(altitude)) {
             if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
                 sendMavCommandInt(defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL, false, 0, 0, 0, 0,
-                                  gcsPosition.latitude(), gcsPosition.longitude(),
-                                  static_cast<float>(gcsPosition.altitude()));
+                                  gcsPosition.latitude(), gcsPosition.longitude(), static_cast<float>(altitude));
             } else {
                 sendMavCommand(defaultComponentId(), MAV_CMD_DO_SET_HOME, false, 0, 0, 0, 0,
                                static_cast<float>(gcsPosition.latitude()), static_cast<float>(gcsPosition.longitude()),
-                               static_cast<float>(gcsPosition.altitude()));
+                               static_cast<float>(altitude));
             }
         }
     }

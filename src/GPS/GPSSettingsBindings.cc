@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include <QtCore/QMetaEnum>
 #include <QtCore/QSet>
 
 #include "Fact.h"
@@ -44,11 +45,15 @@ CorrectionsConfig correctionsFromSettings(GPSCorrectionSettings* settings, FactR
     } else {
         qCWarning(GPSSettingsBindingsLog) << "Invalid correction source; using automatic selection";
     }
+    if (read(settings->correctionVehicles()).toInt() == GPSCorrectionSettings::ActiveVehicle) {
+        configuration.vehicles = GPSCorrectionSettings::ActiveVehicle;
+    }
     configuration.udpInput.enabled = read(settings->rtcmUdpInputEnabled()).toBool();
     configuration.udpInput.port = read(settings->rtcmUdpInputPort()).value<quint16>();
     configuration.udpOutput.enabled = read(settings->rtcmUdpOutputEnabled()).toBool();
     configuration.udpOutput.address = read(settings->rtcmUdpOutputAddress()).toString().trimmed();
     configuration.udpOutput.port = read(settings->rtcmUdpOutputPort()).value<quint16>();
+    configuration.messageFilter = read(settings->ntripWhitelist()).toString();
     return configuration;
 }
 
@@ -65,9 +70,12 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     connection.useTls = read(settings->ntripUseTls()).toBool();
     connection.allowSelfSignedCerts = read(settings->ntripAllowSelfSignedCerts()).toBool();
     connection.pinnedCertificate = read(settings->ntripPinnedCertificate()).toString();
-    configuration.filter.whitelist = read(settings->ntripWhitelist()).toString();
-    configuration.gga.source =
-        static_cast<NTRIPGgaReporter::PositionSource>(read(settings->ntripGgaPositionSource()).toInt());
+    const int ggaSource = read(settings->ntripGgaPositionSource()).toInt();
+    if (QMetaEnum::fromType<NTRIPGgaReporter::PositionSource>().valueToKey(ggaSource)) {
+        configuration.gga.source = static_cast<NTRIPGgaReporter::PositionSource>(ggaSource);
+    } else {
+        qCWarning(GPSSettingsBindingsLog) << "Invalid GGA position source; using automatic selection";
+    }
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());
     return configuration;
 }
@@ -76,7 +84,14 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
 GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& read)
 {
     using Mode = BaseModeDefinition::Mode;
-    const auto mode = static_cast<Mode>(read(settings->useFixedBasePosition()).toInt());
+    Mode mode = Mode::BaseSurveyIn;
+    const int persistedMode = read(settings->baseMode()).toInt();
+    if (persistedMode >= static_cast<int>(Mode::BaseSurveyIn) &&
+        persistedMode <= static_cast<int>(Mode::BaseReceiverAveraging)) {
+        mode = static_cast<Mode>(persistedMode);
+    } else {
+        qCWarning(GPSSettingsBindingsLog) << "Invalid base mode; using survey-in";
+    }
     const GPSBaseStationConfig::Fixed fixed{
         .position = {.latitudeDegrees = read(settings->fixedBasePositionLatitude()).toDouble(),
                      .longitudeDegrees = read(settings->fixedBasePositionLongitude()).toDouble(),
@@ -99,10 +114,6 @@ GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& 
         case Mode::BaseSurveyIn:
             base.mode = surveyIn;
             break;
-        default:
-            qCWarning(GPSSettingsBindingsLog) << "Invalid base mode; using survey-in";
-            base.mode = surveyIn;
-            break;
     }
     return base;
 }
@@ -112,7 +123,7 @@ ReceiverConfig receiverFromSettings(RTKSettings* settings, FactReader& read)
     ReceiverConfig configuration;
     configuration.receiverRole = static_cast<RTKSettings::ReceiverRole>(read(settings->receiverRole()).toInt());
     configuration.forwardReceiverRtcm = read(settings->forwardReceiverRtcm()).toBool();
-    configuration.baseReceiverManufacturer = read(settings->baseReceiverManufacturers()).toInt();
+    configuration.baseReceiverManufacturer = read(settings->baseReceiverManufacturer()).toInt();
     configuration.connectionType = static_cast<RTKSettings::ConnectionType>(read(settings->connectionType()).toInt());
     configuration.tcpHost = read(settings->tcpHost()).toString();
     configuration.tcpPort = read(settings->tcpPort()).toUInt();
@@ -206,11 +217,12 @@ void GPSSettingsBindings::bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip
     if (!settings || !ntrip) {
         return;
     }
-    // Queued: the manager emits these inside its own operation (retrying, trusting a certificate), and storing the
+    // Queued: the manager emits these inside its own operation (connecting, trusting a certificate), and storing the
     // Fact applies a new configuration to it, which must wait until that returns.
     QObject::connect(
-        ntrip, &NTRIPManager::enableRequested, ntrip,
-        [settings]() { settings->ntripServerConnectEnabled()->setRawValue(true); }, Qt::QueuedConnection);
+        ntrip, &NTRIPManager::enabledRequested, ntrip,
+        [settings](bool enabled) { settings->ntripServerConnectEnabled()->setRawValue(enabled); },
+        Qt::QueuedConnection);
     QObject::connect(
         ntrip, &NTRIPManager::certificatePinChanged, ntrip,
         [settings](const QString& pin) { settings->ntripPinnedCertificate()->setRawValue(pin); }, Qt::QueuedConnection);

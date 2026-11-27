@@ -12,6 +12,7 @@ private slots:
     void _deviceAltitudeDatum_data();
     void _deviceAltitudeDatum();
     void _registrationReplacementAndSessions();
+    void _registrationDuringNotification();
     void _producerLoss_data();
     void _producerLoss();
     void _selectionStatusMatchesPublication_data();
@@ -19,6 +20,7 @@ private slots:
     void _automaticRejectionMatchesPublication_data();
     void _automaticRejectionMatchesPublication();
     void _automaticFailoverAndRecovery();
+    void _earlyExpiryTimerKeepsPublication();
     void _standbyReportsDoNotRepublish();
     void _consumerMaximumAge();
     void _policySelectionGates();

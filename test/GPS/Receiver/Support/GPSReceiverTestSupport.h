@@ -24,10 +24,10 @@ inline GPSPositionReport fixReport(GPSFixQuality fixType)
 }
 
 /// The descriptor ID of the passive family, which the settings select by role rather than by manufacturer.
-inline const int kPassiveManufacturer = gpsReceiverManufacturerForType(GPSType::passive);
+inline const int kPassiveManufacturer = gpsReceiverManufacturerForType(GPSType::Passive);
 
 inline GPSReceiver::Configuration receiverConfiguration(
-    int manufacturer = gpsReceiverManufacturerForType(GPSType::ublox))
+    int manufacturer = gpsReceiverManufacturerForType(GPSType::UBlox))
 {
     // The settings' defaults.
     GPSReceiver::Configuration configuration;

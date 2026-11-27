@@ -28,12 +28,15 @@ struct GPSDriverSinks
 {
     std::function<void(const GPSPositionReport&)> onPosition;
     std::function<void(const GPSSatelliteReport&)> onSatelliteInfo;
-    /// One complete frame; copying it shares the receiver's buffer.
+    /// One complete frame; copying it shares the receiver's buffer. A base configured here delivers frames only while
+    /// its base status is Valid; passive input and Septentrio receivers deliver every frame.
     std::function<void(const QByteArray&)> onRTCM;
-    std::function<void(const GPSSurveyReport&)> onSurveyIn;
-    /// The family a GPSType::automatic driver detected, before it configures the receiver. A passive driver reports
+    /// Also delivered while configure() runs.
+    std::function<void(const GPSBaseStatus&)> onBaseStatus;
+    /// The family a GPSType::Automatic driver detected, before it configures the receiver. A passive driver reports
     /// the protocol its input carries once identified and whenever it changes: the family whose native protocol it
-    /// decodes, or GPSType::passive for standard NMEA.
+    /// decodes, or GPSType::Passive for standard NMEA. A change first withdraws the satellite counts of the protocol
+    /// left behind, with an empty onSatelliteInfo report.
     std::function<void(GPSType)> onReceiverDetected;
 };
 
@@ -62,7 +65,7 @@ struct [[nodiscard]] GPSReceiveResult
     }
 };
 
-/// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::automatic detects the
+/// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::Automatic detects the
 /// family (GPSReceiverDetector) on every configure(), then fits the request to it: consent to persistent changes lapses
 /// where the family has none, a compact-observation request lapses with a warning where the family has no compact
 /// option, and an unsupported base mode fails, naming the family.
@@ -96,16 +99,16 @@ public:
     [[nodiscard]] QString receiverIdentity() const;
 
 private:
-    bool _configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudrate);
+    bool _configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate);
     /// @a detected describes the detection that chose @a family; empty for a configured type.
     bool _configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
-                          const GPSConfig& config, unsigned baudrate, const QString& detected);
+                          const GPSConfig& config, unsigned baudRate, const QString& detected);
     void _publish(const GPSEventBatch& batch);
     void _handle(const GPSIntegrityReport& report);
     void _handle(const GPSDecodedPosition& report);
     void _handle(const GPSDecodedSatellites& report);
     void _handle(const GPSDecodedSatelliteUsage& report);
-    void _handle(const GPSSurveyReport& report);
+    void _handle(const GPSBaseStatus& report);
     void _handle(const GPSRTCMFrame& report);
     void _handle(const GPSInputProtocol& report);
     void _handleSatellites(const GPSSatelliteReport& report);

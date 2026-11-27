@@ -2,10 +2,13 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
 
 #include "Fact.h"
@@ -32,13 +35,17 @@ struct SettingsReceiver
 
     ScriptedReceiverWorker* worker() const { return workers.current(); }
 
+    // Scripted workers open no link, so a recorded session names a file here and never creates it.
+    static QString recordingDirectory() { return QStringLiteral("/test/recordings"); }
+
 #ifndef QGC_NO_SERIAL_LINK
     // Every device the tests select; the panel's own port list decides which ones it shows as available.
     TestSerialPorts serial{{serialPort(QStringLiteral("/test/receiver")), serialPort(QStringLiteral("/test/other")),
                             serialPort(QStringLiteral("/test/missing"))}};
-    GPSTest::ScriptedGPSReceiver scripted{nullptr, {.serialPorts = &serial.manager}};
+    GPSTest::ScriptedGPSReceiver scripted{nullptr,
+                                          {.serialPorts = &serial.manager, .recordingDirectory = recordingDirectory}};
 #else
-    GPSTest::ScriptedGPSReceiver scripted;
+    GPSTest::ScriptedGPSReceiver scripted{nullptr, {.recordingDirectory = recordingDirectory}};
 #endif
     GPSReceiver& gps = scripted.receiver;
     ScriptedReceiverWorkerFactory& workers = scripted.workers;
@@ -48,6 +55,16 @@ struct SettingsReceiver
 QVariant portEntries(const QString& path, const QString& label = {})
 {
     return QVariant::fromValue(QList<GPSSerialPortEntry>{{.value = path, .label = label.isEmpty() ? path : label}});
+}
+
+/// Serial device picker entries labelled with their paths.
+QVariant portEntries(const QStringList& paths)
+{
+    QList<GPSSerialPortEntry> entries;
+    for (const QString& path : paths) {
+        entries.append({.value = path, .label = path});
+    }
+    return QVariant::fromValue(entries);
 }
 
 /// The receiver settings panel over saved settings for a manufacturer, and a scripted receiver that follows them.
@@ -81,12 +98,32 @@ struct Panel
     GPSTest::QmlEngine engine;
     std::unique_ptr<QObject> item;
 };
+
+QStringList siteNames(const RTKSettings* settings)
+{
+    QStringList names;
+    for (const RTKBaseSite& site : settings->baseSites()) {
+        names.append(site.name);
+    }
+    return names;
+}
+
+/// Saves sites until the list is full; false when one is refused.
+[[nodiscard]] bool fillBaseSites(RTKSettings* settings)
+{
+    for (qsizetype i = settings->baseSites().size(); i < RTKSettings::MaxBaseSites; ++i) {
+        if (!settings->saveBaseSite({.name = QStringLiteral("Site %1").arg(i), .latitude = 1., .longitude = 2.})) {
+            return false;
+        }
+    }
+    return true;
+}
 }  // namespace
 
 void GPSReceiverSettingsTest::_surveySaveWorkflow()
 {
     // How each family maps the saved base settings is GPSReceiverSettingsBindingTest's; this is the panel's workflow.
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");
     auto* fixed = panel.find("rtkFixedMode");
@@ -109,14 +146,14 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QCOMPARE(settings->fixedBasePositionLongitude()->rawValue().toDouble(), kSurveyedPosition.longitudeDegrees);
     QCOMPARE(settings->fixedBasePositionAltitude()->rawValue().toFloat(), kSurveyedPosition.altitudeMeters);
     QCOMPARE(settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
-    QCOMPARE(settings->useFixedBasePosition()->rawValue().toInt(), 0);
+    QCOMPARE(settings->baseMode()->rawValue().toInt(), 0);
 
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QVERIFY(!panel.receiver.gps.hasReceiver());
     workers.finishRetired();
     QVERIFY(fixed->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(fixed, "click"));
-    QCOMPARE(settings->useFixedBasePosition()->rawValue().toInt(), 1);
+    QCOMPARE(settings->baseMode()->rawValue().toInt(), 1);
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QCOMPARE(workers.count(), 2);
     // The saved position starts the fixed base.
@@ -127,7 +164,7 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
 
 void GPSReceiverSettingsTest::_surveyCompletePrompt()
 {
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     AppReceiver base;
     QVERIFY(base.connect());
     QCOMPARE(GPSManager::instance()->receiver()->activeBaseMode(), int(BaseModeDefinition::Mode::BaseSurveyIn));
@@ -157,6 +194,8 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
     QVERIFY(!save->property("visible").toBool());
     QVERIFY(prompt->property("text").toString().contains(QStringLiteral("saved")));
+    // Without a site name only the fixed base position is kept.
+    QVERIFY(settings.settings->baseSites().isEmpty());
 
     // Another view of the receiver knows the position is saved; a new survey offers saving its result again.
     auto other = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
@@ -170,14 +209,209 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QVERIFY(otherSave->property("visible").toBool());
 }
 
+void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    receiver.facts()->setLiveUpdates(true);
+    QVERIFY(connectOverTcp(receiver));
+    harness.workers.current()->ready();
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* prompt = status->findChild<QObject*>(QStringLiteral("rtkSurveyCompletePrompt"));
+    auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
+    auto* accuracy = status->findChild<QObject*>(QStringLiteral("rtkSurveyAccuracy"));
+    QVERIFY(prompt && save && accuracy);
+
+    // GPSManager saves the position of the application's receiver, so a panel that shows another receiver's finished
+    // survey offers no save.
+    harness.workers.current()->baseStatus(
+        {.state = GPSBaseState::Valid, .position = kSurveyedPosition, .meanAccuracyMeters = 0.75});
+    QVERIFY(receiver.facts()->canSaveCurrentBasePosition());
+    QVERIFY(accuracy->property("visible").toBool());
+    QVERIFY(!prompt->property("visible").toBool());
+    QVERIFY(!save->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_surveySavedAsSite()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    RTKSettings* const rtk = settings.settings;
+    settings.saved.setFactValue(rtk->savedBaseSites(), QString());
+    AppReceiver base;
+    QVERIFY(base.connect());
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* name = status->findChild<QObject*>(QStringLiteral("rtkSurveySiteName"));
+    auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
+    auto* failed = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveFailed"));
+    QVERIFY(name && save && failed);
+    QCOMPARE(name->property("maximumLength").toInt(), static_cast<int>(RTKSettings::MaxBaseSiteNameLength));
+    QVERIFY(!name->property("visible").toBool());
+    base.survey(0.75);
+    QVERIFY(name->property("visible").toBool());
+    QVERIFY(!failed->property("visible").toBool());
+
+    // A full list cannot keep another site: nothing is saved, and the panel says why.
+    QVERIFY(fillBaseSites(rtk));
+    const QString site = QStringLiteral("North field");
+    QVERIFY(name->setProperty("text", QStringLiteral(" North field ")));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(failed->property("visible").toBool());
+    QVERIFY(save->property("visible").toBool());
+    QVERIFY(!base.facts()->currentBasePositionSaved());
+    QCOMPARE(rtk->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
+    QVERIFY(!siteNames(rtk).contains(site));
+
+    // With room for it, the survey becomes the fixed base position and a site of that name.
+    QVERIFY(rtk->removeBaseSite(QStringLiteral("Site 0")));
+    QVERIFY(!failed->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(!save->property("visible").toBool());
+    QCOMPARE(rtk->fixedBasePositionLatitude()->rawValue().toDouble(), kSurveyedPosition.latitudeDegrees);
+    const RTKBaseSite surveyed{.name = site,
+                               .latitude = kSurveyedPosition.latitudeDegrees,
+                               .longitude = kSurveyedPosition.longitudeDegrees,
+                               .altitude = kSurveyedPosition.altitudeMeters,
+                               .accuracy = 0.75};
+    QCOMPARE(rtk->baseSites().last(), surveyed);
+}
+
+void GPSReceiverSettingsTest::_baseSitePicker()
+{
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    RTKSettings* const settings = panel.settings.settings;
+    TestFixtures::SettingsFixture& saved = panel.settings.saved;
+    saved.setFactValue(settings->savedBaseSites(), QString());
+    saved.setFactValue(settings->baseMode(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
+    saved.setFactValue(settings->fixedBasePositionLatitude(), 47.5);
+    saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
+    saved.setFactValue(settings->fixedBasePositionAltitude(), 512.5);
+    saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.75);
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* picker = panel.find("rtkBaseSitePicker");
+    auto* use = panel.find("rtkBaseSiteUse");
+    auto* remove = panel.find("rtkBaseSiteDelete");
+    auto* name = panel.find("rtkBaseSiteName");
+    auto* save = panel.find("rtkBaseSiteSave");
+    auto* failed = panel.find("rtkBaseSiteSaveFailed");
+    QVERIFY(picker && use && remove && name && save && failed);
+    // Without a saved site there is nothing to pick, and a site needs a name, which the settings limit.
+    QVERIFY(!picker->isVisible());
+    QVERIFY(name->isVisible());
+    QVERIFY(!save->isEnabled());
+    QCOMPARE(name->property("maximumLength").toInt(), static_cast<int>(RTKSettings::MaxBaseSiteNameLength));
+
+    const QString north = QStringLiteral("North field");
+    const QString south = QStringLiteral("South field");
+    QVERIFY(name->setProperty("text", north));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    settings->fixedBasePositionLatitude()->setRawValue(-33.5);
+    QVERIFY(name->setProperty("text", south));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QCOMPARE(siteNames(settings), (QStringList{north, south}));
+    // The picker shows the site just saved, not the first one a new list selects.
+    QVERIFY(picker->isVisible());
+    QCOMPARE(picker->property("currentText").toString(), south);
+
+    // Picking a site changes nothing until it is used, which makes it the fixed base position the receiver starts from.
+    QVERIFY(picker->setProperty("currentIndex", 0));
+    QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), -33.5);
+    QVERIFY(QMetaObject::invokeMethod(use, "clicked"));
+    QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), 47.5);
+    QVERIFY(panel.receiver.gps.connectReceiver());
+    const GPSBaseStationConfig::Mode northPosition = GPSBaseStationConfig::Fixed{
+        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 512.5},
+        .accuracyMeters = 0.75f};
+    QVERIFY(panel.receiver.worker()->capturedConfig().base.mode == northPosition);
+    // A connected receiver keeps its position, which can still be saved as a site.
+    QVERIFY(!use->isEnabled());
+    QVERIFY(save->isEnabled() && remove->isEnabled());
+    panel.receiver.gps.disconnectReceiver();
+
+    // A full list refuses another name and says so until there is room.
+    QVERIFY(fillBaseSites(settings));
+    QVERIFY(name->setProperty("text", QStringLiteral("One too many")));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(failed->isVisible());
+    QCOMPARE(settings->baseSites().size(), RTKSettings::MaxBaseSites);
+    QVERIFY(picker->setProperty("currentIndex", 1));
+    QVERIFY(QMetaObject::invokeMethod(remove, "clicked"));
+    QVERIFY(!failed->isVisible());
+    QVERIFY(!siteNames(settings).contains(south));
+    QCOMPARE(siteNames(settings).first(), north);
+}
+
+void GPSReceiverSettingsTest::_statusListsConstellations()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    // The panel appears with the receiver, which an item without a parent cannot do.
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* item = qobject_cast<QQuickItem*>(status.get());
+    auto* row = status->findChild<QObject*>(QStringLiteral("rtkConstellations"));
+    QVERIFY(item && row);
+    QVERIFY(connectOverTcp(receiver));
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    worker->ready();
+    // A receiver that reports no satellites per constellation has no row.
+    QVERIFY(!row->property("visible").toBool());
+
+    GPSSatelliteReport report;
+    report.timestampUs = 1;
+    report.inView = 17;
+    report.addConstellation({GPSConstellation::GPS, 10, 8});
+    report.addConstellation({GPSConstellation::Galileo, 7, std::nullopt});
+    worker->satellites(report);
+    QVERIFY(row->property("visible").toBool());
+    // Used/in view, with a dash for a used count the receiver does not report.
+    QCOMPARE(row->property("labelText").toString(), QStringLiteral("GPS\u00A08/10, Galileo\u00A0–/7"));
+    const qreal width = item->implicitWidth();
+
+    // More constellations wrap inside the row instead of widening the panel.
+    for (const GPSConstellation constellation :
+         {GPSConstellation::BeiDou, GPSConstellation::QZSS, GPSConstellation::SBAS, GPSConstellation::NavIC}) {
+        report.addConstellation({constellation, 12, 11});
+    }
+    worker->satellites(report);
+    QVERIFY(row->property("labelText").toString().endsWith(QStringLiteral("NavIC\u00A011/12")));
+    QCOMPARE(item->implicitWidth(), width);
+
+    receiver.disconnectReceiver();
+    QVERIFY(!row->property("visible").toBool());
+}
+
 void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");
     auto* device = panel.find("rtkSerialDevice");
     QVERIFY(connect && device);
     GPSReceiver& receiver = panel.receiver.gps;
+    // The status panel, which a page without a receiver hides.
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* statusItem = qobject_cast<QQuickItem*>(status.get());
+    auto* statusText = status->findChild<QObject*>(QStringLiteral("rtkReceiverStatus"));
+    QVERIFY(statusItem && statusText);
+    QVERIFY(!statusItem->isVisible());
     // Only Connect automatically reconnects a lost receiver.
     panel.settings.autoConnect->setRawValue(true);
     QVERIFY(receiver.connectReceiver());
@@ -185,21 +419,27 @@ void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
     expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
     panel.receiver.worker()->fail(GPSConnectionError::DeviceError);
     verifyExpectedLogMessage();
-    QVERIFY(receiver.reconnecting());
-    QVERIFY(!receiver.hasReceiver());
-    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Disconnect"));
+    // Both panels follow the receiver's state: the form offers to stop the reconnecting, and the status stays to say
+    // what the receiver is doing.
+    QCOMPARE(receiver.state(), GPSReceiver::State::Reconnecting);
+    QCOMPARE(connect->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverConnectControls", "Disconnect"));
     QVERIFY(connect->isEnabled());
     QVERIFY(!device->isEnabled());
+    QVERIFY(statusItem->isVisible());
+    QCOMPARE(statusText->property("text").toString(), receiver.statusText());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
-    QVERIFY(!receiver.reconnecting());
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(!statusItem->isVisible());
     QVERIFY(device->isEnabled());
-    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Connect"));
+    QCOMPARE(connect->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverConnectControls", "Connect"));
     QCOMPARE(panel.receiver.workers.count(), 1);
 }
 
 void GPSReceiverSettingsTest::_tcpConnectionFields()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* host = panel.find("rtkTcpHost");
     auto* port = panel.find("rtkTcpPort");
@@ -216,7 +456,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     settings->connectionType()->setRawValue(RTKSettings::Tcp);
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->property("visible").toBool());
     // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
@@ -231,7 +471,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
 
 void GPSReceiverSettingsTest::_roleSelectsFields()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* role = panel.find("rtkReceiverRole");
     auto* manufacturer = panel.find("rtkManufacturer");
@@ -264,7 +504,7 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QVERIFY(connect->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.hasReceiver());
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::passive);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Passive);
     QCOMPARE(receiver.activeRole(), RTKSettings::Passive);
     QVERIFY(!receiver.forwardingCorrections());
     receiver.disconnectReceiver();
@@ -294,15 +534,15 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(explanation->property("text").toString().contains(QStringLiteral("identification queries")));
     QVERIFY(connect->property("enabled").toBool());
     // Until a receiver is identified, the base modes of every family are offered.
-    settings->useFixedBasePosition()->setRawValue(2);
+    settings->baseMode()->setRawValue(2);
     QVERIFY(connect->property("enabled").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(!explanation->isVisible());
     QVERIFY(!connect->property("enabled").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings->baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.hasReceiver());
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::automatic);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
 
     GPSReceiverFactGroup& facts = *receiver.facts();
     facts.setLiveUpdates(true);
@@ -315,7 +555,7 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(text && detected);
     QCOMPARE(text->property("text").toString(), QStringLiteral("Identifying receiver..."));
     QVERIFY(!detected->isVisible());
-    panel.receiver.worker()->detected(GPSType::unicore);
+    panel.receiver.worker()->detected(GPSType::Unicore);
     QVERIFY(detected->isVisible());
     QCOMPARE(detected->property("labelText").toString(), QStringLiteral("Unicore"));
     QCOMPARE(text->property("text").toString(), QStringLiteral("Connecting to receiver..."));
@@ -347,23 +587,23 @@ void GPSReceiverSettingsTest::_automaticOffersQuectelConsent()
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QCOMPARE(panel.receiver.workers.count(), 1);
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::automatic);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
     QVERIFY(panel.receiver.worker()->capturedConfig().allowPersistentChanges);
     QVERIFY(!consent->property("checked").toBool());
     panel.receiver.gps.disconnectReceiver();
 
     RTKSettings* const settings = panel.settings.settings;
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(!consent->isVisible());
     QVERIFY(!restartNote->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->isVisible());
     QCOMPARE(consent->property("text").toString(), QStringLiteral("Allow flash save and restart"));
 }
 
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* toggle = panel.find("rtkCompactRtcm");
     QVERIFY(toggle);
@@ -373,18 +613,54 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
     QVERIFY(settings->compactRtcmCorrections()->rawValue().toBool());
     // Which families send compact corrections is the receiver presentation's; the toggle follows it.
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::septentrio));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Septentrio));
     QVERIFY(!toggle->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(toggle->isVisible());
     QVERIFY(panel.receiver.gps.connectReceiver());
     QVERIFY(panel.receiver.worker()->capturedConfig().base.compactObservations);
     QVERIFY(!toggle->isEnabled());
 }
 
+void GPSReceiverSettingsTest::_recordingSwitch()
+{
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* toggle = panel.find("rtkRecordReceiverData");
+    auto* file = panel.find("rtkRecordingFile");
+    QVERIFY(toggle && file);
+    GPSReceiver& receiver = panel.receiver.gps;
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(!file->isVisible());
+
+    // The session that already runs is not recorded, and the note says when recording starts.
+    QVERIFY(receiver.connectReceiver());
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    QVERIFY(receiver.recordSessions());
+    QVERIFY(file->isVisible());
+    QCOMPARE(file->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverRecording", "Recording starts with the next connection."));
+
+    receiver.disconnectReceiver();
+    // The retired worker holds the serial port until it finishes.
+    panel.receiver.workers.finishRetired();
+    QVERIFY(receiver.connectReceiver());
+    const QString recording = receiver.recordingFile();
+    QVERIFY(recording.startsWith(SettingsReceiver::recordingDirectory()));
+    QCOMPARE(file->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverRecording", "Recording file: %1").arg(recording));
+
+    // The switch follows the receiver, and the session that started recorded stays so until it ends.
+    receiver.setRecordSessions(false);
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(file->property("text").toString().endsWith(recording));
+    receiver.disconnectReceiver();
+    QVERIFY(!file->isVisible());
+}
+
 void GPSReceiverSettingsTest::_consentIsOneUse()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::quectel));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* consent = panel.find<QObject>("rtkPersistentChangesCheckBox");
     auto* connect = panel.find<QObject>("rtkConnectButton");
@@ -419,9 +695,9 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(consent->property("checked").toBool());
     settings->serialDevice()->setRawValue(QStringLiteral("/test/other"));
     QVERIFY(!consent->property("checked").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::unicore));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Unicore));
     QVERIFY(!consent->property("visible").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(receiver.gps.connectReceiver());
     QVERIFY(!consent->property("checked").toBool());
@@ -451,7 +727,7 @@ void GPSReceiverSettingsTest::_warningWidth()
     QFETCH(int, width);
     QFETCH(bool, longText);
     GPSTest::QmlWindowFixture window(width, 800);
-    Panel panel(gpsReceiverManufacturerForType(GPSType::quectel));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(panel.item.get());
     QVERIFY(item);
@@ -487,7 +763,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
 #ifdef QGC_NO_SERIAL_LINK
     QSKIP("Serial selection requires serial link support");
 #endif
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* device = panel.find<QObject>("rtkSerialDevice");
     auto* baud = panel.find<QObject>("rtkSerialBaudRate");
@@ -506,7 +782,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(panel.item->setProperty("serialPorts", portEntries(QStringLiteral("/test/missing"), label)));
     QCOMPARE(device->property("currentText").toString(), label);
     // With Connect automatically on, a configured base can leave the device to USB discovery.
-    const QString anyReceiver = QCoreApplication::translate("GPSReceiverSettings", "Any RTK receiver on USB");
+    const QString anyReceiver = QCoreApplication::translate("GPSReceiverConnection", "Any RTK receiver on USB");
     panel.settings.autoConnect->setRawValue(true);
     QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 0)));
     QVERIFY(settings->serialDevice()->rawValue().toString().isEmpty());
@@ -541,6 +817,52 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(!custom->property("enabled").toBool());
 }
 
+void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
+{
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Serial selection requires serial link support");
+#endif
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* device = panel.find<QObject>("rtkSerialDevice");
+    auto* baud = panel.find<QObject>("rtkSerialBaudRate");
+    QVERIFY(device && baud);
+    RTKSettings* const settings = panel.settings.settings;
+    const QString receiver = QStringLiteral("/test/receiver");
+    const QString other = QStringLiteral("/test/other");
+    const QString plugged = QStringLiteral("/test/plugged");
+    const auto selection = [](const QObject* combo) {
+        return QStringLiteral("%1: %2")
+            .arg(combo->property("currentIndex").toInt())
+            .arg(combo->property("currentText").toString());
+    };
+    // A combo box selects its first entry when its choices are replaced, so neither selection is the first one.
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other})));
+    settings->serialDevice()->setRawValue(other);
+    settings->serialBaudRate()->setRawValue(230400);
+    QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
+    QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
+
+    // Plugging in a port lists it; unplugging the selected one keeps it, as unavailable.
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other, plugged})));
+    QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, plugged})));
+    QCOMPARE(selection(device), QStringLiteral("2: /test/other (unavailable)"));
+    // Connect automatically lists USB discovery above the ports.
+    panel.settings.autoConnect->setRawValue(true);
+    QCOMPARE(selection(device), QStringLiteral("3: /test/other (unavailable)"));
+
+    // A passive receiver is not offered Auto, and a receiver may list other rates.
+    settings->receiverRole()->setRawValue(RTKSettings::Passive);
+    QCOMPARE(selection(baud), QStringLiteral("1: 230400"));
+    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
+    QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
+    QVERIFY(panel.item->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
+    QCOMPARE(selection(baud), QStringLiteral("3: 230400"));
+    QCOMPARE(settings->serialDevice()->rawValue().toString(), other);
+    QCOMPARE(settings->serialBaudRate()->rawValue().toInt(), 230400);
+}
+
 void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
 {
     TestFixtures::SettingsFixture saved;
@@ -566,6 +888,114 @@ void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
     // An unknown accuracy is not shown.
     QVERIFY(panel->setProperty("horizontalAccuracy", qInf()));
     QVERIFY(!accuracy->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_settingsPageListsGroups_data()
+{
+    QTest::addColumn<int>("role");
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<BaseModeDefinition::Mode>("baseMode");
+    QTest::addColumn<bool>("baseStation");
+    QTest::addColumn<bool>("baseSites");
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    using Mode = BaseModeDefinition::Mode;
+    QTest::newRow("survey-in base") << int(RTKSettings::ConfiguredBase) << ublox << Mode::BaseSurveyIn << true << false;
+    QTest::newRow("fixed base") << int(RTKSettings::ConfiguredBase) << ublox << Mode::BaseFixed << true << true;
+    // A passive receiver has no base settings, whatever base mode is saved.
+    QTest::newRow("passive") << int(RTKSettings::Passive) << ublox << Mode::BaseFixed << false << false;
+    // A manufacturer no receiver family has offers no base mode: the base station group only says that the saved one
+    // is not supported.
+    const int unknownManufacturer = 9999;
+    QTest::newRow("unknown manufacturer")
+        << int(RTKSettings::ConfiguredBase) << unknownManufacturer << Mode::BaseFixed << true << false;
+}
+
+void GPSReceiverSettingsTest::_settingsPageListsGroups()
+{
+    QFETCH(int, role);
+    QFETCH(int, manufacturer);
+    QFETCH(BaseModeDefinition::Mode, baseMode);
+    QFETCH(bool, baseStation);
+    QFETCH(bool, baseSites);
+    // The settings page shows the groups of the form one by one, so that its sidebar and search reach each of them.
+    // Its definition states when the two base groups are shown apart from the groups themselves, so the sidebar, the
+    // page and the groups have to agree.
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    settings.saved.setFactValue(settings.settings->receiverRole(), role);
+    settings.saved.setFactValue(settings.settings->baseReceiverManufacturer(), manufacturer);
+    settings.saved.setFactValue(settings.settings->baseMode(), static_cast<int>(baseMode));
+    // The page shows the application's receiver, which follows the saved settings only outside tests.
+    GPSReceiver* const receiver = GPSManager::instance()->receiver();
+    const GPSReceiver::Configuration unbound = receiver->configuration();
+    const auto restore = qScopeGuard([receiver, unbound]() { receiver->setConfiguration(unbound); });
+    GPSReceiver::Configuration selected = unbound;
+    selected.receiverRole = static_cast<RTKSettings::ReceiverRole>(role);
+    selected.baseReceiverManufacturer = manufacturer;
+    selected.autoConnect = false;
+    receiver->setConfiguration(selected);
+    GPSTest::QmlEngine engine;
+    auto page = engine.create(QByteArrayLiteral(R"(
+        import QtQuick
+        import QGroundControl
+        import QGroundControl.AppSettings
+
+        Item {
+            // The page's scroll area takes its palette from the window that shows the page.
+            QGCPalette { id: qgcPal }
+            GNSSReceiverSettings {}
+        }
+    )"));
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto sidebar = engine.create(QByteArrayLiteral(R"(
+        import QGroundControl.AppSettings
+
+        SettingsPagesModel {
+            /// The sections the settings sidebar lists under the GNSS Receiver page.
+            function receiverSections() {
+                for (let i = 0; i < count; i++) {
+                    if (get(i).nameKey === "GNSS Receiver") {
+                        return get(i).sections().filter(section => section.visible).map(section => section.name)
+                    }
+                }
+                return []
+            }
+        }
+    )"));
+    QVERIFY2(sidebar, qPrintable(engine.lastError()));
+    QVariant listed;
+    QVERIFY(QMetaObject::invokeMethod(sidebar.get(), "receiverSections", Q_RETURN_ARG(QVariant, listed)));
+    QStringList sections{QStringLiteral("GNSS Receiver Status"), QStringLiteral("GNSS Receiver")};
+    if (baseStation) {
+        sections.append(QStringLiteral("RTK Base Station"));
+    }
+    if (baseSites) {
+        sections.append(QStringLiteral("Saved Base Sites"));
+    }
+    sections.append({QStringLiteral("Connect"), QStringLiteral("GCS Position")});
+    QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(), sections);
+
+    // The page's group of a control: the child of the page layout that holds it.
+    const auto group = [&page](const char* control) -> QQuickItem* {
+        auto* item = page->findChild<QQuickItem*>(QString::fromLatin1(control));
+        while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("settingsPageLayout")) {
+            item = item->parentItem();
+        }
+        return item && item->parentItem() ? item : nullptr;
+    };
+    auto* connection = group("rtkReceiverRole");
+    auto* baseStationGroup = group("rtkFixedMode");
+    auto* baseSitesGroup = group("rtkBaseSiteName");
+    auto* connect = group("rtkConnectButton");
+    QVERIFY(connection && baseStationGroup && baseSitesGroup && connect);
+    QVERIFY(connection->isVisible() && connect->isVisible());
+    QCOMPARE(baseStationGroup->isVisible(), baseStation);
+    QCOMPARE(baseSitesGroup->isVisible(), baseSites);
+    for (const auto& [file, shown] :
+         {std::pair{"GPSReceiverBaseStation.qml", baseStation}, std::pair{"GPSReceiverBaseSites.qml", baseSites}}) {
+        auto part = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)));
+        QVERIFY2(part, qPrintable(engine.lastError()));
+        QVERIFY2(part->property("visible").toBool() == shown, file);
+    }
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

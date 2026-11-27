@@ -181,11 +181,11 @@ void NMEASentenceTest::_lineFraming()
 void NMEASentenceTest::_navigationFreshnessBoundaries()
 {
     const auto rmc =
-        ownedSentence(NMEAUtils::repairChecksum("$GPRMC,000000.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
+        ownedSentence(GPSTest::repairChecksum("$GPRMC,000000.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
     const auto gga =
-        ownedSentence(NMEAUtils::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
-    const auto gsa = ownedSentence(NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
-    const auto gst = ownedSentence(NMEAUtils::repairChecksum("$GPGST,000000.000,1,1,1,0,3,4,6"));
+        ownedSentence(GPSTest::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
+    const auto gsa = ownedSentence(GPSTest::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    const auto gst = ownedSentence(GPSTest::repairChecksum("$GPGST,000000.000,1,1,1,0,3,4,6"));
     QVERIFY(rmc && gga && gsa && gst);
 
     constexpr quint64 maxAgeUs = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
@@ -215,14 +215,19 @@ void NMEASentenceTest::_navigationFreshnessBoundaries()
 void NMEASentenceTest::_navigationFixLoss_data()
 {
     QTest::addColumn<QByteArray>("body");
-    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,");
-    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N");
+    QTest::addColumn<int>("satellitesUsed");
+    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,") << 0;
+    QTest::newRow("gga-most-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,255,,,,,,,") << 255;
+    // gga() rejects a larger count, so the fix loss reports none.
+    QTest::newRow("gga-too-many-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,256,,,,,,,") << -1;
+    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N") << -1;
 }
 
 void NMEASentenceTest::_navigationFixLoss()
 {
     QFETCH(QByteArray, body);
-    const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
+    QFETCH(int, satellitesUsed);
+    const auto sentence = ownedSentence(GPSTest::repairChecksum(body));
     QVERIFY(sentence);
     NMEA::NavigationEpochAssembler assembler;
     const auto update = assembler.ingest(sentence->sentence(), 42);
@@ -230,6 +235,44 @@ void NMEASentenceTest::_navigationFixLoss()
     QVERIFY(update->type == NMEA::NavigationUpdate::Type::FixLoss);
     QCOMPARE(update->epoch.fixQuality, GPSFixQuality::NoFix);
     QCOMPARE(update->epoch.receivedAtUs, quint64(42));
+    QCOMPARE(update->epoch.satellitesUsed, satellitesUsed < 0 ? std::nullopt : std::optional<unsigned>(satellitesUsed));
+}
+
+void NMEASentenceTest::_expiredMetadataEpoch_data()
+{
+    QTest::addColumn<bool>("fixLost");
+    QTest::newRow("fix") << false;
+    QTest::newRow("fix-lost") << true;
+}
+
+void NMEASentenceTest::_expiredMetadataEpoch()
+{
+    QFETCH(bool, fixLost);
+    const auto gga =
+        ownedSentence(GPSTest::repairChecksum("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
+    const auto gsa = ownedSentence(GPSTest::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    const auto loss = ownedSentence(GPSTest::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
+    QVERIFY(gga && gsa && loss);
+    constexpr quint64 receivedAtUs = 1'000'000;
+    constexpr quint64 maxAgeUs = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
+    NMEA::NavigationEpochAssembler assembler;
+    QVERIFY(assembler.ingest(gga->sentence(), receivedAtUs));
+    const auto metadata = assembler.ingest(gsa->sentence(), receivedAtUs);
+    QVERIFY(metadata && metadata->epoch.verticalDop);
+    if (fixLost) {
+        const auto update = assembler.ingest(loss->sentence(), receivedAtUs + 1);
+        QVERIFY(update && update->type == NMEA::NavigationUpdate::Type::FixLoss);
+    }
+    QVERIFY(!assembler.expireUntimedMetadata(receivedAtUs + maxAgeUs));
+
+    // The epoch returns without its expired VDOP, unless a fix loss hides it as it does later metadata.
+    const auto expired = assembler.expireUntimedMetadata(receivedAtUs + maxAgeUs + 1);
+    QCOMPARE(expired.has_value(), !fixLost);
+    if (expired) {
+        QVERIFY(!expired->verticalDop);
+        QCOMPARE(expired->latitude, metadata->epoch.latitude);
+    }
+    QVERIFY(!assembler.expireUntimedMetadata(receivedAtUs + 2 * maxAgeUs));
 }
 
 void NMEASentenceTest::_utcMilliseconds_data()
@@ -263,6 +306,37 @@ void NMEASentenceTest::_qtTimestampEquivalence()
         const auto expected = QTime::fromString(QString::fromLatin1(text), u"hhmmss.z");
         const auto actual = NMEA::utcMilliseconds(std::string_view(text.constData(), text.size()));
         QVERIFY2(actual && *actual == expected.msecsSinceStartOfDay(), text.constData());
+    }
+}
+
+void NMEASentenceTest::_zdaDate_data()
+{
+    QTest::addColumn<QByteArray>("date");
+    QTest::addColumn<bool>("accepted");
+    QTest::newRow("valid") << QByteArray("12,07,2026") << true;
+    QTest::newRow("leap-day") << QByteArray("29,02,2024") << true;
+    QTest::newRow("no-leap-day") << QByteArray("29,02,2026") << false;
+    // Values that std::chrono's day, month and year would narrow to a valid date.
+    QTest::newRow("day-narrows-to-1") << QByteArray("257,07,2026") << false;
+    QTest::newRow("month-narrows-to-1") << QByteArray("12,257,2026") << false;
+    QTest::newRow("year-narrows-to-2024") << QByteArray("12,07,67560") << false;
+    QTest::newRow("year-zero") << QByteArray("12,07,0000") << false;
+    QTest::newRow("negative-year") << QByteArray("12,07,-2026") << false;
+}
+
+void NMEASentenceTest::_zdaDate()
+{
+    QFETCH(QByteArray, date);
+    QFETCH(bool, accepted);
+    const auto sentence = ownedSentence(GPSTest::repairChecksum("$GPZDA,172809.456," + date + ",00,00"));
+    QVERIFY(sentence);
+    const auto zda = NMEA::zda(sentence->sentence());
+    QCOMPARE(zda.has_value(), accepted);
+    if (zda) {
+        const QList<QByteArray> parts = date.split(',');
+        QCOMPARE(zda->date.day, parts[0].toUInt());
+        QCOMPARE(zda->date.month, parts[1].toUInt());
+        QCOMPARE(zda->date.year, parts[2].toInt());
     }
 }
 
@@ -380,7 +454,7 @@ void NMEASentenceTest::_repairChecksum()
 {
     QFETCH(QByteArray, input);
     QFETCH(QByteArray, expected);
-    QCOMPARE(NMEAUtils::repairChecksum(input), expected);
+    QCOMPARE(GPSTest::repairChecksum(input), expected);
 }
 
 void NMEASentenceTest::_ggaHdopValidation_data()
@@ -398,7 +472,7 @@ void NMEASentenceTest::_ggaHdopValidation()
     QFETCH(QByteArray, hdop);
     QFETCH(double, expected);
     const auto sentence = ownedSentence(
-        NMEAUtils::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8," + hdop + ",61.7,M,55.2,M,,"));
+        GPSTest::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8," + hdop + ",61.7,M,55.2,M,,"));
     QVERIFY(sentence);
     const auto fix = NMEA::gga(sentence->sentence());
     QVERIFY(fix);
@@ -425,7 +499,7 @@ void NMEASentenceTest::_gstFieldCounts()
     QFETCH(QByteArray, body);
     QFETCH(bool, parsed);
     QFETCH(double, vertical);
-    const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
+    const auto sentence = ownedSentence(GPSTest::repairChecksum(body));
     QVERIFY(sentence);
     const auto gst = NMEA::gst(sentence->sentence());
     QCOMPARE(gst.has_value(), parsed);
@@ -619,7 +693,7 @@ void NMEASentenceTest::_nmeaWireContract()
     const auto generated = NMEAUtils::makeGGA(fix, QTime(12, 0, 0, 999));
     QCOMPARE(generated, QByteArray("$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,*77\r\n"));
     QVERIFY(checksumValid(generated));
-    QCOMPARE(NMEAUtils::repairChecksum(generated), generated);
+    QCOMPARE(GPSTest::repairChecksum(generated), generated);
     const NMEA::GGA unknownFix{.latitude = 47.3977, .longitude = 8.5456};
     const auto unknown = NMEAUtils::makeGGA(unknownFix, QTime(0, 0));
     QVERIFY(unknown.contains(",E,0,,,,M,,M,,*"));
@@ -665,7 +739,7 @@ void NMEASentenceTest::_ggaValidity()
     QFETCH(QByteArray, body);
     QFETCH(bool, accepted);
     QFETCH(bool, coordinates);
-    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto wire = GPSTest::repairChecksum('$' + body);
     const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
     QVERIFY(sentence);
     const auto fix = NMEA::gga(*sentence);
@@ -702,7 +776,7 @@ void NMEASentenceTest::_navigationStatus()
     QFETCH(QByteArray, body);
     QFETCH(int, valid);
     QFETCH(int, epoch);
-    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto wire = GPSTest::repairChecksum('$' + body);
     const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
     QVERIFY(sentence);
     const auto status = NMEA::navigationStatus(*sentence);

@@ -13,7 +13,7 @@ enum class GPSAltitudeDatum
 {
     Unknown = 0,
     MeanSeaLevel = 1,
-    Ellipsoid = 2
+    Ellipsoid = 2,
 };
 
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
@@ -26,7 +26,7 @@ struct GPSObservation
         GroundStation,
         Motion,
         RemoteID,
-        Gga
+        Gga,
     };
 
     QGeoPositionInfo position;
@@ -55,4 +55,6 @@ struct GPSObservation
     [[nodiscard]] bool usable() const;
     [[nodiscard]] QGeoCoordinate coordinate() const;
     [[nodiscard]] double heading() const;
+    /// The position's altitude above mean sea level; empty when it has none or its datum is not known to be that.
+    [[nodiscard]] std::optional<double> altitudeMslMeters() const;
 };

@@ -69,30 +69,11 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
     b56206010300f55e015edb
   write "UBX-CFG-MSG" 11 acknowledged required
     b56206010300f57c017c17
+  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
 stream failure=none ready=1
-  write "UBX-CFG-RATE" 14 acknowledged required
-    b56206080600e803010000000037
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300013b0046b8
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b562060103000130023da4
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f50505092d
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f54a014ab3
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f5540154c7
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f5e601e6eb
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f55e015edb
-  write "UBX-CFG-MSG" 11 acknowledged required
-    b56206010300f57c017c17
-  survey active=1 valid=0 duration=30s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
   satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1
   position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164646000000 velocity=1 receipt=1
   integrity receipt=1 jamming=critical/1 spoofing=unknown/0 antenna=ok/1 output-overflow=0
   integrity receipt=1 jamming=critical/1 spoofing=indicated/1 antenna=ok/1 output-overflow=0
-  survey active=0 valid=1 duration=181s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
   position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164647000000 velocity=1 receipt=1
   rtcm type=1005 size=25 fnv=f8e3bb62

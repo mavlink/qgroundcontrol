@@ -154,11 +154,11 @@ struct Fixture
 
     bool configure()
     {
-        unsigned baudrate = 115200;
+        unsigned baudRate = 115200;
         GPSConfig config{};
         config.base = base;
         receiver.log.commands.clear();
-        return driver.configure(config, baudrate);
+        return driver.configure(config, baudRate);
     }
 
     void success(unsigned expectedSurveyPolls)
@@ -172,7 +172,7 @@ struct Fixture
         QCOMPARE(receiver.model.startSettings.at(Cfg::TMODE_SVIN_ACC_LIMIT.id), 12500);
         QCOMPARE(receiver.model.startSettings.at(Cfg::MSGOUT_UBX_NAV_SVIN.port(UBX::MsgOutPort::UART1).id), 5);
         QCOMPARE(receiver.model.startSettings.at(Cfg::MSGOUT_UBX_NAV_SVIN.port(UBX::MsgOutPort::USB).id), 5);
-        QCOMPARE(receiver.log.count<GPSSurveyReport>(), 0);
+        QCOMPARE(receiver.log.count<GPSBaseStatus>(), 0);
         QCOMPARE(receiver.model.rtcmEnables, 0);
     }
 
@@ -185,7 +185,7 @@ struct Fixture
         QVERIFY(receiver.model.surveyPolls > 1 && receiver.model.surveyPolls <= 31);
         QCOMPARE_GE(receiver.clock.nowUs() - receiver.model.disabledAt, 3000000);
         QVERIFY(receiver.clock.nowUs() - receiver.model.disabledAt < 3300000);
-        QCOMPARE(receiver.log.count<GPSSurveyReport>(), 0);
+        QCOMPARE(receiver.log.count<GPSBaseStatus>(), 0);
         QCOMPARE(receiver.model.rtcmEnables, 0);
     }
 };
@@ -582,6 +582,19 @@ void transactionalFrames(GPSTestClock& clock)
     const auto empty = driver.decode(ubxFrame(Msg::NAV_SAT.value(), Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
     QCOMPARE(empty.events.size(), 1);
     QCOMPARE(std::get<GPSDecodedSatellites>(empty.events.front()).constellations[0].inView, 0);
+    // Receivers before protocol 15 report channels, which do not name their constellation.
+    Bytes channels(8 + 3 * 12, 0);
+    channels[4] = 3;
+    channels[8 + 2] = 1;
+    channels[8 + 2 * 12 + 2] = 1;
+    const auto legacy = driver.decode(ubxFrame(Msg::NAV_SVINFO.value(), channels));
+    QCOMPARE(legacy.events.size(), 1);
+    const auto& tracked = std::get<GPSDecodedSatellites>(legacy.events.front()).constellations[0];
+    QCOMPARE(tracked.constellation, GPSConstellation::Unknown);
+    QCOMPARE(tracked.inView, 3);
+    QCOMPARE(tracked.inUse, std::optional(2));
+    channels[4] = 2;
+    QVERIFY(driver.decode(ubxFrame(Msg::NAV_SVINFO.value(), channels)).events.empty());
     const QString originalIdentity = driver.identity();
     Bytes version(70, 0);
     const std::string module = "MOD=NEO-M9N";
@@ -838,6 +851,34 @@ void isolatedFrameAndControl(GPSTestClock& clock)
     QVERIFY(!UBX::decodeConfigurationValues(Bytes{1, 0, 0, 0, 1}));
 }
 
+/// Readbacks that time out leave one reply each to come, in order. With two outstanding and a third readback pending,
+/// as after the readbacks of consecutive optional batches, the late replies answer the first two.
+void lateReadbackReplies(GPSTestClock&)
+{
+    UBX::ReceiverController controller;
+    for (const uint32_t key : {Cfg::ODO_USE_ODO.id, Cfg::NAVHPG_DGNSSMODE.id}) {
+        controller.beginReadback(std::array{key});
+        controller.finishReadback();
+    }
+    const auto values = [](uint32_t key) {
+        UBX::ConfigurationValues reply;
+        reply.count = 1;
+        reply.values[0] = {.key = key, .value = 0};
+        return reply;
+    };
+    const std::array pending{Cfg::SEC_JAMDET_SENSITIVITY_HI.id};
+    controller.beginReadback(pending);
+    // The first key's values, then the NAK of a receiver without the second key.
+    controller.accept(values(Cfg::ODO_USE_ODO.id));
+    controller.accept(UBX::Acknowledgement{Msg::CFG_VALGET.value(), false});
+    QVERIFY(!controller.readbackRejected() && !controller.readbackReady());
+    QVERIFY(!controller.readbackReplyOutstanding());
+    controller.accept(values(pending[0]));
+    QVERIFY(controller.readbackReady());
+    controller.finishReadback();
+    QVERIFY(!controller.readbackReplyOutstanding());
+}
+
 void checkedWireCodecs(GPSTestClock&)
 {
     const auto fixed = []<typename T>() {
@@ -870,8 +911,10 @@ void checkedWireCodecs(GPSTestClock&)
     QVERIFY(!validPayload(Msg::SEC_SIG.value(), Bytes{2, 7, 0, 1}));
     QCOMPARE(Wire::decode<UBX::Ack>(Bytes{6, 0x24}).msg, Msg::CFG_NAV5.value());
 
-    for (const auto [key, value] : std::array<UBX::ConfigurationValue, 5>{
-             {{0x50000001, 0}, {0x10000001, 2}, {0x20000001, 256}, {0x30000001, 65536}, {0x00000001, 0}}}) {
+    // The reserved top bit of the last key leaves it a one-bit value.
+    constexpr UBX::ConfigurationValue unwritable[] = {{0x50000001, 0},     {0x10000001, 2}, {0x20000001, 256},
+                                                      {0x30000001, 65536}, {0x00000001, 0}, {0x90000001, 2}};
+    for (const auto [key, value] : unwritable) {
         UBX::CheckedValsetBatch<32> batch;
         QVERIFY(batch.append(0x20000001, 1));
         const auto previousSize = batch.size;
@@ -900,6 +943,8 @@ void checkedWireCodecs(GPSTestClock&)
         }
     }
     values[8] = 2;
+    QVERIFY(!UBX::decodeConfigurationValues(values));
+    values[7] |= 0x80;
     QVERIFY(!UBX::decodeConfigurationValues(values));
     QVERIFY(!batch.append(0x20000005, 0));
     QVERIFY(batch.payload().empty());
@@ -968,6 +1013,9 @@ void legacyRTCMActivation(GPSTestClock& clock)
                               .accuracyMeters = 1}};
                 QCOMPARE(f.configure(), scenario.active);
                 QCOMPARE(f.driver.receiverReady(), scenario.active);
+                // The failure names the missing output, whichever command was the last one.
+                QCOMPARE(f.driver.errorDetail(),
+                         (scenario.active ? QString() : QStringLiteral("u-blox receiver did not start RTCM output")));
             } else {
                 QVERIFY(f.configure());
                 f.log.clear();
@@ -989,6 +1037,44 @@ void legacyRTCMActivation(GPSTestClock& clock)
             QCOMPARE(f.receiver.model.messageRates.contains(Msg::RTCM3_1077.value()),
                      (std::ranges::find(scenario.unsupported, Msg::RTCM3_1077.value()) == scenario.unsupported.end()));
         }
+    }
+}
+
+/// A receiver moved to another baud rate is identified again. One that then reports another board or protocol
+/// generation, or rejects the change late, ends the configuration with that reason and gets no more commands.
+void baudChangeVerification(GPSTestClock& clock)
+{
+    const QString identityChanged = QStringLiteral("u-blox receiver reported a different identity at 115200 baud");
+
+    const struct
+    {
+        std::function<void(UBXReceiver&)> atNewBaud;
+        QString detail;
+    } cases[] = {
+        {[](UBXReceiver& receiver) { receiver.model.hardware = "000B0000"; }, identityChanged},
+        {[](UBXReceiver& receiver) { receiver.model.protocol = "20.30"; }, identityChanged},
+        {[](UBXReceiver& receiver) { receiver.queueReply(ubxBytes(Msg::ACK_NAK.value(), {0x06, 0x8a})); },
+         QStringLiteral("u-blox receiver rejected the change to 115200 baud")},
+    };
+
+    for (const auto& scenario : cases) {
+        clock.reset(GPSTestClock::START_US);
+        UBXReceiver receiver(clock);
+        receiver.model.receiverBaud = 9600;
+        receiver.model.protocol = "27.31";
+        receiver.model.loseBaudAck = true;
+        receiver.setBaudRateHandler([&](unsigned baud) -> std::optional<bool> {
+            if (baud == UBX::Plan::BASE_BAUD) {
+                scenario.atNewBaud(receiver);
+            }
+            return std::nullopt;
+        });
+        GPSProtocolRuntime driver(UBX::FAMILY, ubxLink(receiver), receiver.observer());
+        unsigned baud = 0;
+        QVERIFY(!driver.configure({}, baud));
+        QCOMPARE(driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(driver.errorDetail(), scenario.detail);
+        QCOMPARE(receiver.log.commands.back().command, UBX::messageName(Msg::MON_VER));
     }
 }
 
@@ -1288,6 +1374,40 @@ void slowLegacyRTCMActivation(GPSTestClock& clock)
     }
 }
 
+/// A receiver that keeps streaming after its survey but leaves the activation commands unanswered, all of them or
+/// only the CFG-MSG rates, is not asked forever: after a few services without a settled output the session fails as
+/// it does when the receiver rejects the outputs.
+void silentLegacyRTCMActivation(GPSTestClock& clock)
+{
+    const QByteArray baseRate("\xb5\x62\x06\x08", 4);
+    const QByteArray messageRate("\xb5\x62\x06\x01", 4);
+    for (const bool baseRateAnswered : {false, true}) {
+        Fixture f(clock);
+        f.receiver.model.legacy = true;
+        f.receiver.model.module = "NEO-M8P";
+        QVERIFY(f.configure());
+        if (!baseRateAnswered) {
+            f.receiver.faults.rules.push_back(silence(baseRate));
+        }
+        f.receiver.faults.rules.push_back(silence(messageRate));
+        f.receiver.clearCommands();
+        f.receiver.model.queueSurveyReply(SurveyReply::Valid);
+        unsigned services = 0;
+        for (; services < 3 * UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS && !failed(f.driver); ++services) {
+            f.receiver.model.queueBytes(ubxNavigationEpoch(ubxFix3D(), 1000 + 200 * services));
+            QVERIFY(positionUpdated(f.driver.receive(100ms)));
+        }
+        QCOMPARE(services, UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS);
+        QCOMPARE(f.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(f.driver.errorDetail(),
+                 QStringLiteral("u-blox receiver did not start RTCM output after the survey-in"));
+        QCOMPARE(std::ranges::count_if(f.receiver.commands(),
+                                       [&](const QByteArray& command) { return command.startsWith(baseRate); }),
+                 UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS);
+        QCOMPARE(f.receiver.model.rtcmEnables, 0);
+    }
+}
+
 /// A survey-stop poll that cannot be written, or whose reply wait is cancelled, ends the configuration before the
 /// survey restarts.
 void surveyStopPollFailures(GPSTestClock& clock)
@@ -1346,6 +1466,36 @@ void receiversWithoutBase(GPSTestClock& clock)
         QCOMPARE(bench.receiver.commands().size(), 1);
         QCOMPARE(bench.receiver.log.commands.size(), 1u);
         QCOMPARE(bench.receiver.log.commands.front().outcome, GPSCommandOutcome::Acknowledged);
+    }
+}
+
+/// A receiver with GPS L5 is told to track the signal, which a NEO-F9P ships with disabled, and to take the L1 health
+/// flag for it. One without GPS L5 is told neither, and one that refuses the signal is configured all the same.
+void gpsL5Signal(GPSTestClock& clock)
+{
+    const struct
+    {
+        const char* module;
+        bool gpsL5;
+        bool signalRefused;
+    } receivers[] = {
+        {"ZED-F9P FWVER=HPGL1L5", true, false},
+        {"ZED-F9P FWVER=HPGL1L5", true, true},
+        {"ZED-F9P", false, false},
+    };
+
+    for (const auto& row : receivers) {
+        Fixture f(clock);
+        auto& model = f.receiver.model;
+        model.module = row.module;
+        if (row.signalRefused) {
+            model.unsupportedKeys = {Cfg::SIGNAL_GPS_L5_ENA.id};
+        }
+        QVERIFY2(f.configure(), row.module);
+        QCOMPARE(model.currentSettings.contains(Cfg::SIGNAL_GPS_L5_ENA.id), row.gpsL5 && !row.signalRefused);
+        QCOMPARE(model.currentSettings.contains(Cfg::SIGNAL_HEALTH_L5.id), row.gpsL5);
+        QCOMPARE(f.log.warnings(),
+                 row.signalRefused ? QStringList{"GPS L5 signal not supported by this receiver"} : QStringList{});
     }
 }
 
@@ -1527,8 +1677,8 @@ void independentSequences(GPSTestClock& clock)
 /// The recorded NAV-PVT and NAV-SAT, and the receiver profile and schema tables they rely on.
 void recordedNavigation(GPSTestClock& clock)
 {
-    QVERIFY(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
-    QVERIFY(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);
+    QVERIFY(!UBX::receiverProfile(UBX::Board::UBlox9).rtcmOutput);
+    QVERIFY(UBX::receiverProfile(UBX::Board::UBlox9F9PL1L2).rtcmOutput);
     QCOMPARE(UBX::configurationValueBytes(0x50000001), 0);
     QCOMPARE(UBX::configurationValueBytes(0x30000001), 2);
     for (const auto& schema : UBX::MESSAGE_SCHEMAS) {
@@ -1579,16 +1729,30 @@ void reconfigureDoesNotReuseStopConfirmation(GPSTestClock& clock)
     f.timeout();
 }
 
+/// A configuration that finds no receiver reports no identity, whatever an earlier one on the same runtime found.
+void reconfigureForgetsIdentity(GPSTestClock& clock)
+{
+    Fixture f(clock);
+    QVERIFY(f.configure());
+    QCOMPARE(f.driver.identity(), QStringLiteral("ZED-F9P HPG 1.32"));
+    f.receiver.model.corruptIdentity = true;
+    QVERIFY(!f.configure());
+    QCOMPARE(f.driver.identity(), QString());
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"isolated-frame-control", isolatedFrameAndControl},
+    {"late-readback-replies", lateReadbackReplies},
     {"checked-wire-codecs", checkedWireCodecs},
     {"optional-command-write-evidence", optionalCommandWriteEvidence},
     {"legacy-rtcm-activation", legacyRTCMActivation},
+    {"baud-change-verification", baudChangeVerification},
     {"late-optional-valset-reply", lateOptionalValsetReply},
     {"acknowledged-and-rejected-in-one-read", acknowledgedAndRejectedInOneRead},
     {"rejected-optional-batch", rejectedOptionalBatch},
     {"legacy-rtcm-rate-polls", legacyRTCMRatePolls},
     {"slow-legacy-rtcm-activation", slowLegacyRTCMActivation},
+    {"silent-legacy-rtcm-activation", silentLegacyRTCMActivation},
     {"integrity-original-receipts", integrityReceipts},
     {"plan-output-decoded", planOutputDecoded},
     {"antenna-states", antennaStates},
@@ -1601,8 +1765,10 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"transactional-frames", transactionalFrames},
     {"reentrant-payload", reentrantPayload},
     {"reconfigure-does-not-reuse-stop-confirmation", reconfigureDoesNotReuseStopConfirmation},
+    {"reconfigure-forgets-identity", reconfigureForgetsIdentity},
     {"survey-stop-poll-failures", surveyStopPollFailures},
     {"receivers-without-base", receiversWithoutBase},
+    {"gps-l5-signal", gpsL5Signal},
     {"fixture-sequences", independentSequences},
     {"fixture-integrity", independentIntegrity},
     {"fixture-navigation-epochs", navigationEpochs},
@@ -1728,6 +1894,52 @@ void UBXProtocolTest::_replyFaults()
         // An aborted configuration never restarts the survey.
         QCOMPARE(bench.receiver.model.starts, 0);
     }
+}
+
+void UBXProtocolTest::_timeOfWeekSteps_data()
+{
+    constexpr quint32 WEEK = GPSTime::WEEK_MS;
+    constexpr quint32 WINDOW = UBX::EpochAssembler::REORDER_WINDOW_MS;
+    // Each time of week is one epoch, a NAV-PVT and its NAV-EOE, numbered from 1 in order of arrival.
+    QTest::addColumn<QList<quint32>>("tows");
+    // The epoch whose NAV-EOE is withheld, so it is still being assembled when the next one arrives; 0 for none.
+    QTest::addColumn<int>("partial");
+    QTest::addColumn<QList<int>>("published");
+    QTest::newRow("advance") << QList<quint32>{1000, 1200, 1400} << 0 << QList{1, 2, 3};
+    QTest::newRow("week-rollover") << QList<quint32>{WEEK - 200, 0, 200} << 0 << QList{1, 2, 3};
+    // An epoch at or behind the last published one, within the reordering window, was already published.
+    QTest::newRow("late-epoch") << QList<quint32>{1000, 1200, 1000, 1400} << 0 << QList{1, 2, 4};
+    QTest::newRow("late-epoch-at-the-window") << QList<quint32>{WINDOW + 1000, 1000, WINDOW + 1200} << 0 << QList{1, 3};
+    QTest::newRow("late-epoch-across-the-rollover") << QList<quint32>{0, WEEK - 200, 200} << 0 << QList{1, 3};
+    // Any other time of week is a new time base, which the following epochs continue.
+    QTest::newRow("backward-step-past-the-window") << QList<quint32>{WINDOW + 1001, 1000, 1200} << 0 << QList{1, 2, 3};
+    QTest::newRow("backward-step") << QList<quint32>{500000000, 400000000, 400000200} << 0 << QList{1, 2, 3};
+    QTest::newRow("forward-step-of-half-a-week")
+        << QList<quint32>{1000, WEEK / 2 + 1000, WEEK / 2 + 1200} << 0 << QList{1, 2, 3};
+    QTest::newRow("step-ends-a-partial-epoch")
+        << QList<quint32>{500000000, 500000200, 400000000, 400000200} << 2 << QList{1, 2, 3, 4};
+}
+
+void UBXProtocolTest::_timeOfWeekSteps()
+{
+    QFETCH(QList<quint32>, tows);
+    QFETCH(int, partial);
+    QFETCH(QList<int>, published);
+    GPSTestClock clock;
+    NavigationDecoder decoder(clock);
+    auto pvt = ubxFix3D();
+    QList<int> actual;
+    for (qsizetype index = 0; index < tows.size(); ++index) {
+        pvt[23] = static_cast<uint8_t>(index + 1);
+        auto frames = ubxNavigationEpoch(pvt, tows[index]);
+        if (index + 1 == partial) {
+            frames.resize(UBX::FRAME_OVERHEAD + pvt.size());
+        }
+        for (const auto& event : decoder->decode(frames).events) {
+            actual.append(std::get<GPSDecodedPosition>(event).navigation.satellitesUsed.value_or(0));
+        }
+    }
+    QCOMPARE(actual, published);
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(UBXProtocolTest, TestLabel::Unit)
