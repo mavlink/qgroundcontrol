@@ -68,6 +68,8 @@ SKIPPED_STATUS = "skipped"
 # Progress count of the jobs that had source cells; their status reports the cells instead.
 LAND_JOBS = "land"
 MAX_LISTED_JOBS = 100
+# Nodes beyond a cell that the bilinear warp of its pixels can read, as the footprint margin.
+KERNEL_REACH_NODES = 2
 # Seconds before a retry pass, so a brief source outage does not use up every retry.
 RETRY_DELAY_S = 30.0
 
@@ -212,6 +214,19 @@ def _read_groups(job: TileKey, cells: Mapping[tuple[int, int], str]) -> list[Gro
             dataset.close()
 
 
+def _grown(mask: np.ndarray, steps: int) -> np.ndarray:
+    """The mask with every True spread *steps* nodes in each direction, diagonals included."""
+    grown = mask.copy()
+    for _ in range(steps):
+        rows = grown.copy()
+        rows[1:] |= grown[:-1]
+        rows[:-1] |= grown[1:]
+        grown = rows.copy()
+        grown[:, 1:] |= rows[:, :-1]
+        grown[:, :-1] |= rows[:, 1:]
+    return grown
+
+
 def _complete_group(job: TileKey, group: Group, others: list[Group]) -> tuple[np.ndarray, int]:
     """The group's grid with nodes it lacks taken from the other groups, then its voids filled.
 
@@ -219,6 +234,11 @@ def _complete_group(job: TileKey, group: Group, others: list[Group]) -> tuple[np
     differs) are resampled from the other groups, so a cell interpolates on its own lattice
     and blends with its neighbors only within a pixel of their shared edge. Returns the grid
     and the number of void nodes filled.
+
+    A void is a node without a height inside the group's own cells or, in another group's
+    cell, within the kernel's reach of them. Inside that cell the nodes before its first row
+    or column on its own lattice get nothing from the resampling, and at a corner they are
+    read by the cell diagonally across. The rest of that cell is never read on this lattice.
     """
     heights = group.heights
     shape = heights.shape
@@ -272,6 +292,10 @@ def _complete_group(job: TileKey, group: Group, others: list[Group]) -> tuple[np
     covered = np.zeros(shape, dtype=bool)
     for lat, lon in group.keys:
         covered[np.ix_(lat_cells == lat, lon_cells == lon)] = True
+    beside = np.zeros(shape, dtype=bool)
+    for lat, lon in (key for other in others for key in other.keys):
+        beside[np.ix_(lat_cells == lat, lon_cells == lon)] = True
+    covered |= beside & _grown(covered, KERNEL_REACH_NODES)
     in_footprint = np.zeros(shape, dtype=bool)
     in_footprint[row0:row1, col0:col1] = True
     covered &= in_footprint

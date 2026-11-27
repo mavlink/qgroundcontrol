@@ -1,0 +1,88 @@
+# Findings of `terrain_tiles.py check` that were reviewed and accepted, so that a check can pass
+# with them. One per line: `Z/X/Y jump <meters> <pairs>` (`jump east` or `jump south` for one
+# to that neighbor), `Z/X/Y hole <pixels>` or `Z/X/Y seam <east|south> <meters>`, with the
+# size `check` reported; for a jump, the largest and the number of pixel pairs over the limit.
+# A finding is accepted up to that size. Anything larger, one more pair, and any other problem
+# in the same tile, still fails the check.
+#
+# Add a line only after `validate --tile Z/X/Y` reports the finding as in the source. It
+# compares the tile's pixels behind the finding with the heights the source gives those very
+# pixels, at the tile's zoom. A passing `validate --job` is not enough: it samples a job's z13
+# pixels, so it can miss a few of them and says nothing about a coarser tile.
+#
+# All of these come from the first global build (November 2026). `validate --tile` put the
+# pixels behind every one, all 330 pairs of the jumps included, within 0.19 m of the source.
+# It put those of the four GLO-90 corner tiles, a generator fault that is not listed, 1,523 to
+# 2,725 m from it.
+
+# Height jumps over 1,000 m between neighboring pixels. The source has them: extreme relief
+# averaged into coarse pixels, steep islands, and pits in the highest ranges.
+
+# Nepal Himalaya, 83.7-86.5E 27.7-28.9N
+8/187/106 jump 1156 1
+8/188/106 jump 2287 7
+8/189/107 jump 1087 1
+9/376/213 jump 1123 1
+9/377/213 jump 2116 26
+10/753/427 jump 1136 1
+10/754/427 jump 2659 51
+11/1508/854 jump 2665 32
+11/1508/855 jump 1706 18
+12/3016/1708 jump 1073 1
+12/3016/1709 jump 1827 16
+12/3016/1710 jump 1268 5
+13/6033/3419 jump 1016 2
+
+# Eastern Himalaya, 92.1-93.2E 27.7-28.0N
+8/193/107 jump 1401 11
+9/387/214 jump 1814 37
+9/388/214 jump 1098 3
+10/775/429 jump 1429 38
+10/776/429 jump 1102 4
+11/1550/858 jump 1100 9
+11/1550/859 jump 1106 8
+
+# Namcha Barwa and the Hengduan Mountains, 94.9-102.0E 29.7-30.2N
+8/195/105 jump 1130 4
+9/391/211 jump 1187 3
+8/200/105 jump 1593 4
+9/400/211 jump 1246 5
+10/801/423 jump 1072 1
+
+# Karakoram and Tian Shan, 75.2-79.5E 34.9-41.5N
+8/181/100 jump 1009 1
+8/182/101 jump 1032 1
+8/184/95 jump 1129 2
+
+# Colombia's Western Cordillera, 76.3W 5.3N
+9/147/248 jump 1008 1
+
+# Alejandro Selkirk Island (Juan Fernandez), 80.8W 33.8S
+9/141/307 jump 1040 1
+
+# Clarence and Elephant Islands, 54-55W 61S
+7/44/91 jump 1205 1
+8/89/183 jump 1074 2
+
+# Peter I Island, 90.6W 68.8S
+7/31/98 jump 1188 7
+8/63/196 jump 1154 9
+9/127/392 jump 1052 6
+
+# Balleny Islands, 164-165E 67S
+7/122/96 jump 1137 2
+8/245/193 jump 1064 3
+9/490/387 jump 1107 5
+
+# Seams: the heights step along a tile edge more than beside it, by the mean step given in
+# meters. These are features of the surface, not tiles out of place. The first four are in
+# flat country inside one job, as at the edge of a forest or a field; the rest are small
+# islands and coasts, where a coarse tile's edge row holds a few land pixels next to sea.
+12/1380/2278 seam east 2.2  # Pantanal, 58.6W 19.9S
+12/2486/1434 seam south 2.3  # Ukraine, 38.5E 47.4N
+12/2959/1374 seam south 1.4  # East Kazakhstan, 80.1E 50.8N
+13/6636/4039 seam south 1.8  # Sarawak, 111.6E 2.5N
+6/18/10 seam east 2.0  # Ellesmere Island and northwest Greenland
+6/57/32 seam east 2.2  # north coast of New Guinea
+7/65/64 seam east 4.2  # Annobon, in the tile to the east
+8/128/85 seam south 2.4  # the coast of Kent
