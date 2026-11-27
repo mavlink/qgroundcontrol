@@ -7,6 +7,7 @@ include(CMakePushCheckState)
 option(QGC_ENABLE_HARDENING "Apply security hardening flags to non-Debug builds" ON)
 option(QGC_REPRODUCIBLE_BUILD "Strip build paths from non-Debug binaries (-ffile-prefix-map)" ON)
 
+# Sets <out_var> to whether every architecture the build targets matches <pattern>.
 function(_qgc_target_architectures_match pattern out_var)
     if(CMAKE_OSX_ARCHITECTURES)
         set(_architectures ${CMAKE_OSX_ARCHITECTURES})
@@ -23,9 +24,14 @@ function(_qgc_target_architectures_match pattern out_var)
             set(_all_match FALSE)
         endif()
     endforeach()
-    set(${out_var} ${_all_match} PARENT_SCOPE)
+    set(${out_var}
+        ${_all_match}
+        PARENT_SCOPE
+    )
 endfunction()
 
+# Appends <flag> to the list <out_var> if the C++ compiler takes it.
+# cmake-lint: disable=C0103
 function(_qgc_try_compile_flag flag out_var)
     string(MAKE_C_IDENTIFIER "QGC_HARDEN_CXX_${flag}" _probe)
     cmake_push_check_state(RESET)
@@ -37,10 +43,16 @@ function(_qgc_try_compile_flag flag out_var)
     if(${_probe})
         set(_acc ${${out_var}})
         list(APPEND _acc "${flag}")
-        set(${out_var} "${_acc}" PARENT_SCOPE)
+        set(${out_var}
+            "${_acc}"
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 
+# Appends <flag>, scoped to the slice <arch> of a universal build, to the list <out_var> if the C++ compiler takes it
+# for that architecture.
+# cmake-lint: disable=C0103
 function(_qgc_try_compile_flag_arch flag arch out_var)
     string(MAKE_C_IDENTIFIER "QGC_HARDEN_CXX_${arch}_${flag}" _probe)
     cmake_push_check_state(RESET)
@@ -53,10 +65,14 @@ function(_qgc_try_compile_flag_arch flag arch out_var)
     if(${_probe})
         set(_acc ${${out_var}})
         list(APPEND _acc "-Xarch_${arch}" "${flag}")
-        set(${out_var} "${_acc}" PARENT_SCOPE)
+        set(${out_var}
+            "${_acc}"
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 
+# Appends <flag> to the list <out_var> if the linker takes it.
 function(_qgc_try_link_flag flag out_var)
     string(MAKE_C_IDENTIFIER "QGC_HARDEN_LD_${flag}" _probe)
     cmake_push_check_state(RESET)
@@ -65,10 +81,17 @@ function(_qgc_try_link_flag flag out_var)
     if(${_probe})
         set(_acc ${${out_var}})
         list(APPEND _acc "${flag}")
-        set(${out_var} "${_acc}" PARENT_SCOPE)
+        set(${out_var}
+            "${_acc}"
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 
+# Adds the hardening and reproducible-build flags that the toolchain takes to every non-Debug target, and records them
+# in QGC_HARDENING_CXX_FLAGS and QGC_HARDENING_LINK_FLAGS, which the configure summary and the contract tests read
+# under those public names. One function, because the flags of each platform are chosen in one place.
+# cmake-lint: disable=C0103,R0912,R0915
 function(qgc_apply_global_hardening)
     list(APPEND CMAKE_MESSAGE_CONTEXT hardening)
     set(_cxx "")
@@ -85,6 +108,13 @@ function(qgc_apply_global_hardening)
             list(APPEND _cxx "-U_FORTIFY_SOURCE" "-D_FORTIFY_SOURCE=3")
             _qgc_try_compile_flag("-fstack-protector-strong" _cxx)
             _qgc_try_compile_flag("-fstack-clash-protection" _cxx)
+            # "standard" adds pac-ret to BTI. On macOS arm64 an exception thrown through code built with pac-ret is
+            # not caught: the program ends (AppleClang 17). Apple systems get BTI alone.
+            if(APPLE)
+                set(_qgc_branch_protection "-mbranch-protection=bti")
+            else()
+                set(_qgc_branch_protection "-mbranch-protection=standard")
+            endif()
             list(LENGTH CMAKE_OSX_ARCHITECTURES _qgc_osx_arch_count)
             if(APPLE AND _qgc_osx_arch_count GREATER 1)
                 # Scope architecture-specific flags to their universal-build slice.
@@ -92,7 +122,7 @@ function(qgc_apply_global_hardening)
                     if(_arch MATCHES "^x86_64")
                         _qgc_try_compile_flag_arch("-fcf-protection=full" "${_arch}" _cxx)
                     elseif(_arch MATCHES "^arm64")
-                        _qgc_try_compile_flag_arch("-mbranch-protection=standard" "${_arch}" _cxx)
+                        _qgc_try_compile_flag_arch("${_qgc_branch_protection}" "${_arch}" _cxx)
                     endif()
                 endforeach()
             else()
@@ -101,7 +131,7 @@ function(qgc_apply_global_hardening)
                 if(_qgc_all_x86)
                     _qgc_try_compile_flag("-fcf-protection=full" _cxx)
                 elseif(_qgc_all_aarch64)
-                    _qgc_try_compile_flag("-mbranch-protection=standard" _cxx)
+                    _qgc_try_compile_flag("${_qgc_branch_protection}" _cxx)
                 endif()
             endif()
             _qgc_try_link_flag("-Wl,-z,relro" _link)
@@ -125,8 +155,14 @@ function(qgc_apply_global_hardening)
         add_link_options("$<$<NOT:$<CONFIG:Debug>>:${_flag}>")
     endforeach()
 
-    set(QGC_HARDENING_CXX_FLAGS "${_cxx}" CACHE INTERNAL "Applied hardening/reproducible compile flags")
-    set(QGC_HARDENING_LINK_FLAGS "${_link}" CACHE INTERNAL "Applied hardening link flags")
+    set(QGC_HARDENING_CXX_FLAGS
+        "${_cxx}"
+        CACHE INTERNAL "Applied hardening/reproducible compile flags"
+    )
+    set(QGC_HARDENING_LINK_FLAGS
+        "${_link}"
+        CACHE INTERNAL "Applied hardening link flags"
+    )
 
     list(LENGTH _cxx _n_cxx)
     list(LENGTH _link _n_link)
