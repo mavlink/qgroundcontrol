@@ -5,12 +5,16 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
 #include "LinkManager.h"
+#include "LocalHttpTestServer.h"
 #include "MavlinkCameraControlInterface.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
@@ -31,6 +35,8 @@ public:
     QString cacheFile() const { return _cacheFile; }
 
     bool paramComplete() const { return _paramComplete; }
+
+    QNetworkAccessManager* netManager() const { return _netManager; }
 };
 
 MockConfiguration* newMockConfiguration(const QString& name)
@@ -279,6 +285,56 @@ void VehicleCameraControlTest::_testFtpDefinitionDownloadRefusedFallsBack()
 
     // The refused download must not leave the camera waiting forever for a definition.
     QVERIFY(camera->paramComplete());
+}
+
+// The camera is set up as soon as its definition has arrived, within the signal of the reply that brought it, and
+// then gives up its network manager and with it the reply. A reply must not be deleted within its own signal.
+void VehicleCameraControlTest::_testHttpDefinitionReplyOutlivesItsFinishedSignal()
+{
+    _connectVehicle(newMockConfiguration(QStringLiteral("CameraHttpDefinitionTest")));
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QTemporaryDir saveRoot;
+    QVERIFY(saveRoot.isValid());
+    const auto restoreSavePath = overrideSavePath(saveRoot.path());
+
+    // The content only has to arrive: it does not need to be a valid camera definition
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    server.installHttpResponder(QByteArrayLiteral("not a camera definition"));
+
+    const QByteArray uriBytes = server.url(QStringLiteral("/definition.xml")).toUtf8();
+    mavlink_camera_information_t info{};
+    memcpy(info.vendor_name, "Acme", 5);
+    memcpy(info.model_name, "Cam", 4);
+    QVERIFY(uriBytes.size() < static_cast<qsizetype>(sizeof(info.cam_definition_uri)));
+    memcpy(info.cam_definition_uri, uriBytes.constData(), static_cast<size_t>(uriBytes.size()));
+
+    expectLogMessage("default", QtCriticalMsg, QRegularExpression(QStringLiteral("Unable to parse camera definition")));
+    // The second message is Qt's own XML parser error text, which can change between Qt
+    // versions, so only its presence is checked.
+    expectLogMessage("default", QtCriticalMsg, QRegularExpression(QStringLiteral(".+")));
+
+    auto camera = std::make_unique<CameraControlProbe>(&info, _vehicle, MAV_COMP_ID_CAMERA6);
+    const QPointer<QNetworkAccessManager> manager = camera->netManager();
+    QVERIFY(manager);
+    const QPointer<QNetworkReply> reply = manager->findChild<QNetworkReply*>();
+    QVERIFY(reply);
+
+    // Connected after the camera, so told after it: not at all by a reply that the camera deleted
+    bool toldAfterCamera = false;
+    (void) connect(reply, &QNetworkReply::finished, this, [&toldAfterCamera] { toldAfterCamera = true; });
+
+    QTRY_VERIFY_WITH_TIMEOUT(camera->paramComplete(), TestTimeout::longMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY(toldAfterCamera);
+
+    // Neither is left once the camera is set up
+    QCOMPARE(camera->netManager(), nullptr);
+    QTRY_VERIFY_WITH_TIMEOUT(manager.isNull() && reply.isNull(), TestTimeout::mediumMs());
 }
 
 void VehicleCameraControlTest::_testFtpDefinitionDownloadIsSavedAsCacheFile_data()
