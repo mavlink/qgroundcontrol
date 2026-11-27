@@ -591,6 +591,42 @@ void GStreamerInitTest::_testPlanRanks()
     }
 }
 
+void GStreamerInitTest::_testPlanRanksPrefersVideoToolbox_data()
+{
+    QTest::addColumn<bool>("preferVideoToolbox");
+    QTest::addColumn<bool>("softwareRendering");
+    QTest::addColumn<QStringList>("decoders");
+    QTest::addColumn<QStringList>("changes");  // "name=rank", in input order
+
+    // GStreamer's ranks on iOS: decodebin3 would plug avdec_h264, the first of the two by name.
+    const QStringList iosDecoders{"avdec_h264 256 sw", "avdec_h265 256 sw", "vtdec 256 hw", "openh264dec 64 sw"};
+
+    QTest::newRow("out of the tie with the software decoders")
+        << true << false << iosDecoders << QStringList{"vtdec=257"};
+    QTest::newRow("not where the platform doesn't ask for it") << false << false << iosDecoders << QStringList();
+    // macOS: GStreamer prefers vtdec_hw itself, and keeps vtdec, which may decode in software, behind libav.
+    QTest::newRow("a decoder GStreamer ranks otherwise stays")
+        << true << false << QStringList{"vtdec_hw 257 hw", "vtdec 128 hw", "avdec_h264 256 sw"} << QStringList();
+    QTest::newRow("software rendering ranks it below the software decoders")
+        << true << true << iosDecoders << QStringList{"vtdec=128"};
+}
+
+void GStreamerInitTest::_testPlanRanksPrefersVideoToolbox()
+{
+    QFETCH(bool, preferVideoToolbox);
+    QFETCH(bool, softwareRendering);
+    QFETCH(QStringList, decoders);
+    QFETCH(QStringList, changes);
+
+    GStreamer::RankTraits traits;
+    traits.preferVideoToolbox = preferVideoToolbox;
+    traits.softwareRendering = softwareRendering;
+    const GStreamer::RankPlan plan = GStreamer::planRanks(VideoDecoderOption::Default, decoderInfos(decoders), traits);
+
+    QCOMPARE(plannedChanges(plan), changes);
+    QVERIFY2(plan.warnings.isEmpty(), qPrintable(plan.warnings.join(QStringLiteral("; "))));
+}
+
 void GStreamerInitTest::_testScopedDecoderOptionRestoresThePreviousOption()
 {
     GSTTEST_REQUIRE_GSTREAMER();

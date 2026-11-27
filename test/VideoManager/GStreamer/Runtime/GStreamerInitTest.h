@@ -33,6 +33,8 @@ private slots:
     void _testUserFeatureRankKept();
     void _testPlanRanks_data();
     void _testPlanRanks();
+    void _testPlanRanksPrefersVideoToolbox_data();
+    void _testPlanRanksPrefersVideoToolbox();
     void _testScopedDecoderOptionRestoresThePreviousOption();
     void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
     void _testSetCodecPrioritiesReplacesThePreviousOption();

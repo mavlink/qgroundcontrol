@@ -135,6 +135,15 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
                 planner.rankPrefix("vaapi", GST_RANK_NONE);
                 planner.prioritizeZeroCopy();
             }
+            if (traits.preferVideoToolbox) {
+                // Only out of the tie: one GStreamer ranks lower, or leaves out of autoplug, stays where it is.
+                (void) planner.rank(
+                    [](const DecoderInfo& decoder) {
+                        return (decoder.family == VideoDecoderOption::VideoToolbox) &&
+                               (decoder.rank == GST_RANK_PRIMARY);
+                    },
+                    kPrioritizedRank);
+            }
             break;
         case VideoDecoderOption::Software:
             planner.demoteOtherClass(false, plan.warnings);

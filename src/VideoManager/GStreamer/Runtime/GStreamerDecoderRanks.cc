@@ -173,7 +173,8 @@ QList<DecoderInfo> installedDecoders()
     return decoders;
 }
 
-/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows.
+/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows,
+/// VideoToolbox on iOS.
 RankTraits currentRankTraits()
 {
     RankTraits traits;
@@ -202,6 +203,8 @@ RankTraits currentRankTraits()
     // Both known once the scene graph has published Qt's device, which has the ranks applied again (reapply()).
     traits.d3d11OpensD3D12 = !d3d12 && HwBuffers::d3d11OpensD3D12();
     traits.rhiAdapterLuid = HwBuffers::graphicsAdapterLuid();
+#elif defined(Q_OS_IOS)
+    traits.preferVideoToolbox = true;
 #endif
     traits.softwareRendering = HwBuffers::softwareRenderingRequested();
     return traits;
