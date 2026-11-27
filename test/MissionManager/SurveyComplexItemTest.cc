@@ -8,6 +8,8 @@
 #include <QtTest/QSignalSpy>
 
 #include "CoordFixtures.h"
+#include "FirmwarePlugin.h"
+#include "FirmwarePluginManager.h"
 #include "JsonParsing.h"
 #include "MissionItem.h"
 #include "MultiSignalSpy.h"
@@ -637,6 +639,29 @@ void SurveyComplexItemTest::_testSplitConcaveLegacyLoad()
     QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
     QVERIFY(!loadedItem->splitConcavePolygons()->rawValue().toBool());
     loadedItem->deleteLater();
+}
+
+void SurveyComplexItemTest::_testConditionGateFirmwareSupport()
+{
+    // ArduPilot rejects MAV_CMD_CONDITION_GATE at mission upload, so the gate
+    // setting must only make patterns use gates on PX4
+    _planViewSettings->useConditionGate()->setRawValue(true);
+
+    static const QList<QGCMAVLink::VehicleClass_t> vehicleClasses = {
+        QGCMAVLink::VehicleClassGeneric, QGCMAVLink::VehicleClassFixedWing, QGCMAVLink::VehicleClassMultiRotor,
+        QGCMAVLink::VehicleClassVTOL,    QGCMAVLink::VehicleClassRoverBoat, QGCMAVLink::VehicleClassSub,
+    };
+    for (const QGCMAVLink::VehicleClass_t vehicleClass : vehicleClasses) {
+        const MAV_TYPE mavType = QGCMAVLink::vehicleClassToMavType(vehicleClass);
+        const FirmwarePlugin* const apmPlugin =
+            FirmwarePluginManager::instance()->firmwarePluginForAutopilot(MAV_AUTOPILOT_ARDUPILOTMEGA, mavType);
+        const FirmwarePlugin* const px4Plugin =
+            FirmwarePluginManager::instance()->firmwarePluginForAutopilot(MAV_AUTOPILOT_PX4, mavType);
+        QVERIFY(!apmPlugin->supportedMissionCommands(vehicleClass).contains(MAV_CMD_CONDITION_GATE));
+        QVERIFY(px4Plugin->supportedMissionCommands(vehicleClass).contains(MAV_CMD_CONDITION_GATE));
+    }
+
+    _planViewSettings->useConditionGate()->setRawValue(false);
 }
 
 UT_REGISTER_TEST(SurveyComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)
