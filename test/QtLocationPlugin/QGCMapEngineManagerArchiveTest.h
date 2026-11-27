@@ -13,7 +13,9 @@ private slots:
     void _importSetsUnpacksArchive();
     void _importArchiveUnpacksOnlyTileSetFiles();
     void _importArchiveFindsExportedFile();
+    UT_PARAMETERIZED_TEST(_importFailureShownEachTime);
     void _importArchiveRejectsSeveralTileSets();
+    UT_PARAMETERIZED_TEST(_importArchiveIgnoresAppleDouble);
     void _importArchiveStopsAtSizeLimit();
     void _importArchiveRemovedWithManager();
     void _importArchiveRejectsWhenAlreadyImporting();

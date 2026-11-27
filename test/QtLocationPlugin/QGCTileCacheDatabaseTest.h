@@ -35,6 +35,7 @@ private slots:
     UT_PARAMETERIZED_TEST(_testImportRefusesFileInUse);
     UT_PARAMETERIZED_TEST(_testImportReplaceKeepsLeftoverBackup);
     UT_PARAMETERIZED_TEST(_testInitPutsBackupBack);
+    void _testInitRemovesStaleUnpackDirectories();
     UT_PARAMETERIZED_TEST(_testImmutableFileUri);
     UT_PARAMETERIZED_TEST(_testImportFileNameAsUri);
     UT_PARAMETERIZED_TEST(_testImportReadOnlyFile);

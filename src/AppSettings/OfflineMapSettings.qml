@@ -24,7 +24,11 @@ Item {
 
     Connections {
         target:                 _mapEngineManager
-        function onErrorMessageChanged() { errorDialogFactory.open() }
+        function onErrorMessageChanged() {
+            if (_mapEngineManager.errorMessage) {
+                errorDialogFactory.open()
+            }
+        }
     }
 
     ColumnLayout {

@@ -18,6 +18,8 @@ class QGCTileCacheDatabase
 public:
     static constexpr quint64 kInvalidTileSet = UINT64_MAX;
     static constexpr int kSchemaVersion = 1;
+    /// Start of the name of a directory beside the database that an archive is unpacked into for its import
+    static constexpr QLatin1StringView kUnpackDirectoryPrefix{"qgc_tiles_"};
 
     explicit QGCTileCacheDatabase(const QString &databasePath);
     ~QGCTileCacheDatabase();

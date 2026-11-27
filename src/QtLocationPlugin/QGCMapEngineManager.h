@@ -66,7 +66,7 @@ public:
     /// exportSets() gives its files, .db or .sqlite. Only the first such file is unpacked: an archive that holds
     /// none, or more than one, fails the import. What is unpacked is limited to a multiple of the size of the
     /// archive. The directory is removed when the import ends, also when it fails, and with the manager. One that an
-    /// import which crashed or was killed left behind is removed when the next import starts.
+    /// import which crashed or was killed left behind is removed when the tile cache or the next import starts.
     /// @param archivePath Path to the archive file
     /// @return true if the extraction started
     Q_INVOKABLE bool importArchive(const QString &archivePath);

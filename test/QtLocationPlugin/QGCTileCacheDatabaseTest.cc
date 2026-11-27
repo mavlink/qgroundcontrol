@@ -16,6 +16,7 @@
 #include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
+#include "QGCWorkDirectory.h"
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
@@ -710,6 +711,25 @@ void QGCTileCacheDatabaseTest::_testInitPutsBackupBack()
         QVERIFY(db.findTile(QStringLiteral("leftover")).has_value());
         QVERIFY(!QFile::exists(backupPath));
     }
+}
+
+// An archive import that crashed or was killed left what it unpacked beside the cache, which can be gigabytes: it goes
+// when the cache starts, not only at the next archive import. One that an import uses, here or in another QGC, stays
+void QGCTileCacheDatabaseTest::_testInitRemovesStaleUnpackDirectories()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QDir cacheDir(tempDir.path());
+    const QString stale = QString(QGCTileCacheDatabase::kUnpackDirectoryPrefix) + QStringLiteral("left");
+    QVERIFY(cacheDir.mkpath(stale + QStringLiteral("/unpacked")));
+    QVERIFY(TestFixtures::writeFile(cacheDir.filePath(stale + QStringLiteral("/unpacked/tiles.qgctiledb")), "tiles"));
+    const QGCWorkDirectory used(tempDir.path(), QGCTileCacheDatabase::kUnpackDirectoryPrefix);
+    QVERIFY(used.isValid());
+
+    QGCTileCacheDatabase db(cacheDir.filePath(QStringLiteral("tiles.db")));
+    QVERIFY(db.init());
+    QVERIFY(!QFileInfo::exists(cacheDir.filePath(stale)));
+    QVERIFY(QFileInfo(used.path()).isDir());
 }
 
 void QGCTileCacheDatabaseTest::_testImmutableFileUri_data()

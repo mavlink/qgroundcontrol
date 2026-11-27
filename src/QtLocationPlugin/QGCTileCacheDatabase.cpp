@@ -21,6 +21,7 @@
 #include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileSet.h"
+#include "QGCWorkDirectory.h"
 
 QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "QtLocationPlugin.QGCTileCacheDatabase")
 
@@ -230,6 +231,9 @@ bool QGCTileCacheDatabase::init()
         }
         // A cache that an earlier import of a read-only file left read-only heals here
         makeTileDatabaseFileWritable(_databasePath);
+        // What an archive import that crashed or was killed unpacked can be gigabytes, and goes now rather than at the
+        // next archive import. A directory that an import of this or another QGC uses is locked, and stays
+        (void) QGCWorkDirectory::removeStale(QFileInfo(_databasePath).absolutePath(), kUnpackDirectoryPrefix);
 
         if (connectDB()) {
             if (!_checkSchemaVersion()) {

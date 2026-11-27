@@ -131,14 +131,58 @@ void QGCMapEngineManagerArchiveTest::_importArchiveFindsExportedFile()
     const QStringList unpackedBefore = unpackDirectories();
 
     QGCMapEngineManager manager;
-    expectLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg, QRegularExpression("Error in task"));
+    expectLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg,
+                     QRegularExpression("is not a tile set file"));
     QVERIFY(manager.importArchive(archivePath));
-    QTRY_VERIFY_WITH_TIMEOUT(manager.errorMessage().contains(QStringLiteral("Error in task")), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!manager.errorMessage().isEmpty(), TestTimeout::mediumMs());
     verifyExpectedLogMessage();
+    // The import task's own sentence, not framed as an error of the database
+    QCOMPARE(manager.errorMessage(), QStringLiteral("export.qgctiledb is not a tile set file of QGroundControl"));
 
     // What was unpacked for the import is removed again, and the import has ended: the page lets the user go on
     QTRY_COMPARE_WITH_TIMEOUT(unpackDirectories(), unpackedBefore, TestTimeout::mediumMs());
     QCOMPARE(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone);
+}
+
+void QGCMapEngineManagerArchiveTest::_importFailureShownEachTime_data()
+{
+    QTest::addColumn<QByteArray>("entryName");
+    QTest::addColumn<QString>("message");
+
+    QTest::newRow("refused before the import task")
+        << QByteArray("notes.txt") << QStringLiteral("No tile database found in archive");
+    QTest::newRow("refused by the import task")
+        << QByteArray("export.qgctiledb")
+        << QStringLiteral("export.qgctiledb is not a tile set file of QGroundControl");
+}
+
+void QGCMapEngineManagerArchiveTest::_importFailureShownEachTime()
+{
+    // The pages open their error dialog when the message changes: a user who imports the same file again must be
+    // told again
+    QFETCH(QByteArray, entryName);
+    QFETCH(QString, message);
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(QStringLiteral("again.zip"));
+    QVERIFY(TestFixtures::writeFile(archivePath,
+                                    ArchiveFixtures::makeZip({{.name = entryName, .data = "not a database"}})));
+
+    QGCMapEngineManager manager;
+    QStringList shown;
+    (void) connect(&manager, &QGCMapEngineManager::errorMessageChanged, &manager, [&manager, &shown]() {
+        if (!manager.errorMessage().isEmpty()) {
+            shown.append(manager.errorMessage());
+        }
+    });
+    ignoreLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg,
+                     QRegularExpression("is not a tile set file"));
+    for (int attempt = 1; attempt <= 2; ++attempt) {
+        QVERIFY(manager.importSets(archivePath));
+        QTRY_COMPARE_WITH_TIMEOUT(shown.count(), attempt, TestTimeout::mediumMs());
+        QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                                  TestTimeout::mediumMs());
+    }
+    QCOMPARE(shown, QStringList({message, message}));
 }
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsSeveralTileSets()
@@ -161,6 +205,44 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRejectsSeveralTileSets()
     QVERIFY2(manager.errorMessage().contains(QStringLiteral("more than one tile set file")),
              qPrintable(manager.errorMessage()));
     QCOMPARE(unpackDirectories(), unpackedBefore);
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveIgnoresAppleDouble_data()
+{
+    QTest::addColumn<QList<QByteArray>>("entryNames");
+    QTest::addColumn<QString>("message");
+
+    // An import that gets to the task, which refuses the file of the test: the companion was not counted
+    const QString taskMessage = QStringLiteral("offline.qgctiledb is not a tile set file of QGroundControl");
+    QTest::newRow("Finder, under __MACOSX")
+        << QList<QByteArray>{"offline.qgctiledb", "__MACOSX/._offline.qgctiledb"} << taskMessage;
+    QTest::newRow("beside the file, first")
+        << QList<QByteArray>{"._offline.qgctiledb", "offline.qgctiledb"} << taskMessage;
+    QTest::newRow("a companion only") << QList<QByteArray>{"__MACOSX/._offline.qgctiledb"}
+                                      << QStringLiteral("No tile database found in archive");
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveIgnoresAppleDouble()
+{
+    // macOS packs the extended attributes of a file into "._<name>" beside it, or under __MACOSX/ in an archive that
+    // Finder makes: it has the name of the tile set file, and is no tile set
+    QFETCH(QList<QByteArray>, entryNames);
+    QFETCH(QString, message);
+    QList<ArchiveFixtures::ZipEntry> entries;
+    for (const QByteArray& name : std::as_const(entryNames)) {
+        entries.append({.name = name, .data = "not a database"});
+    }
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(QStringLiteral("finder.zip"));
+    QVERIFY(TestFixtures::writeFile(archivePath, ArchiveFixtures::makeZip(entries)));
+
+    QGCMapEngineManager manager;
+    ignoreLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg,
+                     QRegularExpression("is not a tile set file"));
+    QVERIFY(manager.importArchive(archivePath));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.errorMessage(), message, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::mediumMs());
 }
 
 void QGCMapEngineManagerArchiveTest::_importArchiveStopsAtSizeLimit()

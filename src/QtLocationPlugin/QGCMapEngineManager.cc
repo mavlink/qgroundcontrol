@@ -24,6 +24,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileCacheDatabase.h"
 #include "QGCWorkDirectory.h"
 #include "QGeoFileTileCacheQGC.h"
 #include "QmlObjectListModel.h"
@@ -306,9 +307,15 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
         break;
     }
 
-    QString serror = QStringLiteral("Error in task: ") + task;
-    serror += QStringLiteral("\nError description:\n");
-    serror += error;
+    QString serror;
+    if (type == QGCMapTask::TaskType::taskImport) {
+        // The import tells the user why it failed, and what it did with the tile cache, in a sentence of its own
+        serror = error;
+    } else {
+        serror = QStringLiteral("Error in task: ") + task;
+        serror += QStringLiteral("\nError description:\n");
+        serror += error;
+    }
 
     setErrorMessage(serror);
 
@@ -390,14 +397,19 @@ constexpr qint64 kMaxTileSetExpansion = 20;
 /// Least that limit is, for a small archive, which may hold a database of mostly empty pages
 constexpr qint64 kMinTileSetLimitBytes = 64LL * 1024 * 1024;
 
-/// Start of the name of a directory that an archive is unpacked into
-constexpr QLatin1StringView kUnpackDirectoryPrefix("qgc_tiles_");
-
-/// Whether a file has the name of a tile set file: one exportSets() wrote, or a database
+/// Whether a file has the name of a tile set file: one exportSets() wrote, or a database. The metadata that macOS
+/// packs beside a file with extended attributes is not one, though it has the name of the file after "._": Finder
+/// puts it under __MACOSX/, other tools beside the file
 bool isTileSetFileName(const QString& fileName)
 {
     static const QStringList suffixes{QLatin1Char('.') + QLatin1String(AppSettings::tilesetFileExtension),
                                       QStringLiteral(".db"), QStringLiteral(".sqlite")};
+    static const QRegularExpression separators(QStringLiteral("[/\\\\]"));
+    const QStringList components = fileName.split(separators, Qt::SkipEmptyParts);
+    if (components.isEmpty() || components.constLast().startsWith(QLatin1String("._")) ||
+        components.contains(QLatin1String("__MACOSX"))) {
+        return false;
+    }
     return std::any_of(suffixes.cbegin(), suffixes.cend(),
                        [&fileName](const QString& suffix) { return fileName.endsWith(suffix, Qt::CaseInsensitive); });
 }
@@ -406,6 +418,10 @@ bool isTileSetFileName(const QString& fileName)
 
 bool QGCMapEngineManager::importSets(const QString &path)
 {
+    // The pages show the message when it changes: an import or an export clears it, so that every failure changes it,
+    // also the same one again
+    setErrorMessage(QString());
+
     if (_importAction == ImportAction::ActionImporting) {
         setErrorMessage(tr("Import already in progress"));
         return false;
@@ -438,6 +454,7 @@ bool QGCMapEngineManager::importSets(const QString &path)
 
 bool QGCMapEngineManager::exportSets(const QString &path)
 {
+    setErrorMessage(QString());
     setImportAction(ImportAction::ActionNone);
 
     if (path.isEmpty()) {
@@ -554,6 +571,8 @@ bool QGCMapEngineManager::lacksRoomToUnpack(qint64 bytesAvailable, qint64 archiv
 
 bool QGCMapEngineManager::importArchive(const QString &archivePath)
 {
+    setErrorMessage(QString());
+
     if (archivePath.isEmpty()) {
         setErrorMessage(tr("No archive path specified"));
         return false;
@@ -587,7 +606,7 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
 
     // What an import that crashed or was killed left behind goes first, also so that its space counts as free. One
     // that another QGC runs stays
-    (void) QGCWorkDirectory::removeStale(cacheDirectory, kUnpackDirectoryPrefix);
+    (void) QGCWorkDirectory::removeStale(cacheDirectory, QGCTileCacheDatabase::kUnpackDirectoryPrefix);
 
     // Map tiles are images that do not compress further, so the tile set is about as large as the archive
     const qint64 archiveSize = QFileInfo(archivePath).size();
@@ -604,7 +623,8 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
     // A directory of this import alone: a name that could be told beforehand would let another user of the
     // directory put files where the tile set file is looked for. The archive is unpacked into a new directory in it,
     // beside the lock file that keeps it while the import runs
-    auto extractionDirectory = std::make_unique<QGCWorkDirectory>(cacheDirectory, kUnpackDirectoryPrefix);
+    auto extractionDirectory =
+        std::make_unique<QGCWorkDirectory>(cacheDirectory, QGCTileCacheDatabase::kUnpackDirectoryPrefix);
     if (!extractionDirectory->isValid()) {
         setErrorMessage(tr("Could not create temporary directory: %1").arg(extractionDirectory->errorString()));
         return false;
