@@ -31,12 +31,11 @@ private slots:
     void _testVTOLTakeoffChoices();
 
 private:
-    /// Adds the "tabbedPanel" and "geoMapEngine" columns with one row per Plan panel and map engine combination;
-    /// these tests run against all of them.
-    static void _addPanelData();
+    /// Adds the "geoMapEngine" column with one row per Plan map engine; these tests run against both.
+    static void _addMapEngineData();
 
-    /// Fetches the "tabbedPanel" and "geoMapEngine" columns and selects them; call before startUI().
-    void _selectPanelFromTestData();
+    /// Fetches the "geoMapEngine" column and selects the map engine; call before startUI().
+    void _selectMapEngineFromTestData();
 
     enum class PanelTab
     {
@@ -44,11 +43,10 @@ private:
         Mission
     };
 
-    /// Opens a tabbed-panel tab. The tree panel has no tabs, so this is a no-op there.
-    /// A map click sets home only on the Plan tab, and the tool strip is only shown on the Mission tab.
+    /// Opens a Plan panel tab. A map click sets home only on the Plan tab, and the tool strip is only shown on
+    /// the Mission tab.
     void _showPanelTab(PanelTab tab);
 
-    bool _tabbedPanel = false;
     bool _geoMapEngine = false;
 
     /// Complete expected state of all Plan view UI under test
@@ -72,7 +70,7 @@ private:
     /// Verify every Plan view UI element against the full expected state.
     /// Also checks the invariants that hold while offline: Upload disabled
     /// and not highlighted, Open/Clear always enabled.
-    /// On the tabbed panel it opens the Plan tab for the templates checks, then the Mission tab for the tool strip,
+    /// It opens the Plan tab for the templates checks, then the Mission tab for the tool strip,
     /// and leaves the Mission tab active; callers that click the map to set home must reopen the Plan tab first.
     void _verifyFullState(const PlanUIState &state, const QString &context);
 

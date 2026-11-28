@@ -56,8 +56,6 @@ target_sources(
         QGroundControlQmlGlobal.h
         QmlObjectListModel.cc
         QmlObjectListModel.h
-        QmlObjectTreeModel.cc
-        QmlObjectTreeModel.h
         QmlUnitsConversion.cc
         QmlUnitsConversion.h
         RCChannelMonitorController.cc
@@ -76,15 +74,6 @@ target_sources(
         TransformPositionController.h
         ServoOutputMonitorController.cc
         ServoOutputMonitorController.h
-)
-
-# Shares file-local helper names with QmlObjectListModel.cc, so it cannot share a unity unit.
-set_source_files_properties(
-    QmlObjectTreeModel.cc
-    TARGET_DIRECTORY
-    ${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

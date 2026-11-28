@@ -19,8 +19,8 @@ The main elements of the UI are:
   A hamburger menu (☰) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
   The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
 - **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
-- **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
-- **Layer Switcher:** Buttons in the top-right area for switching between the **Mission**, **GeoFence**, and **Rally Points** editing layers.
+- **[Plan Editor Panel](#plan_editor_panel):** A tabbed panel on the right side with **Plan**, **Mission**, **Fence**, and **Rally** tabs containing the plan settings and the mission item, GeoFence, and rally point editors.
+  The selected tab also sets what is edited on the map.
 - **Mission Stats / Terrain Panel:** A panel at the bottom of the map that can toggle between a terrain altitude profile chart (height AMSL vs. distance) and mission statistics (selected waypoint info, total distance, max telemetry distance, estimated flight time, and battery info).
 
 ## Planning a Mission {#plan_mission}
@@ -39,6 +39,7 @@ The following sections explain some of the details in the view.
 The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
 It is used by QGC to estimate mission times and to draw waypoint lines.
 
+Set the planned home position by clicking in the map while the **Plan** tab of the [Plan Editor Panel](#plan_editor_panel) is selected.
 You should move/drag the planned home position to roughly the location where you plan to takeoff.
 The altitude for the planned home position is determined automatically from terrain data.
 
@@ -48,7 +49,7 @@ The Fly View displays the _actual_ home position set by the vehicle firmware whe
 
 ## Plan Tools {#plan_tools}
 
-The plan tools are a vertical tool strip on the left side of the map, used for adding mission items. The tools are only visible when editing the Mission layer. The main tools (top to bottom) are described below.
+The plan tools are a vertical tool strip on the left side of the map, used for adding mission items. The tools are only visible while the **Mission** tab of the [Plan Editor Panel](#plan_editor_panel) is selected. The main tools (top to bottom) are described below.
 
 ### Takeoff
 
@@ -103,45 +104,70 @@ Before you fly a mission you must upload it to the vehicle.
 
 ## Plan Editor Panel {#plan_editor_panel}
 
-The Plan Editor Panel is a collapsible tree view on the right side of the view.
-The panel can be collapsed or expanded using the toggle button on its left edge.
-It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission Items**, **GeoFence**, **Rally Points**, and **Transform**.
+The Plan Editor Panel is a tabbed panel on the right side of the view.
+The tabs are on its left edge: **Plan**, **Mission**, **Fence**, and **Rally**.
+On short screens the tab names are replaced by icons.
+The panel can be closed or opened using the toggle button at the bottom of its left edge.
 
-The **Mission Items**, **GeoFence**, and **Rally Points** sections correspond to the map editing layers and are mutually exclusive — expanding one collapses the others and makes it the active editing layer.
+The selected tab is also the active map editing layer: the map elements of the selected tab can be edited, and the others are dimmed.
 
-### Layer Switcher {#layer_switcher}
+- A new or empty plan opens on the **Plan** tab. A plan which has items opens on the **Mission** tab.
+- The **Mission**, **Fence**, and **Rally** tabs are disabled until the [planned home position](#planned_home) is set.
+- A warning dot is shown on the **Mission** tab while the mission has incomplete items.
 
-Buttons in the top-right area of the map allow switching between the **Mission**, **GeoFence**, and **Rally Points** editing layers.
-Only the active layer's button is shown; click it to expand the other layer choices, which auto-collapse after a few seconds.
-Selecting a layer also expands the corresponding section in the [Plan Editor Panel](#plan_editor_panel).
+The **Mission**, **Fence**, and **Rally** tabs show a list with an inspector for the selected entry below it.
+You can drag the divider between them to resize the list.
+On short screens the list and the inspector take turns filling the tab: selecting an entry opens its inspector, which has **Back**, **Previous**, and **Next** buttons.
 
-### Plan Info {#plan_info}
+### Plan Tab {#plan_info}
 
-The Plan Info section contains general plan-level settings:
+The Plan tab contains the plan-level settings.
+While this tab is selected, clicking in the map sets the planned home position.
 
-- **Plan File** — The name of the currently loaded plan file (`<Untitled>` if the plan has not been saved yet).
-- **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
-- **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
+The **Plan** group shows:
 
-### Defaults {#defaults}
+- **File** — The name of the currently loaded plan file (`<Untitled>` if the plan has not been saved yet).
+- **Firmware** and **Vehicle** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
+- **Home** — Whether the planned home position is set, and its altitude (AMSL), which is determined automatically from terrain data. If terrain data is not available you can enter the altitude. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
-The Defaults section sets plan-wide values that apply to new mission items:
+#### Start from a Template
 
-- **Altitude Frame** — Select the altitude reference frame for waypoints.
-- **Waypoints Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
+For an empty plan, the **Start from a template** group offers buttons which create a plan for you, such as a survey.
+The buttons are enabled once the planned home position is set.
+Choose **No Template** to add the mission items yourself.
+
+#### Defaults {#defaults}
+
+The **Defaults** group sets plan-wide values that apply to new mission items:
+
+- **Alt Frame** — Select the altitude reference frame for waypoints.
+- **Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
 - **Flight Speed** — Set a flight speed that differs from the default mission speed.
-- **Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover speed (multi-rotor/VTOL), used for estimating mission time.
+- **Expected Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover, ascent, and descent speeds (multi-rotor/VTOL), used for estimating mission time. They do not affect the flight speed for the mission.
 
-### Mission Items {#mission_items}
+#### Transform {#transform}
 
-The Mission Items section lists all mission items (waypoints, commands, patterns, etc.) in order.
-Each item can be expanded to edit its parameters.
+The **Transform mission...** button in the **Tools** group opens a dialog with tools to adjust the entire mission after it has been created:
 
-- Click an item to select it on the map and expand its editor.
-- Click the **command name** dropdown to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
-- Each item has a **hamburger menu** (☰) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
-- A **delete button** (trash icon) removes the item.
-- Items that are incomplete or missing required values show a **?** status indicator.
+- **Offset Mission** — Shift the mission by a specified distance in the East, North, and Up directions. Optionally include takeoff and/or landing items in the offset.
+- **Reposition Mission** — Move the mission to a new location specified by geographic coordinates (Lat/Lon), UTM, MGRS, or the current vehicle position.
+- **Rotate Mission** — Rotate the mission clockwise by a specified number of degrees. Optionally include takeoff and/or landing items in the rotation.
+
+### Mission Tab {#mission_items}
+
+The Mission tab lists all mission items (waypoints, commands, patterns, etc.) in order.
+The [Plan Tools](#plan_tools) are shown while this tab is selected.
+
+The line at the top of the tab shows the mission distance, the estimated flight time, and the number of incomplete items.
+The **Alt** button next to it shows the default altitude for new items; click it to open the [Defaults](#defaults) on the Plan tab.
+
+Each row of the list shows the item's sequence number, its command, and its altitude if it has one.
+
+- Click a row, or the item on the map, to select the item and show its editor in the inspector.
+- Click **Change...** in the inspector to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
+- The inspector's **hamburger menu** (☰) has options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
+- The **delete button** (trash icon) removes the item.
+- Items that are incomplete or missing required values show a **?** instead of their sequence number and are marked _Incomplete_.
 
 ::: info
 The list of available commands depends on firmware and vehicle type.
@@ -150,28 +176,23 @@ Examples include: Waypoint, Start image capture, Jump to item (to repeat mission
 
 #### Initial Camera Settings
 
-This allows you to set camera options before any mission items take place.
+The first row of the list (**H**) is the planned home position.
+Selecting it allows you to set camera options before any mission items take place.
 This includes camera actions (take photos by time/distance, start/stop video recording) and gimbal control.
 
-### GeoFence {#geofence}
+### Fence Tab {#geofence}
 
-The GeoFence section allows you to define geofence boundaries:
+The Fence tab allows you to define [GeoFence](plan_geofence.md) boundaries:
 
-- **Polygon Fences** — Add inclusion or exclusion polygon fences. Each polygon can be toggled between inclusion/exclusion, edited, or deleted.
-- **Circular Fences** — Add inclusion or exclusion circular fences with a configurable radius.
-- **Breach Return Point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
+- **+ Polygon** and **+ Circle** add a polygon or circular fence to the map and to the list.
+- Select a fence in the list to edit it on the map and in the inspector, where it can be switched between _Include_ and _Exclude_, given a radius (circular fences), or deleted.
+- **Breach return point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
 
-### Rally Points {#rally_points}
+### Rally Tab {#rally_points}
 
-The Rally Points section displays and manages rally points. When a rally point is selected, its position fields are shown for editing.
-
-### Transform {#transform}
-
-The Transform section provides tools to adjust the entire mission after it has been created:
-
-- **Offset Mission** — Shift the mission by a specified distance in the East, North, and Up directions. Optionally include takeoff and/or landing items in the offset.
-- **Reposition Mission** — Move the mission to a new location specified by geographic coordinates (Lat/Lon), UTM, MGRS, or the current vehicle position.
-- **Rotate Mission** — Rotate the mission clockwise by a specified number of degrees. Optionally include takeoff and/or landing items in the rotation.
+The Rally tab displays and manages [Rally Points](plan_rally_points.md).
+While this tab is selected, clicking in the map adds a rally point.
+When a rally point is selected, its position and altitude fields are shown in the inspector for editing.
 
 ## Mission Stats / Terrain Panel {#stats_terrain}
 

@@ -5,7 +5,6 @@ import QGroundControl
 import QGroundControl.Controls
 
 /// Drop-down menu with the position and edit-mode actions for a mission item.
-/// Shared by the tree view item editor and the tabbed panel inspector.
 Item {
     id: root
 

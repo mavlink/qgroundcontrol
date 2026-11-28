@@ -70,8 +70,6 @@ const char* kHomeStatus = "planPanel_homeStatus";
 const char* kGeoFenceVisuals = "planView_geoFenceMapVisuals";
 const char* kRallyVisuals = "planView_rallyPointMapVisuals";
 const char* kStatusHint = "planToolbar_statusHint";
-const char* kPanelLayerSwitcher = "planView_layerSwitcher";
-const char* kPlanTree = "planView_planTree";
 const char* kTakeoffButton = "planToolStrip_takeoffButton";
 const char* kWaypointButton = "planToolStrip_waypointButton";
 
@@ -159,7 +157,6 @@ bool restoreValidValue(QObject* textField, const QVariant& validText)
 
 void PlanPanelUITest::_startPlanPanel(bool geoMapEngine)
 {
-    setUseTabbedPlanPanel(true);
     setUseGeoMapPlanEngine(geoMapEngine);
 
     startUI();
@@ -298,23 +295,7 @@ void PlanPanelUITest::_buildMission(int waypointCount)
 
 void PlanPanelUITest::_testFlagDefaults()
 {
-    QVERIFY2(planViewSettings()->useNewPlanPanel()->rawDefaultValue().toBool(),
-             "The tabbed plan panel must be the default");
     QVERIFY2(!planViewSettings()->useGeoMapEngine()->rawDefaultValue().toBool(), "The GeoMap Plan map must be opt-in");
-}
-
-void PlanPanelUITest::_testFlagOffShowsTreeView()
-{
-    setUseTabbedPlanPanel(false);
-
-    startUI();
-    if (QTest::currentTestFailed())
-        return;
-    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
-
-    QVERIFY2(findVisibleItem(_rootItem, QLatin1String(kPlanTree), 2000), "Tree view missing with the flag off");
-    QVERIFY2(!findVisibleItem(_rootItem, QLatin1String(kPlanPanel), 0), "Tabbed panel shown with the flag off");
 }
 
 void PlanPanelUITest::_testEmptyPlanStartsOnPlanTab()
@@ -326,8 +307,6 @@ void PlanPanelUITest::_testEmptyPlanStartsOnPlanTab()
     QCOMPARE(_currentTab(), QStringLiteral("plan"));
     QVERIFY2(waitForCondition([&] { return _editingLayer() == kPanelLayerPlan; }, 2000, QStringLiteral("plan layer")),
              "Empty plan did not start on the plan editing layer");
-    verifyVisibility(QLatin1String(kPanelLayerSwitcher), false, QStringLiteral("layer switcher hidden"));
-    verifyVisibility(QLatin1String(kPlanTree), false, QStringLiteral("tree hidden"));
     verifyVisibility(QString::fromLatin1(kTakeoffButton), false,
                      QStringLiteral("tool strip hidden off the Mission tab"));
     for (const QString& tab :
@@ -392,6 +371,27 @@ void PlanPanelUITest::_testEmptyPlanStartsOnPlanTab()
         waitForCondition([&] { return _currentTab() == QStringLiteral("mission"); }, 2000, QStringLiteral("mission")),
         "No Template did not open the Mission tab");
     QCOMPARE(_editingLayer(), kPanelLayerMission);
+}
+
+void PlanPanelUITest::_testLockedTabsKeepClicksFromTheMap()
+{
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    QSignalSpy homeSetSpy(controller, &MissionController::homePositionSetChanged);
+
+    // The tabs hang over the map, where a click on the Plan tab's layer would set home
+    for (const QString& tab : {QStringLiteral("mission"), QStringLiteral("fence"), QStringLiteral("rally")}) {
+        verifyEnabled(tabObjectName(tab), false, QStringLiteral("%1 tab locked before home").arg(tab));
+        QVERIFY2(clickItemFraction(tabObjectName(tab), 0.3, 0.5),
+                 qPrintable(QStringLiteral("Failed to click the locked %1 tab").arg(tab)));
+        QVERIFY2(homeSetSpy.isEmpty() && !controller->homePositionSet(),
+                 qPrintable(QStringLiteral("Click on the locked %1 tab set home on the map behind it").arg(tab)));
+        QCOMPARE(_currentTab(), QStringLiteral("plan"));
+    }
 }
 
 void PlanPanelUITest::_testTabSelectionDrivesEditingLayer()
@@ -461,14 +461,6 @@ void PlanPanelUITest::_testTabSelectionDrivesEditingLayer()
         if (QTest::currentTestFailed())
             return;
     }
-
-    // The tree created by turning the tabbed panel off must not keep the Plan tab's layer
-    setUseTabbedPlanPanel(false);
-    QVERIFY2(findVisibleItem(_rootItem, QLatin1String(kPlanTree), 2000),
-             "Tree view missing after turning the flag off");
-    QVERIFY2(
-        waitForCondition([&] { return _editingLayer() == kPanelLayerMission; }, 2000, QStringLiteral("mission layer")),
-        qPrintable(QStringLiteral("Tree view left the editing layer at %1").arg(_editingLayer())));
 }
 
 void PlanPanelUITest::_testDefaultAltitudeChipOpensPlanTab()
@@ -718,6 +710,40 @@ void PlanPanelUITest::_testDrillInShowsListOrInspector()
     verifyVisibility(QLatin1String(kMissionList), true, QStringLiteral("list after back"));
     verifyVisibility(QLatin1String(kInspectorLoader), false, QStringLiteral("inspector after back"));
     QCOMPARE(controller->currentPlanViewSeqNum(), 2);
+}
+
+void PlanPanelUITest::_testMapItemSelectionOpensClosedPanel()
+{
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+
+    QQuickItem* const rightPanel = findVisibleItem(_rootItem, QStringLiteral("planView_rightPanel"));
+    QVERIFY(rightPanel);
+    const auto panelOnScreen = [&] {
+        return rightPanel->x() + rightPanel->width() <= rightPanel->parentItem()->width() + 1;
+    };
+    QVERIFY(panelOnScreen());
+
+    // The mission stats panel shares the bottom edge of the map with the toggle and must leave it clickable
+    QCOMPARE(_currentTab(), QStringLiteral("mission"));
+    QVERIFY2(clickButton(QStringLiteral("planView_rightPanelToggle")), "Failed to click the panel toggle");
+    QVERIFY2(waitForCondition([&] { return !panelOnScreen(); }, 2000, QStringLiteral("panel closed")),
+             "The toggle did not close the panel");
+
+    QObject* const mapIndicators = findItem(_rootItem, QStringLiteral("planView_missionItemIndicators"));
+    QVERIFY(mapIndicators);
+    QVERIFY(QMetaObject::invokeMethod(mapIndicators, "itemSelected", Q_ARG(int, 2)));
+    QCOMPARE(controller->currentPlanViewSeqNum(), 2);
+    QVERIFY2(waitForCondition(panelOnScreen, 2000, QStringLiteral("panel reopened")),
+             "Selecting a mission item on the map did not reopen the closed panel");
+    verifyVisibility(QLatin1String(kInspectorLoader), true, QStringLiteral("inspector of the selected item"));
 }
 
 void PlanPanelUITest::_testPanelHeightSelectsLayout()
@@ -1975,7 +2001,6 @@ void PlanPanelUITest::_testGeoMapControlsReceiveClicksOverMissionMarkers()
 
 void PlanPanelUITest::_testGeoMapDoesNotRecenterOnOffscreenVehicleInPlanView()
 {
-    setUseTabbedPlanPanel(true);
     setUseGeoMapPlanEngine(true);
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
@@ -2090,19 +2115,6 @@ void PlanPanelUITest::_testGeoMapDimsLandingPatternOutsideTheMissionLayer()
     QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
     QVERIFY2(waitForCondition([&] { return labelsAt(0.5); }, 3000, QStringLiteral("dimmed 3D landing markers")),
              "The landing pattern markers are not dimmed outside the mission layer");
-}
-
-void PlanPanelUITest::_testGeoMapKeepsTabbedPanelWhenTheSettingIsTurnedOff()
-{
-    _startPlanPanel(true /* geoMapEngine */);
-    if (QTest::currentTestFailed())
-        return;
-
-    // The tree panel does not support the GeoMap engine, which stays loaded until the restart
-    planViewSettings()->useNewPlanPanel()->setRawValue(false);
-    verifyVisibility(QStringLiteral("planPanel_tabBar"), true, QStringLiteral("tabbed panel stays"));
-    verifyVisibility(QLatin1String(kPlanTree), false, QStringLiteral("tree panel not shown"));
-    verifyVisibility(QStringLiteral("geoMapModeButton"), true, QStringLiteral("GeoMap camera controls stay"));
 }
 
 void PlanPanelUITest::_testGeoMapModeButtonTogglesCameraMode()
@@ -2277,7 +2289,6 @@ void PlanPanelUITest::_testOpenedPlanShowsMissionTab()
 
 void PlanPanelUITest::_testConnectedVehicleFixesVehicleChoiceAndEnablesVehicleActions()
 {
-    setUseTabbedPlanPanel(true);
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
         [this](QPointer<MockLink>, Vehicle* vehicle) {

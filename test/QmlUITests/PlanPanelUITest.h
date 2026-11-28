@@ -8,9 +8,7 @@ class MissionController;
 class PlanMasterController;
 class QQuickItem;
 
-/// UI test for the tabbed Plan View panel. It is behind the
-/// PlanViewSettings useNewPlanPanel flag, so every test sets the flag it needs before starting the UI.
-/// Tests are offline unless they connect a MockLink.
+/// UI test for the tabbed Plan View panel. Tests are offline unless they connect a MockLink.
 class PlanPanelUITest : public QmlUITestBase
 {
     Q_OBJECT
@@ -20,14 +18,15 @@ public:
 
 private slots:
     void _testFlagDefaults();
-    void _testFlagOffShowsTreeView();
     void _testEmptyPlanStartsOnPlanTab();
+    void _testLockedTabsKeepClicksFromTheMap();
     void _testTabSelectionDrivesEditingLayer();
     void _testDefaultAltitudeChipOpensPlanTab();
     void _testMissionListFollowsItemsAndSelection();
     void _testItemsAddedOnPlanTabSwitchToMission();
     void _testIncompleteItemsAreFlagged();
     void _testDrillInShowsListOrInspector();
+    void _testMapItemSelectionOpensClosedPanel();
     void _testPanelHeightSelectsLayout();
     void _testDividerResizesListAndInspector();
     void _testItemMenuActsOnInspectedItem();
@@ -42,7 +41,6 @@ private slots:
     void _testFenceTabAddsFenceInsideTheGeoMapViewport();
     void _testFenceTabAddsFenceInsideTheViewportOverTheDateline_data();
     void _testFenceTabAddsFenceInsideTheViewportOverTheDateline();
-    void _testGeoMapKeepsTabbedPanelWhenTheSettingIsTurnedOff();
     void _testGeoMapDoesNotRecenterOnOffscreenVehicleInPlanView();
     void _testGeoMapControlsReceiveClicksOverMissionMarkers();
     void _testGeoMapDimsMissionOutsideTheMissionLayer();

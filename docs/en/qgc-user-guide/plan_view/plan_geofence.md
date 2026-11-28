@@ -4,7 +4,7 @@ GeoFences allow you to create virtual regions within which the vehicle can fly, 
 You can also configure the action taken if you fly outside permitted areas.
 
 ::: info
-_QGroundControl_ will not display the GeoFence options if they are not supported by the connected vehicle firmware.
+If GeoFence is not supported by the connected vehicle firmware, the **Fence** tab shows a message saying so instead of the GeoFence options.
 :::
 
 ## Create a GeoFence
@@ -12,10 +12,11 @@ _QGroundControl_ will not display the GeoFence options if they are not supported
 To create a GeoFence:
 
 1. Navigate to the Plan View
-1. Select the **GeoFence** layer using the [Layer Switcher](plan_view.md#layer_switcher) in the top-right area of the map (or expand the **GeoFence** section in the [Plan Editor Panel](plan_view.md#plan_editor_panel))
+1. Select the **Fence** tab in the [Plan Editor Panel](plan_view.md#plan_editor_panel).
+   The tab is enabled once the [planned home position](plan_view.md#planned_home) is set.
 
-1. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button in the GeoFence section.
-   A new region will be added to the map and to the associated list of fences below the buttons.
+1. Insert a circular or polygon region by pressing the **+ Circle** or **+ Polygon** button at the top of the tab.
+   A new region will be added to the map and to the list of fences below the buttons, and it becomes the selected fence.
 
 :::tip
 You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
@@ -24,7 +25,7 @@ You can create multiple regions by pressing the buttons multiple times, allowing
 - Circular region:
 
   - Move the region by dragging the central dot on the map
-  - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
+  - Resize the circle by dragging the dot on the edge of the circle (or you can change the **Radius** value in the fence inspector).
 
 - Polygon region:
 
@@ -32,19 +33,20 @@ You can create multiple regions by pressing the buttons multiple times, allowing
   - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.
 
 1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
-   Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
+   Change them to exclusion zones (where the vehicle can't travel) by selecting _Exclude_ in the fence inspector.
 
-1. Check a circular region's _Center on home_ checkbox to keep it centred on the vehicle home position.
+1. Check a circular region's _Center on home_ checkbox in the fence inspector to keep it centred on the vehicle home position.
    The checkbox is offered when connected to a vehicle whose firmware supports these circles.
 
-Depending on the firmware, the GeoFence section may also show fence parameters (e.g. breach action) and a **Breach Return Point** that the vehicle will fly to if it breaches the fence.
+The list also has a **Breach return point** entry.
+Select it and press **Set at map center** to add an optional point (with altitude) that the vehicle will fly to if it breaches the fence.
 
 ## Edit/Delete a GeoFence
 
-You can select a GeoFence region to edit by selecting its _Edit_ radio button in the GeoFence section.
-You can then edit the region on the map as described in the previous section.
+Select a GeoFence region to edit by clicking it in the list on the **Fence** tab.
+You can then edit the region on the map as described in the previous section, and change its settings in the inspector below the list.
 
-Regions can be deleted by pressing the associated **Del** button.
+Delete the selected region by pressing the delete button (trash icon) in the inspector.
 
 ## Upload a GeoFence
 

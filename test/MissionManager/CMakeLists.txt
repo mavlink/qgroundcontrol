@@ -28,8 +28,6 @@ target_sources(
         MissionControllerManagerTest.h
         MissionControllerTest.cc
         MissionControllerTest.h
-        MissionControllerTreeTest.cc
-        MissionControllerTreeTest.h
         MissionItemTest.cc
         MissionItemTest.h
         MissionManagerTest.cc
@@ -67,7 +65,6 @@ set_source_files_properties(
     FWLandingPatternTest.cc
     LandingComplexItemTest.cc
     MissionControllerTest.cc
-    MissionControllerTreeTest.cc
     MissionItemTest.cc
     TARGET_DIRECTORY
     QGCUnitTests
@@ -141,7 +138,6 @@ add_qgc_test(LandingComplexItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionCommandTreeEditorTest LABELS Integration MissionManager TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
 add_qgc_test(MissionControllerTest LABELS Integration MissionManager)
-add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager)
 add_qgc_test(MissionItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionManagerTest LABELS Integration MissionManager)
 add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)

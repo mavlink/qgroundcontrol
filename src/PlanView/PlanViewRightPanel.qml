@@ -13,42 +13,34 @@ Item {
 
     id: root
 
-    property var  _missionController: planMasterController.missionController
+    objectName: "planView_rightPanel"
+
+    /// Width of the open/close button which hangs off the left edge of the panel
+    readonly property real toggleWidth: panelOpenCloseButton.width
+
     property real _toolsMargin:       ScreenTools.defaultFontPixelWidth * 0.75
 
-    property bool useNewPlanPanel: QGroundControl.settingsManager.planViewSettings.useNewPlanPanel.rawValue
+    function _openPanel() {
+        root.anchors.left = undefined
+        root.anchors.right = root.parent.right
+    }
 
-    readonly property bool _useNewPlanPanel: useNewPlanPanel
-
-    function selectNextNotReady() {
-        for (var i = 0; i < _missionController.visualItems.count; i++) {
-            var vmi = _missionController.visualItems.get(i)
-            if (vmi.readyForSaveState === VisualMissionItem.NotReadyForSaveData) {
-                _missionController.setCurrentPlanViewSeqNum(vmi.sequenceNumber, true)
-                break
-            }
-        }
+    function _closePanel() {
+        root.anchors.right = undefined
+        root.anchors.left = root.parent.right
     }
 
     QGCPalette { id: qgcPal }
 
-    Rectangle {
-        id:             rightPanelBackground
-        anchors.fill:   parent
-        color:          qgcPal.window
-        opacity:        0.85
-        visible:        !root._useNewPlanPanel
-    }
-
-
     // Open/Close panel
     Item {
         id:                     panelOpenCloseButton
+        objectName:             "planView_rightPanelToggle"
         anchors.right:          parent.left
         anchors.verticalCenter: parent.verticalCenter
-        // The tabbed panel has its tab pills at the top of this edge so the button moves to the bottom
-        anchors.verticalCenterOffset: root._useNewPlanPanel ? parent.height / 2 - height / 2 - _toolsMargin : 0
-        width:                  toggleButtonRect.width - toggleButtonRect.radius * (root._useNewPlanPanel ? 2 : 1)
+        // The panel has its tab pills at the top of this edge so the button sits at the bottom
+        anchors.verticalCenterOffset: parent.height / 2 - height / 2 - _toolsMargin
+        width:                  toggleButtonRect.width - toggleButtonRect.radius * 2
         height:                 toggleButtonRect.height
         clip:                   true
 
@@ -56,19 +48,18 @@ Item {
 
         Rectangle {
             id:             toggleButtonRect
-            // The tabbed panel styles the button like its tab pills, with the inner side tucked under the panel
-            width:          root._useNewPlanPanel ? ScreenTools.defaultFontPixelHeight * 2.2 : ScreenTools.defaultFontPixelWidth * 2.25
-            height:         root._useNewPlanPanel ? ScreenTools.defaultFontPixelHeight * 2.2 : width * 3
+            // Styled like the panel's tab pills, with the inner side tucked under the panel
+            width:          ScreenTools.defaultFontPixelHeight * 2.2
+            height:         width
             radius:         ScreenTools.defaultBorderRadius
-            color:          root._useNewPlanPanel ? qgcPal.windowPanel : rightPanelBackground.color
-            opacity:        root._useNewPlanPanel ? 1 : rightPanelBackground.opacity
-            border.width:   root._useNewPlanPanel ? 1 : 0
+            color:          qgcPal.windowPanel
+            border.width:   1
             border.color:   qgcPal.borderSubtle
 
             QGCLabel {
                 id:                 toggleButtonLabel
                 anchors.centerIn:   parent
-                anchors.horizontalCenterOffset: root._useNewPlanPanel ? -toggleButtonRect.radius : 0
+                anchors.horizontalCenterOffset: -toggleButtonRect.radius
                 text:               panelOpenCloseButton._expanded ? ">" : "<"
                 color:              qgcPal.textPrimary
             }
@@ -80,13 +71,9 @@ Item {
 
             onClicked: {
                 if (panelOpenCloseButton._expanded) {
-                    // Close panel
-                    root.anchors.right = undefined
-                    root.anchors.left = root.parent.right
+                    root._closePanel()
                 } else {
-                    // Open panel
-                    root.anchors.left = undefined
-                    root.anchors.right = root.parent.right
+                    root._openPanel()
                 }
             }
         }
@@ -95,55 +82,24 @@ Item {
     //-------------------------------------------------------
     // Right Panel Controls
     Item {
-        anchors.fill: rightPanelBackground
+        anchors.fill: parent
 
         DeadMouseArea {
             anchors.fill:   parent
         }
 
-        Loader {
-            id:             planTreeLoader
-            anchors.fill:   parent
-            active:         !root._useNewPlanPanel
-
-            sourceComponent: PlanTreeView {
-                objectName:             "planView_planTree"
-                editorMap:              root.editorMap
-                planMasterController:   root.planMasterController
-                onEditingLayerChangeRequested: (layer) => root.editingLayerChangeRequested(layer)
-            }
-        }
-
-        Loader {
-            id:             planPanelLoader
-            anchors.fill:   parent
-            active:         root._useNewPlanPanel
-
-            sourceComponent: PlanPanel {
-                editorMap:              root.editorMap
-                planMasterController:   root.planMasterController
-                onEditingLayerChangeRequested: (layer) => root.editingLayerChangeRequested(layer)
-            }
+        PlanPanel {
+            id:                     planPanel
+            anchors.fill:           parent
+            editorMap:              root.editorMap
+            planMasterController:   root.planMasterController
+            onEditingLayerChangeRequested: (layer) => root.editingLayerChangeRequested(layer)
         }
     }
 
     /// Called when the user picks a mission item on the map
     function showItemInspector() {
-        if (planPanelLoader.item) {
-            planPanelLoader.item.showItemInspector()
-        }
-    }
-
-    function selectLayer(nodeType) {
-        // Ensure panel is open
-        if (!panelOpenCloseButton._expanded) {
-            root.anchors.left = undefined
-            root.anchors.right = root.parent.right
-        }
-        if (planPanelLoader.item) {
-            planPanelLoader.item.selectLayer(nodeType)
-        } else if (planTreeLoader.item) {
-            planTreeLoader.item.selectLayer(nodeType)
-        }
+        _openPanel()
+        planPanel.showItemInspector()
     }
 }

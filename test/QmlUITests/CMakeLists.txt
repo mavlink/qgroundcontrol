@@ -19,8 +19,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarIndicatorUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewLayerUITest.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewLayerUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanPanelUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanPanelUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4SensorsCalibrationUITest.cc
@@ -92,11 +90,10 @@ add_qgc_test(TopLevelViewsTest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(PX4VehicleConfigUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(APMVehicleConfigUITest LABELS Integration NoSanitizer TIMEOUT 360)
 add_qgc_test(ToolbarIndicatorUITest LABELS Integration NoSanitizer TIMEOUT 180 SHARDS 3)
-# StockUI: asserts stock UI elements that custom builds intentionally replace/omit
-add_qgc_test(PlanViewLayerUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(PX4SensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(APMSensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 240)
 add_qgc_test(APMFreshFlashUITest LABELS Integration NoSanitizer TIMEOUT 180)
+# StockUI: asserts stock UI elements that custom builds intentionally replace/omit
 add_qgc_test(PX4AirframeSetupUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(PX4BatteryUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(PX4FailsafesUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
