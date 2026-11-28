@@ -1,6 +1,4 @@
 #include "CompInfoActuators.h"
-#include "JsonParsing.h"
-#include "JsonSchemaValidator.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
@@ -14,24 +12,27 @@ CompInfoActuators::CompInfoActuators(uint8_t compId_, Vehicle* vehicle_, QObject
 
 }
 
-void CompInfoActuators::setJson(const QString& metadataJsonFileName)
+QString CompInfoActuators::jsonSchema() const
 {
-    if (metadataJsonFileName.isEmpty()) {
+    return QStringLiteral(":/json/component_metadata/actuators.schema.json");
+}
+
+void CompInfoActuators::setJson(const QString& fileName, const ParsedJson& json)
+{
+    if (fileName.isEmpty()) {
         return;
     }
 
-    QString errorString;
-    QJsonDocument jsonDoc;
-    if (!JsonParsing::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
-        qCWarning(CompInfoActuatorsLog) << "Metadata json file open failed: compid:" << compId << errorString;
-        vehicle->setActuatorsMetadata(compId, metadataJsonFileName, QJsonDocument());
+    if (json.document.isNull()) {
+        qCWarning(CompInfoActuatorsLog) << "Metadata json file open failed: compid:" << compId << json.readError;
+        vehicle->setActuatorsMetadata(compId, fileName, QJsonDocument());
         return;
     }
 
-    QString schemaError;
-    if (!JsonSchemaValidator::validate(jsonDoc, QStringLiteral(":/json/component_metadata/actuators.schema.json"), schemaError)) {
-        qCWarning(CompInfoActuatorsLog) << "Metadata json schema validation failed: compid:" << compId << schemaError;
+    if (!json.schemaError.isEmpty()) {
+        qCWarning(CompInfoActuatorsLog) << "Metadata json schema validation failed: compid:" << compId
+                                        << json.schemaError;
     }
 
-    vehicle->setActuatorsMetadata(compId, metadataJsonFileName, jsonDoc);
+    vehicle->setActuatorsMetadata(compId, fileName, json.document);
 }

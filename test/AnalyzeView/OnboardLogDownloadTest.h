@@ -39,8 +39,12 @@ private slots:
     void _ftpListFallbackTest();
     void _ftpMultiDownloadAndDedupTest();
     void _ftpDownloadErrorDisablesFtpTest();
+    void _ftpExistingLogKeptTest_data();
+    void _ftpExistingLogKeptTest();
+    void _ftpRefusedNameFallbackTest();
     void _ftpSortOrderTest();
     void _ftpCancelDownloadTest();
+    void _ftpVehicleChangeEndsRequestTest();
     void _ftpRefreshDuringDownloadTest();
     void _ftpEraseSelectedTest();
     void _ftpCancelEraseSelectedTest();

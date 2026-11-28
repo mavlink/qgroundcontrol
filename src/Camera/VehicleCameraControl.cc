@@ -5,31 +5,32 @@
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QSaveFile>
 #include <QtCore/QSettings>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 #include <QtXml/QDomDocument>
 #include <QtXml/QDomNodeList>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
-#include "FTPManager.h"
+#include "Compression.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
 #include "QGCCameraIO.h"
 #include "QGCCameraManager.h"
-#include "QGCCompression.h"
 #include "QGCCorePlugin.h"
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleFileFetch.h"
 #include "VehicleLinkManager.h"
 #include "VideoManager.h"
+#include "WorkerJob.h"
 
 QGC_LOGGING_CATEGORY(VehicleCameraControlLog, "Camera.VehicleCameraControl")
 QGC_LOGGING_CATEGORY(VehicleCameraControlVerboseLog, "Camera.VehicleCameraControl.Verbose")
@@ -259,8 +260,8 @@ VehicleCameraControl::~VehicleCameraControl()
     _cameraSettingsRefreshTimer.stop();
     _storageInfoTimer.stop();
 
-    delete _netManager;
-    _netManager = nullptr;
+    // Before the directory it downloads into goes
+    delete _definitionFetch.data();
 }
 
 void VehicleCameraControl::_initWhenReady()
@@ -298,9 +299,6 @@ void VehicleCameraControl::_initWhenReady()
     connect(this, &VehicleCameraControl::cameraModeChanged, this, &VehicleCameraControl::capturePhotosStateChanged);
 
     emit infoChanged();
-
-    delete _netManager;
-    _netManager = nullptr;
 }
 
 bool VehicleCameraControl::capturesVideo() const
@@ -973,21 +971,89 @@ void VehicleCameraControl::_setPhotoCaptureStatus(PhotoCaptureStatus captureStat
     }
 }
 
-bool VehicleCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
+struct VehicleCameraControl::DefinitionFile
 {
-    QByteArray originalData(bytes);
-    //-- Handle localization
-    if(!_handleLocalization(bytes)) {
+    QByteArray bytes;  ///< Decompressed if the file is compressed
+    Compression::Outcome read;
+    bool wellFormed = false;
+};
+
+struct VehicleCameraControl::ParsedDefinition
+{
+    QByteArray original;         ///< As received, for the cache
+    QDomDocument document;       ///< Null if the definition could not be parsed
+    int unnamedLocales = 0;      ///< Locales of the localization without a name
+    bool noLocaleMatch = false;  ///< The localization has no locale for the system locale
+    bool localized = false;      ///< Whether the strings of the locale were put in before the parse
+    int errorLine = 0;
+    QString errorMessage;
+};
+
+VehicleCameraControl::DefinitionFile VehicleCameraControl::_readDefinitionFile(const QString& fileName, qint64 maxBytes,
+                                                                               bool checkWellFormed)
+{
+    DefinitionFile file;
+    file.read = Compression::decompressFileToMemory(fileName, file.bytes, maxBytes);
+    if (!file.read) {
+        return file;
+    }
+    if (checkWellFormed) {
+        QDomDocument doc;
+        file.wellFormed = static_cast<bool>(doc.setContent(file.bytes, QDomDocument::ParseOption::Default));
+    }
+    return file;
+}
+
+VehicleCameraControl::ParsedDefinition VehicleCameraControl::_parseDefinition(const QByteArray& bytes,
+                                                                              const QString& localeName)
+{
+    ParsedDefinition parsed;
+    parsed.original = bytes;
+
+    QDomDocument doc;
+    QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        parsed.errorLine = static_cast<int>(result.errorLine);
+        parsed.errorMessage = result.errorMessage;
+        return parsed;
+    }
+
+    QByteArray localizedBytes(bytes);
+    if (!_localize(doc, localeName, localizedBytes, parsed)) {
+        parsed.document = doc;
+        return parsed;
+    }
+
+    parsed.localized = true;
+    result = parsed.document.setContent(localizedBytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        parsed.document = QDomDocument();
+        parsed.errorLine = static_cast<int>(result.errorLine);
+        parsed.errorMessage = result.errorMessage;
+    }
+    return parsed;
+}
+
+bool VehicleCameraControl::_loadCameraDefinitionFile(const ParsedDefinition& parsed)
+{
+    if (!parsed.localized && parsed.document.isNull()) {
+        qCritical() << "Unable to parse camera definition file on line:" << parsed.errorLine;
+        qCritical() << parsed.errorMessage;
+        return false;
+    }
+    for (int i = 0; i < parsed.unnamedLocales; i++) {
+        qWarning() << "Localization entry is missing its name attribute";
+    }
+    if (parsed.noLocaleMatch) {
+        qWarning() << "No match for" << _localeName << "in camera definition file";
+    }
+    if (parsed.document.isNull()) {
+        qCCritical(VehicleCameraControlLog) << "Unable to parse camera definition file on line:" << parsed.errorLine;
+        qCCritical(VehicleCameraControlLog) << parsed.errorMessage;
         return false;
     }
 
-    QDomDocument doc;
-    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
-    if (!result) {
-        qCCritical(VehicleCameraControlLog) << "Unable to parse camera definition file on line:" << result.errorLine;
-        qCCritical(VehicleCameraControlLog) << result.errorMessage;
-        return false;
-    }
+    const QDomDocument& doc = parsed.document;
     //-- Load camera constants
     QDomNodeList defElements = doc.elementsByTagName(kDefnition);
     if(!defElements.size() || !_loadConstants(defElements)) {
@@ -1004,14 +1070,13 @@ bool VehicleCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
         qCWarning(VehicleCameraControlLog) <<  "Unable to load camera parameters from camera definition";
         return false;
     }
-    //-- If this is new, cache it
-    if(!_cached) {
+    //-- If this is new, cache it. Whole or not at all: another camera of the model may read it at any time.
+    if (!_cached && !_cacheFile.isEmpty()) {
         qCDebug(VehicleCameraControlLog) << "Saving camera definition file" << _cacheFile;
-        QFile file(_cacheFile);
-        if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
-        } else {
-            file.write(originalData);
+        QSaveFile file(_cacheFile);
+        if (!file.open(QIODevice::WriteOnly) || (file.write(parsed.original) != parsed.original.size()) ||
+            !file.commit()) {
+            qCWarning(VehicleCameraControlLog) << "Could not save cache file" << _cacheFile << file.errorString();
         }
     }
     return true;
@@ -1252,30 +1317,17 @@ bool VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
     return false;
 }
 
-bool VehicleCameraControl::_handleLocalization(QByteArray& bytes)
+bool VehicleCameraControl::_localize(const QDomDocument& doc, const QString& localeName, QByteArray& bytes,
+                                     ParsedDefinition& parsed)
 {
-    QDomDocument doc;
-    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
-    if (!result) {
-        qCritical() << "Unable to parse camera definition file on line:" << result.errorLine;
-        qCritical() << result.errorMessage;
-        return false;
-    }
-    //-- Find out where we are
-    QLocale locale = QLocale::system();
-#if defined (Q_OS_MACOS)
-    locale = QLocale(locale.name());
-#endif
-    QString localeName = locale.name().toLower().replace("-", "_");
-    qCDebug(VehicleCameraControlLog) << "Current locale:" << localeName;
     if(localeName == "en_us") {
         // Nothing to do
-        return true;
+        return false;
     }
     QDomNodeList locRoot = doc.elementsByTagName(kLocalization);
     if(!locRoot.size()) {
         // Nothing to do
-        return true;
+        return false;
     }
     //-- Iterate locales
     QDomNode node = locRoot.item(0);
@@ -1285,31 +1337,33 @@ bool VehicleCameraControl::_handleLocalization(QByteArray& bytes)
         QDomNode localeNode = locales.item(i);
         QString name;
         if(!read_attribute(localeNode, kName, name)) {
-            qWarning() << "Localization entry is missing its name attribute";
+            parsed.unnamedLocales++;
             continue;
         }
         // If we found a direct match, deal with it now
         if(localeName == name.toLower().replace("-", "_")) {
-            return _replaceLocaleStrings(localeNode, bytes);
+            _replaceLocaleStrings(localeNode, bytes);
+            return true;
         }
     }
     //-- No direct match. Pick first matching language (if any)
-    localeName = localeName.left(3);
+    const QString language = localeName.left(3);
     for(int i = 0; i < locales.size(); i++) {
         QDomNode localeNode = locales.item(i);
         QString name;
         read_attribute(localeNode, kName, name);
-        if(name.toLower().startsWith(localeName)) {
-            return _replaceLocaleStrings(localeNode, bytes);
+        if (name.toLower().startsWith(language)) {
+            _replaceLocaleStrings(localeNode, bytes);
+            return true;
         }
     }
     //-- Could not find a language to use
-    qWarning() <<  "No match for" << QLocale::system().name() << "in camera definition file";
+    parsed.noLocaleMatch = true;
     //-- Just use default, en_US
-    return true;
+    return false;
 }
 
-bool VehicleCameraControl::_replaceLocaleStrings(const QDomNode node, QByteArray& bytes)
+void VehicleCameraControl::_replaceLocaleStrings(const QDomNode node, QByteArray& bytes)
 {
     QDomElement stringElem = node.toElement();
     QDomNodeList strings = stringElem.elementsByTagName(kStrings);
@@ -1328,7 +1382,6 @@ bool VehicleCameraControl::_replaceLocaleStrings(const QDomNode node, QByteArray
             }
         }
     }
-    return true;
 }
 
 void VehicleCameraControl::_requestAllParameters()
@@ -2316,139 +2369,151 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
 {
     //-- First check and see if we have it cached
     QFile xmlFile(_cacheFile);
-
-    QString ftpPrefix(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme));
-    if (!xmlFile.exists() && url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
-        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt ftp download";
-        QString ext = "";
-        if (url.endsWith(".lzma", Qt::CaseInsensitive)) { ext = ".lzma"; }
-        if (url.endsWith(".xz", Qt::CaseInsensitive)) { ext = ".xz"; }
-        // Built from the sanitised token, not from the raw vendor/model strings, so the
-        // vehicle cannot steer FTPManager's toDir.filePath() join out of the cache folder.
-        QString fileName = _cacheFileToken + QStringLiteral(".xml") + ext;
-        connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this,
-                &VehicleCameraControl::_ftpDownloadComplete);
-        if (!_vehicle->ftpManager()->download(
-                _compID, url, SettingsManager::instance()->appSettings()->parameterSavePath(), fileName)) {
-            qCWarning(VehicleCameraControlLog) << "Could not start camera definition ftp download:" << url;
-            disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this,
-                       &VehicleCameraControl::_ftpDownloadComplete);
-            emit dataReady(QByteArray());
-        }
-        return;
-    }
-
     if (!xmlFile.exists()) {
-        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt http download";
-        _httpRequest(url);
+        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt download";
+        _fetchDefinition(url);
         return;
     }
-    if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not read cached camera definition file:" << _cacheFile;
-        _httpRequest(url);
-        return;
-    }
-    QByteArray bytes = xmlFile.readAll();
-    QDomDocument doc;
-    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
-    if (!result) {
-        qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
-        _httpRequest(url);
-        return;
-    }
-    //-- We have it
-    qCDebug(VehicleCameraControlLog) << "Using cached camera definition file:" << _cacheFile;
-    _cached = true;
-    emit dataReady(bytes);
+    const auto read = [cacheFile = _cacheFile, maxBytes = _maxDefinitionBytes]() {
+        return _readDefinitionFile(cacheFile, maxBytes, true);
+    };
+    _startDefinitionJob(QGC::runOnWorker(this, read, [this, url](const DefinitionFile& file) {
+        if (!file.read || !file.wellFormed) {
+            if (!file.read) {
+                qWarning() << "Could not read cached camera definition file:" << file.read.description();
+            } else {
+                qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
+            }
+            // Without the cache file, the definition is downloaded again the way its URL says
+            if (QFile::remove(_cacheFile)) {
+                _handleDefinitionFile(url);
+            } else {
+                _fetchDefinition(url);
+            }
+            return;
+        }
+        //-- We have it
+        qCDebug(VehicleCameraControlLog) << "Using cached camera definition file:" << _cacheFile;
+        _cached = true;
+        emit dataReady(file.bytes);
+    }));
 }
 
-void VehicleCameraControl::_httpRequest(const QString &url)
+void VehicleCameraControl::_startDefinitionJob(QObject* job)
+{
+    delete _definitionJob.data();
+    _definitionJob = job;
+}
+
+void VehicleCameraControl::_fetchDefinition(const QString& url)
 {
     qCDebug(VehicleCameraControlLog) << "Request camera definition:" << url;
-    if(!_netManager) {
-        _netManager = new QNetworkAccessManager(this);
+
+    // In a directory of the camera's own, which the system cleans: the save directory is the user's, and a transfer
+    // that a crash cuts off would stay there. The definition is cached, from memory, only once it has loaded.
+    if (!_downloadDirectory) {
+        const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        _downloadDirectory = std::make_shared<QTemporaryDir>(tempDir.filePath(QStringLiteral("qgc_camera_XXXXXX")));
+        if (!_downloadDirectory->isValid()) {
+            qCWarning(VehicleCameraControlLog) << "Cannot create a directory to download the camera definition into:"
+                                               << _downloadDirectory->errorString();
+        }
     }
-    QGCNetworkHelper::configureProxy(_netManager);
-    QNetworkRequest request(QUrl::fromUserInput(url));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
-    QNetworkReply* reply = _netManager->get(request);
-    connect(reply, &QNetworkReply::finished,  this, &VehicleCameraControl::_downloadFinished);
+
+    // Built from the sanitised token, not from the raw vendor/model strings, so the vehicle cannot steer the file out
+    // of the directory. The download is read, compressed or not, and removed. Its name is that of this download only:
+    // a download that is given up may still be read on a worker when the next one arrives.
+    static quint32 downloadCount = 0;
+    const VehicleFileFetch::Options options{
+        .directory = _downloadDirectory->isValid() ? _downloadDirectory->path() : QString(),
+        .fileName = QStringLiteral("%1_%2.xml.download").arg(_cacheFileToken, QString::number(++downloadCount)),
+        .maxBytes = _maxDefinitionBytes,
+        .ftpComponentId = static_cast<uint8_t>(_compID),
+        // Cameras that serve their definition over HTTPS often do so with a self-signed certificate, which cannot be
+        // verified. The definition has always been fetched without verifying the certificate, so that they keep
+        // working.
+        .verifyPeer = false,
+    };
+    // Over MAVLink FTP the download waits for the other transfers of the vehicle, which often run as it connects
+    _definitionFetch = VehicleFileFetch::start(
+        this, _vehicle, url, options,
+        [this](const QString& file, const QString& errorMsg) { _definitionDownloaded(file, errorMsg); });
+    if (!_definitionFetch) {
+        qCWarning(VehicleCameraControlLog) << "Could not start the camera definition download:" << url;
+        emit dataReady(QByteArray());
+    }
 }
 
-void VehicleCameraControl::_downloadFinished()
+void VehicleCameraControl::_definitionDownloaded(const QString& fileName, const QString& errorMsg)
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply) {
-        return;
-    }
-    int err = reply->error();
-    int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    QByteArray data = reply->readAll();
-    if(err == QNetworkReply::NoError && http_code == 200) {
-        data.append("\n");
-    } else {
-        data.clear();
-        qWarning() << QString("Camera Definition (%1) download error: %2 status: %3").arg(
-            reply->url().toDisplayString(),
-            reply->errorString(),
-            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString()
-        );
-    }
-    emit dataReady(data);
-    //reply->deleteLater();
-}
+    qCDebug(VehicleCameraControlLog) << "Camera definition download completed:" << fileName << errorMsg;
 
-void VehicleCameraControl::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)
-{
-    qCDebug(VehicleCameraControlLog) << "FTP Download completed: " << fileName << ", " << errorMsg;
-
-    disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
-
-    QString outputFileName = QGCCompression::decompressIfNeeded(fileName);
-    if (outputFileName.isEmpty()) {
-        qCWarning(VehicleCameraControlLog) << "Inflate of compressed xml failed" << fileName;
-    }
-
-    QFile xmlFile(outputFileName);
-
-    if (!xmlFile.exists()) {
-        qCDebug(VehicleCameraControlLog) << "No camera definition file present after ftp download completed";
-        return;
-    }
-    if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not read downloaded camera definition file: " << fileName;
+    // Every failure ends the same way: with no definition, so that the camera is initialised without one
+    if (!errorMsg.isEmpty()) {
+        qCWarning(VehicleCameraControlLog) << "Camera definition download failed:" << errorMsg;
+        emit dataReady(QByteArray());
         return;
     }
 
-    _cached = true;
-    QByteArray bytes = xmlFile.readAll();
-    emit dataReady(bytes);
+    // The definition is written to the cache file, decompressed, once it has loaded. The read holds the directory: the
+    // worker may still read the file once the camera is gone, and Windows cannot remove a directory with an open file
+    const auto read = [fileName, maxBytes = _maxDefinitionBytes, directory = _downloadDirectory]() {
+        DefinitionFile file = _readDefinitionFile(fileName, maxBytes, false);
+        (void) QFile::remove(fileName);
+        return file;
+    };
+    _startDefinitionJob(QGC::runOnWorker(this, read, [this](const DefinitionFile& file) {
+        if (!file.read) {
+            qCWarning(VehicleCameraControlLog)
+                << "Could not read the downloaded camera definition:" << file.read.description();
+            emit dataReady(QByteArray());
+            return;
+        }
+
+        emit dataReady(file.bytes);
+    }));
 }
 
 void VehicleCameraControl::_dataReady(QByteArray data)
 {
     if(data.size()) {
         qCDebug(VehicleCameraControlLog) << "Parsing camera definition";
-        _loadCameraDefinitionFile(data);
-    } else {
-        qCDebug(VehicleCameraControlLog) << "No camera definition received, trying to search on our own...";
-        QFile definitionFile;
-        if(QGCCorePlugin::instance()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
-            qCDebug(VehicleCameraControlLog) << "Found offline definition file for: " << _modelName << ", loading: " << definitionFile.fileName();
-            if (definitionFile.open(QIODevice::ReadOnly)) {
-                QByteArray newData = definitionFile.readAll();
-                _loadCameraDefinitionFile(newData);
-            } else {
-                qCDebug(VehicleCameraControlLog) << "error opening offline definition file for: " << _modelName;
-            }
-        } else {
-            qCDebug(VehicleCameraControlLog) << "No offline camera definition file found";
+        _parseAndLoadDefinition(data);
+        return;
+    }
+
+    qCDebug(VehicleCameraControlLog) << "No camera definition received, trying to search on our own...";
+    QFile definitionFile;
+    if (QGCCorePlugin::instance()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
+        qCDebug(VehicleCameraControlLog) << "Found offline definition file for: " << _modelName
+                                         << ", loading: " << definitionFile.fileName();
+        // An offline definition comes with QGC, so it is read here
+        if (definitionFile.open(QIODevice::ReadOnly)) {
+            _parseAndLoadDefinition(definitionFile.readAll());
+            return;
         }
+        qCDebug(VehicleCameraControlLog) << "error opening offline definition file for: " << _modelName;
+    } else {
+        qCDebug(VehicleCameraControlLog) << "No offline camera definition file found";
     }
     _initWhenReady();
+}
+
+void VehicleCameraControl::_parseAndLoadDefinition(const QByteArray& bytes)
+{
+    //-- Find out where we are
+    QString name = _localeName;
+#if defined(Q_OS_MACOS)
+    name = QLocale(name).name();
+#endif
+    const QString localeName = name.toLower().replace("-", "_");
+    qCDebug(VehicleCameraControlLog) << "Current locale:" << localeName;
+
+    const auto parse = [bytes, localeName]() { return _parseDefinition(bytes, localeName); };
+    _startDefinitionJob(QGC::runOnWorker(this, parse, [this](const ParsedDefinition& parsed) {
+        (void) _loadCameraDefinitionFile(parsed);
+        _initWhenReady();
+    }));
 }
 
 void VehicleCameraControl::_paramDone()

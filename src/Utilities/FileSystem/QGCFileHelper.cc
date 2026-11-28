@@ -43,14 +43,8 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
     return data;
 }
 
-size_t optimalBufferSize(const QString &path)
+static size_t bufferSizeFor(const QString& path)
 {
-    // Cache the result - only compute once per process
-    static size_t cachedSize = 0;
-    if (cachedSize != 0) {
-        return cachedSize;
-    }
-
     qint64 blockSize = 0;
 
     // Try to get block size from specified path
@@ -67,17 +61,20 @@ size_t optimalBufferSize(const QString &path)
     }
 
     if (blockSize <= 0) {
-        cachedSize = kBufferSizeDefault;
-    } else {
-        // Use 16 blocks, clamped to min/max bounds
-        // Typical: 4KB block × 16 = 64KB
-        cachedSize = static_cast<size_t>(
-            qBound(static_cast<qint64>(kBufferSizeMin),
-                   blockSize * 16,
-                   static_cast<qint64>(kBufferSizeMax))
-        );
+        return kBufferSizeDefault;
     }
 
+    // Use 16 blocks, clamped to min/max bounds
+    // Typical: 4KB block × 16 = 64KB
+    return static_cast<size_t>(
+        qBound(static_cast<qint64>(kBufferSizeMin), blockSize * 16, static_cast<qint64>(kBufferSizeMax)));
+}
+
+size_t optimalBufferSize(const QString& path)
+{
+    // Computed once per process, for the first path asked about. A static local is initialized by one thread
+    // only, also when worker threads ask at the same time
+    static const size_t cachedSize = bufferSizeFor(path);
     return cachedSize;
 }
 
@@ -95,6 +92,73 @@ QString joinPath(const QString &dir, const QString &name)
         return dir + name;
     }
     return dir + QLatin1Char('/') + name;
+}
+
+bool isInDirectory(const QString& directoryPath, const QString& path)
+{
+    if (path == directoryPath) {
+        return true;
+    }
+    // A root ("/", "E:/") is the one directory whose clean path ends in the separator
+    return path.startsWith(directoryPath.endsWith(QLatin1Char('/')) ? directoryPath : directoryPath + QLatin1Char('/'));
+}
+
+namespace {
+
+/// Whether a file name, without its extension, names a device on Windows, which then opens the device instead of a
+/// file. Windows ignores spaces before the extension
+bool isWindowsDeviceFileName(QStringView name)
+{
+    QStringView stem = name.left(name.indexOf(QLatin1Char('.')));
+    while (stem.endsWith(QLatin1Char(' '))) {
+        stem.chop(1);
+    }
+    for (const QLatin1StringView device :
+         {QLatin1StringView("CON"), QLatin1StringView("PRN"), QLatin1StringView("AUX"), QLatin1StringView("NUL"),
+          QLatin1StringView("CONIN$"), QLatin1StringView("CONOUT$")}) {
+        if (stem.compare(device, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    // COM and LPT with a digit, also a superscript one
+    if ((stem.size() != 4) || !(stem.startsWith(QLatin1StringView("COM"), Qt::CaseInsensitive) ||
+                                stem.startsWith(QLatin1StringView("LPT"), Qt::CaseInsensitive))) {
+        return false;
+    }
+    const char16_t digit = stem.at(3).unicode();
+    return ((digit >= u'0') && (digit <= u'9')) || (digit == u'\u00B9') || (digit == u'\u00B2') || (digit == u'\u00B3');
+}
+
+}  // namespace
+
+FileNameIssue fileNameIssue(QStringView name)
+{
+    if (name.isEmpty()) {
+        return FileNameIssue::Empty;
+    }
+    for (const QChar character : name) {
+        if ((character.unicode() < 0x20) || QStringView(u"<>:\"|?*/\\").contains(character)) {
+            return FileNameIssue::ForbiddenCharacter;
+        }
+    }
+    if (name.endsWith(QLatin1Char('.')) || name.endsWith(QLatin1Char(' '))) {
+        return FileNameIssue::TrailingDotOrSpace;
+    }
+    if (isWindowsDeviceFileName(name)) {
+        return FileNameIssue::DeviceName;
+    }
+    // UTF-8 takes at least one byte for each UTF-16 unit
+    if ((name.size() > kMaxFileNameBytes) || (name.toUtf8().size() > kMaxFileNameBytes)) {
+        return FileNameIssue::TooLong;
+    }
+    return FileNameIssue::None;
+}
+
+QString localFileName(QStringView name)
+{
+    const QStringView fileName =
+        name.sliced(qMax(name.lastIndexOf(QLatin1Char('/')), name.lastIndexOf(QLatin1Char('\\'))) + 1);
+    return (fileNameIssue(fileName) == FileNameIssue::None) ? fileName.toString() : QString();
 }
 
 bool ensureDirectoryExists(const QString &path)
@@ -271,9 +335,16 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
 // URL/Path Utilities
 // ============================================================================
 
+/// Whether @a text starts with a drive letter ("C:/dir", "c:\\dir", "D:"): a path of Windows, which QUrl would read
+/// as a URL whose scheme is the letter
+static bool startsWithDriveLetter(QStringView text)
+{
+    return (text.size() >= 2) && (text[1] == QLatin1Char(':')) && (text[0].unicode() < 0x80) && text[0].isLetter();
+}
+
 QString toLocalPath(const QString &urlOrPath)
 {
-    if (urlOrPath.isEmpty()) {
+    if (urlOrPath.isEmpty() || startsWithDriveLetter(urlOrPath)) {
         return urlOrPath;
     }
 
@@ -336,7 +407,7 @@ bool isLocalPath(const QString &urlOrPath)
     }
 
     // Qt resource paths are "local" (accessible via QFile)
-    if (isQtResource(urlOrPath)) {
+    if (isQtResource(urlOrPath) || startsWithDriveLetter(urlOrPath)) {
         return true;
     }
 

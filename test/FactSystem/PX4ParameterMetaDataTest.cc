@@ -8,6 +8,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
+#include "FileFixtures.h"
 #include "PX4ParameterMetaData.h"
 #include "ParameterMetaData.h"
 #include "ParameterMetaDataTestHelper.h"
@@ -439,6 +440,31 @@ void PX4ParameterMetaDataTest::_loadMissingFile()
     FactMetaData *fact = meta.getMetaDataForFact("ANY_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QVERIFY(fact->name().isEmpty());
+}
+
+void PX4ParameterMetaDataTest::_loadCompressedFileRefused()
+{
+    QJsonObject extra;
+    extra[u"shortDesc"_s] = u"Compressed"_s;
+    QJsonObject root = _makeRoot({_makeParam(u"TEST_GZIP"_s, u"Int32"_s, extra)});
+    root[u"parameter_version_major"_s] = 1;
+    root[u"parameter_version_minor"_s] = 2;
+    const QByteArray json = QJsonDocument(root).toJson(QJsonDocument::Compact);
+
+    QTemporaryFile compressedFile;
+    QVERIFY(writeJsonToTempFile(compressedFile, TestFixtures::gzipMember(json)));
+
+    PX4ParameterMetaData meta;
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Unable to open parameter meta data file:.*compressed"));
+    meta.loadParameterFactMetaDataFile(compressedFile.fileName());
+    verifyExpectedLogMessage();
+    QVERIFY(meta.getMetaDataForFact("TEST_GZIP", FactMetaData::valueTypeInt32)->name().isEmpty());
+    QVERIFY(ParameterMetaData::versionFromMetaDataFile(compressedFile.fileName()).isNull());
+
+    QTemporaryFile plainFile;
+    QVERIFY(writeJsonToTempFile(plainFile, json));
+    QCOMPARE(ParameterMetaData::versionFromMetaDataFile(plainFile.fileName()), QVersionNumber(1, 2));
 }
 
 void PX4ParameterMetaDataTest::_rejectOtherThread()

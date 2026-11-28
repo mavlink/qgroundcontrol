@@ -4,7 +4,9 @@
 Parses CMakeCache.txt for CPM_PACKAGES and per-package VERSION/SOURCE_DIR,
 then reads git metadata (remote URL, commit hash) from each source directory.
 Adds the GStreamer the build bundles, from the QGC_GST_RESOLVED_* entries
-cmake/GStreamer records, when video streaming is enabled.
+cmake/GStreamer records, when video streaming is enabled. Names each
+component's NVD product in a CPE, which vulnerability scanners such as Grype
+match it by.
 
 Usage:
     generate_cpm_sbom.py --build-dir DIR [--format cyclonedx|spdx] [--output FILE]
@@ -32,6 +34,46 @@ from common.cmake import read_cache_dict
 from common.git import run_git
 from common.io import write_json
 
+# The NVD vendor and product of each package CMake fetches with CPM, and of GStreamer. Grype finds the advisories of a
+# C/C++ library only through a CPE: no advisory database has an ecosystem for a pkg:github purl, and a CPE it made up
+# from the CPM name would miss where NVD files a library under another name (liblzma under tukaani:xz). None: NVD has
+# no product for it. Every CPM package needs an entry (tools/tests/ci/contracts/test_cpm_sbom_products.py).
+NVD_PRODUCTS: dict[str, tuple[str, str] | None] = {
+    "ZLIB": ("zlib", "zlib"),
+    "LibLZMA": ("tukaani", "xz"),
+    "LibArchive": ("libarchive", "libarchive"),
+    "zstd": ("facebook", "zstandard"),
+    "lz4": ("lz4_project", "lz4"),
+    "BZip2": ("bzip", "bzip2"),
+    "EXPAT": ("libexpat_project", "libexpat"),
+    "libexif": ("libexif_project", "libexif"),
+    "Shapelib": ("osgeo", "shapelib"),
+    "SDL3": ("libsdl", "simple_directmedia_layer"),
+    "valijson": ("valijson_project", "valijson"),
+    "GStreamer": ("gstreamer", "gstreamer"),
+    # NVD's clipper_project:clipper is Clipper 1, and its mavlink:micro_air_vehicle_link names protocol versions,
+    # not commits of the generated headers.
+    "clipper2": None,
+    "mavlink": None,
+    "geographiclib": None,
+    "ulog_cpp": None,
+    "sdl_gamecontrollerdb": None,
+    "libevents": None,
+    "protozero": None,
+    "libosmium": None,
+    "earcut_hpp": None,
+    "ArduPilotParams": None,
+    "nanobench": None,
+    "rapidcheck": None,
+    "VulkanHeaders": None,
+    "qtandroidextensions": None,
+    "QtAndroidTools": None,
+    "android_openssl": None,
+    "create-dmg": None,
+    # Only its headers are used and nothing of it is compiled: the FFmpeg libraries are the ones Qt ships.
+    "ffmpeg_source": None,
+}
+
 
 def git_info(source_dir: Path) -> tuple[str, str]:
     """Return (remote_url, commit_hash) from a git working directory."""
@@ -50,6 +92,30 @@ def git_info(source_dir: Path) -> tuple[str, str]:
     except (OSError, subprocess.TimeoutExpired):
         pass
     return url, commit
+
+
+def git_exact_tag(source_dir: Path) -> str:
+    """Return the tag checked out in a git working directory, or "" when HEAD is at no tag."""
+    try:
+        result = run_git("describe", "--tags", "--exact-match", "HEAD", cwd=source_dir, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def tag_version(tag: str) -> str:
+    """Return the release version a tag names (v1.2.3, 1.2.3, expat's R_2_7_5), or ""."""
+    match = re.search(r"\d+(?:[._]\d+)+", tag)
+    return match.group().replace("_", ".") if match else ""
+
+
+def make_cpe(name: str, version: str) -> str | None:
+    """Return the CPE 2.3 name of a release of a package that NVD_PRODUCTS knows, or None."""
+    product = NVD_PRODUCTS.get(name)
+    if not product or not re.fullmatch(r"\d+(?:\.\d+)*", version):
+        return None
+    vendor, name_in_nvd = product
+    return f"cpe:2.3:a:{vendor}:{name_in_nvd}:{version}:*:*:*:*:*:*:*"
 
 
 def normalize_git_url(url: str) -> str:
@@ -90,7 +156,8 @@ def gstreamer_component(cache: dict[str, str]) -> dict | None:
     purl = f"pkg:generic/gstreamer@{version}"
     # The official packages an auto-downloaded SDK came from, then the source of that version.
     references: list[dict] = []
-    for package in cache.get("QGC_GST_RESOLVED_PACKAGES", "").split(";"):
+    packages = [p for p in cache.get("QGC_GST_RESOLVED_PACKAGES", "").split(";") if p]
+    for package in packages:
         url, _, sha256 = package.partition("|")
         if url and sha256:
             references.append(
@@ -110,7 +177,7 @@ def gstreamer_component(cache: dict[str, str]) -> dict | None:
         }
     )
     references.append({"type": "website", "url": "https://gstreamer.freedesktop.org"})
-    return {
+    component = {
         "type": "framework",
         "name": "GStreamer",
         "version": version,
@@ -119,6 +186,12 @@ def gstreamer_component(cache: dict[str, str]) -> dict | None:
         "licenses": [{"expression": "LGPL-2.1-or-later"}],
         "externalReferences": references,
     }
+    # Only for the official SDK: NVD's version ranges do not know a distribution's backported fixes, which the scan of
+    # the builder image checks with the distribution's own data.
+    cpe = make_cpe("GStreamer", release.group() if release else version) if packages else None
+    if cpe:
+        component["cpe"] = cpe
+    return component
 
 
 def generate_sbom(build_dir: Path) -> dict:
@@ -140,13 +213,14 @@ def generate_sbom(build_dir: Path) -> dict:
         version = cache.get(f"CPM_PACKAGE_{name}_VERSION", "")
         source_dir = cache.get(f"CPM_PACKAGE_{name}_SOURCE_DIR", "")
 
-        url, commit = "", ""
+        url, commit, tag = "", "", ""
         if source_dir:
             url, commit = git_info(Path(source_dir))
+            tag = git_exact_tag(Path(source_dir)) if commit else ""
+        # CPM records no version for a tag that is not v<version>, such as expat's R_2_7_5.
+        release = version if version and version != "0" else tag_version(tag)
 
-        display_version = (
-            version if version and version != "0" else commit[:12] if commit else "unknown"
-        )
+        display_version = release or (commit[:12] if commit else "unknown")
 
         component: dict = {
             "type": "library",
@@ -157,6 +231,10 @@ def generate_sbom(build_dir: Path) -> dict:
         purl = make_purl(name, version, url, commit)
         component["purl"] = purl
         component["bom-ref"] = purl
+        # A checkout at no tag is pinned to a commit, whatever VERSION its CPMAddPackage() states (bzip2)
+        cpe = make_cpe(name, release) if tag or not commit else None
+        if cpe:
+            component["cpe"] = cpe
 
         external_refs = []
         if url:
@@ -256,6 +334,14 @@ def generate_spdx(build_dir: Path) -> dict:
                 }
             ],
         }
+        if "cpe" in component:
+            package["externalRefs"].append(
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": component["cpe"],
+                }
+            )
         packages.append(package)
         relationships.append(
             {

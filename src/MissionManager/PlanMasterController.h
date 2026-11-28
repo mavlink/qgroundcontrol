@@ -121,6 +121,8 @@ public:
     static constexpr const char* kJsonMissionObjectKey = "mission";
     static constexpr const char* kJsonGeoFenceObjectKey = "geoFence";
     static constexpr const char* kJsonRallyPointsObjectKey = "rallyPoints";
+    /// Largest size of a plan file. A plan of ten thousand mission items is a few MiB
+    static constexpr qint64 kMaxPlanFileBytes = 64LL * 1024 * 1024;
 
 signals:
     void containsItemsChanged();
@@ -169,7 +171,7 @@ private:
     void _setDirtyStates(bool dirtyForSave, bool dirtyForUpload);
     void _clearElementDirtyStates();
     void _clearCurrentPlanFile();
-    bool _loadPlanJson(const QByteArray& bytes, QString& errorString);
+    bool _loadPlanJson(const QString& filename, QString& errorString);
 
 #ifdef QGC_UNITTEST_BUILD
     // Used by unit tests to set dirty flags for initial state

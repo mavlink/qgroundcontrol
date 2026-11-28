@@ -16,6 +16,9 @@ private slots:
     void _basic_test();
     void _lru_test();
     void _multi_test();
+    UT_PARAMETERIZED_TEST(_version_test);
+    UT_PARAMETERIZED_TEST(_incomplete_entry_test);
+    void _remove_test();
 
 private:
     void _setup();

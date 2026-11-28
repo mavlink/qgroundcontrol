@@ -40,6 +40,109 @@ void WaitStateBaseTest::_testTimeoutRunsOnMachineScheduler()
     QCOMPARE(timedOutSpy.count(), 1);
 }
 
+void WaitStateBaseTest::_testHeldTimeoutCountsFromRestart_data()
+{
+    QTest::addColumn<bool>("fromEntry");
+
+    // As the users of the state hold it: the timeout has not started yet, and must not start
+    QTest::newRow("held from the entry") << true;
+    // The timeout is running, and is stopped
+    QTest::newRow("held after the entry") << false;
+}
+
+// The timeout of an operation that waits behind others before it begins counts from when it begins
+void WaitStateBaseTest::_testHeldTimeoutCountsFromRestart()
+{
+    QFETCH(bool, fromEntry);
+
+    ignoreTimeoutWarnings();
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("HeldTimeoutTest"), nullptr, nullptr, &scheduler);
+    const int timeoutMs = 200;
+
+    WaitStateBase* waitState = nullptr;
+    if (fromEntry) {
+        waitState = new AsyncFunctionState(
+            QStringLiteral("Wait"), &machine, [](AsyncFunctionState* state) { state->holdTimeout(); }, timeoutMs);
+    } else {
+        waitState = new TestWaitState(QStringLiteral("Wait"), &machine, timeoutMs);
+    }
+    machine.setInitialState(waitState);
+
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+    if (!fromEntry) {
+        waitState->holdTimeout();
+    }
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(2 * timeoutMs)));
+    QCOMPARE(timedOutSpy.count(), 0);
+
+    waitState->restartTimeout();
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs - 1)));
+    QCOMPARE(timedOutSpy.count(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(timedOutSpy.count(), 1);
+}
+
+// A hold is for one entry. An operation that ends while it waits never restarts the timeout: the state entered again
+// without a hold has its timeout all the same.
+void WaitStateBaseTest::_testHoldEndsWithItsEntry()
+{
+    ignoreTimeoutWarnings();
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("HoldEndsWithEntryTest"), nullptr, nullptr, &scheduler);
+    const int timeoutMs = 200;
+
+    bool hold = true;
+    auto* waitState = new AsyncFunctionState(
+        QStringLiteral("Wait"), &machine,
+        [&hold](AsyncFunctionState* state) {
+            if (hold) {
+                state->holdTimeout();
+            }
+        },
+        timeoutMs);
+    waitState->addTransition(waitState, &QGCState::advance, waitState);
+    machine.setInitialState(waitState);
+
+    QSignalSpy enteredSpy(waitState, &QState::entered);
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+
+    hold = false;
+    waitState->complete();
+    QTRY_COMPARE_WITH_TIMEOUT(enteredSpy.count(), 2, TestTimeout::shortMs());
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs)));
+    QCOMPARE(timedOutSpy.count(), 1);
+}
+
+// The operation may begin once the state that waited for it has been left: its timeout is not started then
+void WaitStateBaseTest::_testRestartTimeoutAfterExitArmsNothing()
+{
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("RestartAfterExitTest"), nullptr, nullptr, &scheduler);
+    const int timeoutMs = 200;
+
+    auto* waitState = new TestWaitState(QStringLiteral("Wait"), &machine, timeoutMs);
+    auto* nextState = new QGCState(QStringLiteral("Next"), &machine);
+    machine.addEventTransition(waitState, QStringLiteral("next"), nextState);
+    machine.setInitialState(waitState);
+
+    QSignalSpy nextEnteredSpy(nextState, &QState::entered);
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+    waitState->holdTimeout();
+    machine.postEvent(QStringLiteral("next"));
+    QVERIFY(spyTriggered(nextEnteredSpy));
+
+    // A timeout that came would also log a warning, which fails the test
+    waitState->restartTimeout();
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs)));
+    QCOMPARE(timedOutSpy.count(), 0);
+}
+
 void WaitStateBaseTest::_testCompleteAndFail_data()
 {
     QTest::addColumn<bool>("fail");

@@ -51,9 +51,9 @@ bool MAVLinkEventManager::healthAndArmingChecksSupported(uint8_t compid) const
     return it.value()->healthAndArmingChecksSupported();
 }
 
-void MAVLinkEventManager::setMetadata(uint8_t compid, const QString &metadataJsonFileName)
+void MAVLinkEventManager::setMetadata(uint8_t compid, const std::shared_ptr<events::parser::Parser>& metadata)
 {
-    _eventHandlerForCompId(compid).setMetadata(metadataJsonFileName);
+    _eventHandlerForCompId(compid).setMetadata(metadata);
 }
 
 int MAVLinkEventManager::modeGroup(uint8_t compid, uint32_t customMode) const

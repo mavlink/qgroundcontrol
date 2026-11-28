@@ -423,7 +423,7 @@ void QGCCacheWorker::_importSets(QGCMapTask *mtask)
 
     DatabaseResult result;
     if (task->replace()) {
-        result = _database->importSetsReplace(task->path(), progress);
+        result = _database->importSetsReplace(task->path(), progress, task->movable());
     } else {
         result = _database->importSetsMerge(task->path(), progress);
     }

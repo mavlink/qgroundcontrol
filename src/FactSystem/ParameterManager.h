@@ -1,11 +1,13 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QPair>
+#include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -15,8 +17,10 @@
 #include "QGCMAVLinkTypes.h"
 #include "ScheduledTask.h"
 
+class QTemporaryDir;
 class QTextStream;
 
+class FTPRequest;
 class ParameterEditorController;
 class Vehicle;
 
@@ -218,6 +222,8 @@ private:
     void _handleHeartbeat(int componentId);
     void _sendParamRequestList(uint8_t componentId);
     void _ftpDownloadProgress(float progress);
+    /// The directory of this vehicle's parameter file download, made on first use
+    QString _ftpDownloadDirectory();
     /// Parse the binary parameter file and inject the parameters in the qgc fact system.
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
     bool _parseParamFile(const QString &filename);
@@ -285,7 +291,8 @@ private:
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     bool _tryftp = false;
-    bool _ftpDownloadInProgress = false;        ///< true: @PARAM/param.pck transfer in flight
+    QPointer<FTPRequest> _ftpRequest;           ///< The @PARAM/param.pck transfer that waits or runs
+    std::unique_ptr<QTemporaryDir> _ftpDownloadDir;
     bool _ftpParamsLoaded = false;              ///< true: autopilot params came from param.pck
     QSet<int> _heartbeatComponentIds;           ///< Non-autopilot components heard via HEARTBEAT
 };

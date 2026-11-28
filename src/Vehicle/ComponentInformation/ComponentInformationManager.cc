@@ -1,15 +1,20 @@
 #include "ComponentInformationManager.h"
-#include "ComponentInformationTranslation.h"
-#include "ComponentInformationCache.h"
-#include "Vehicle.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
+
+#include "CompInfoActuators.h"
+#include "CompInfoEvents.h"
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
-#include "CompInfoEvents.h"
-#include "CompInfoActuators.h"
+#include "ComponentInformationCache.h"
+#include "ComponentInformationTranslation.h"
 #include "QGCCachedFileDownload.h"
+#include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QStandardPaths>
+#include "Vehicle.h"
+#include "VehicleFileFetch.h"
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformation.ComponentInformationManager")
 
@@ -17,14 +22,15 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObje
     : QGCStateMachine("ComponentInformationManager", vehicle, parent)
     // Without a QObject parent: a machine whose parent is this machine is one of its states to Qt
     , _requestTypeStateMachine(this)
-    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-                                                        QLatin1String("/QGCCompInfoFileDownloadCache"),
-                                                    this))
+    , _cachedFileDownload(new QGCCachedFileDownload(httpCacheDirectory(), this))
     , _fileCache(ComponentInformationCache::defaultInstance())
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
     qCDebug(ComponentInformationManagerLog) << this;
-    qCDebug(ComponentInformationManagerLog) << "Cache location:" << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
+    qCDebug(ComponentInformationManagerLog) << "Cache location:" << ComponentInformationCache::defaultDirectory();
+
+    // The translation summary and the translation file come from where the vehicle points to, and are read whole
+    _cachedFileDownload->fileDownloader()->setMaxBytes(VehicleFileFetch::kMaxSmallFileBytes);
 
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
@@ -41,6 +47,35 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObje
 ComponentInformationManager::~ComponentInformationManager()
 {
     qCDebug(ComponentInformationManagerLog) << this;
+
+    // Before the download directory goes. Deleting the downloader closes the file it writes into it; the translation,
+    // which uses the downloader, goes first.
+    delete _translation;
+    delete _cachedFileDownload;
+}
+
+QString ComponentInformationManager::httpCacheDirectory()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+           QLatin1String("/QGCCompInfoFileDownloadCache");
+}
+
+QString ComponentInformationManager::downloadDirectory()
+{
+    // Made once a download needs it: a vehicle that downloads nothing, such as an offline one, makes none
+    if (!_downloadDir) {
+        const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        _downloadDir = std::make_unique<QTemporaryDir>(tempDir.filePath(QStringLiteral("qgc_compinfo_XXXXXX")));
+        if (_downloadDir->isValid()) {
+            _cachedFileDownload->fileDownloader()->setOutputDirectory(_downloadDir->path());
+        } else {
+            qCWarning(ComponentInformationManagerLog)
+                << "Cannot create a download directory, downloading to the shared temp location:"
+                << _downloadDir->errorString();
+        }
+    }
+
+    return _cachedFileDownload->fileDownloader()->outputDirectory();
 }
 
 void ComponentInformationManager::_createStates()

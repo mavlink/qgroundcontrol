@@ -1,10 +1,15 @@
 #include "ComponentInformationCacheTest.h"
 
+#include <cstring>
+
 #include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUuid>
 
 #include "ComponentInformationCache.h"
+#include "FileFixtures.h"
 #include "UnitTest.h"
 
 ComponentInformationCacheTest::ComponentInformationCacheTest()
@@ -58,10 +63,7 @@ void ComponentInformationCacheTest::_basic_test()
     QVERIFY(QFile(_tmpFiles[0].cachedPath).exists());
     QVERIFY(!QFile(_tmpFiles[0].path).exists());
     QVERIFY(cache.access(_tmpFiles[0].cacheTag) == _tmpFiles[0].cachedPath);
-    QFile f(_tmpFiles[0].cachedPath);
-    QVERIFY(f.open(QFile::ReadOnly | QFile::Text));
-    QTextStream in(&f);
-    QVERIFY(in.readAll() == _tmpFiles[0].content);
+    QCOMPARE(TestFixtures::readFile(_tmpFiles[0].cachedPath), _tmpFiles[0].content.toUtf8());
     _cleanup();
 }
 
@@ -132,6 +134,125 @@ void ComponentInformationCacheTest::_multi_test()
         QVERIFY(cache.access(_tmpFiles[10].cacheTag) == _tmpFiles[10].cachedPath);
     }
     _cleanup();
+}
+
+namespace {
+
+/// The meta file of a cache entry, as ComponentInformationCache writes it
+struct CacheTestMeta
+{
+    uint32_t magic = 0x9a9cad0e;
+    uint32_t version = 0;
+    uint64_t accessCounter = 0;
+};
+
+}  // namespace
+
+void ComponentInformationCacheTest::_version_test_data()
+{
+    QTest::addColumn<uint>("version");
+    QTest::addColumn<bool>("kept");
+
+    // An earlier QGC keeps its entries of version 0, decompressed, in a directory of their own
+    QTest::newRow("decompressed, of an earlier QGC") << 0U << false;
+    QTest::newRow("as downloaded") << 1U << true;
+    QTest::newRow("of a later QGC") << 2U << false;
+}
+
+// An entry is kept as it was downloaded, possibly compressed, which its version says. An entry of another version is
+// removed, as an earlier QGC removes those of this one
+void ComponentInformationCacheTest::_version_test()
+{
+    QFETCH(uint, version);
+    QFETCH(bool, kept);
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const CacheTestMeta meta{.version = version};
+    QVERIFY(TestFixtures::writeFile(directory.filePath(QStringLiteral("entry.meta")),
+                                    QByteArray(reinterpret_cast<const char*>(&meta), sizeof(meta))));
+    QVERIFY(TestFixtures::writeFile(directory.filePath(QStringLiteral("entry.cache")), "content"));
+
+    if (!kept) {
+        expectLogMessage("ComponentInformation.ComponentInformationCache", QtWarningMsg,
+                         QRegularExpression("Validation failed"));
+    }
+    ComponentInformationCache cache(QDir(directory.path()), 10);
+    if (!kept) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(cache.access(QStringLiteral("entry")).isEmpty(), !kept);
+    QCOMPARE(QFile::exists(directory.filePath(QStringLiteral("entry.cache"))), kept);
+
+    // A new entry has the version of a file as it was downloaded
+    const QString downloaded = directory.filePath(QStringLiteral("downloaded.json.xz"));
+    QVERIFY(TestFixtures::writeFile(downloaded, "compressed"));
+    QVERIFY(!cache.insert(QStringLiteral("new"), downloaded).isEmpty());
+    const QByteArray newMeta = TestFixtures::readFile(directory.filePath(QStringLiteral("new.meta")));
+    CacheTestMeta written;
+    QCOMPARE(newMeta.size(), static_cast<qsizetype>(sizeof(written)));
+    std::memcpy(&written, newMeta.constData(), sizeof(written));
+    QCOMPARE(written.version, 1U);
+}
+
+void ComponentInformationCacheTest::_incomplete_entry_test_data()
+{
+    QTest::addColumn<QString>("leftover");
+
+    QTest::newRow("data without meta") << QStringLiteral("entry.cache");
+    QTest::newRow("meta without data") << QStringLiteral("entry.meta");
+}
+
+// A file left without its counterpart, as a removal of a file that is still open leaves it on Windows, is not an
+// entry: insert() replaces it rather than keep a file that access() never finds
+void ComponentInformationCacheTest::_incomplete_entry_test()
+{
+    QFETCH(QString, leftover);
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    ComponentInformationCache cache(QDir(directory.path()), 10);
+    QVERIFY(TestFixtures::writeFile(directory.filePath(leftover), "stale"));
+    QVERIFY(cache.access(QStringLiteral("entry")).isEmpty());
+
+    const QString downloaded = directory.filePath(QStringLiteral("downloaded.json"));
+    QVERIFY(TestFixtures::writeFile(downloaded, "fresh"));
+    const QString cached = cache.insert(QStringLiteral("entry"), downloaded);
+    QVERIFY(!cached.isEmpty());
+    QCOMPARE(cache.access(QStringLiteral("entry")), cached);
+    QCOMPARE(TestFixtures::readFile(cached), QByteArray("fresh"));
+}
+
+// An entry that is removed, such as one whose file cannot be read, is gone at once and no longer counts: the entries
+// that are left are kept, and evicted, as if it had never been there
+void ComponentInformationCacheTest::_remove_test()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    ComponentInformationCache cache(QDir(directory.path()), 2);
+    const auto insert = [&directory, &cache](const QString& tag) {
+        const QString downloaded = directory.filePath(tag + QStringLiteral(".json"));
+        return TestFixtures::writeFile(downloaded, tag.toUtf8()) ? cache.insert(tag, downloaded) : QString();
+    };
+    const QString first = insert(QStringLiteral("first"));
+    const QString second = insert(QStringLiteral("second"));
+    QVERIFY(!first.isEmpty());
+    QVERIFY(!second.isEmpty());
+
+    cache.remove(QStringLiteral("first"));
+    QVERIFY(cache.access(QStringLiteral("first")).isEmpty());
+    QVERIFY(!QFile::exists(first));
+    QVERIFY(!QFile::exists(directory.filePath(QStringLiteral("first.meta"))));
+
+    // Two entries again, which the cache holds
+    const QString third = insert(QStringLiteral("third"));
+    QCOMPARE(cache.access(QStringLiteral("second")), second);
+    QCOMPARE(cache.access(QStringLiteral("third")), third);
+
+    // A third one, for which the entry used least recently goes
+    QVERIFY(!insert(QStringLiteral("fourth")).isEmpty());
+    QVERIFY(cache.access(QStringLiteral("second")).isEmpty());
+    QCOMPARE(cache.access(QStringLiteral("third")), third);
 }
 
 UT_REGISTER_TEST(ComponentInformationCacheTest, TestLabel::Unit, TestLabel::Vehicle)

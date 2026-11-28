@@ -2,11 +2,13 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QQueue>
 #include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 struct OnboardLogDownloadData;
+class FTPRequest;
 class QGCOnboardLogEntry;
 class QmlObjectListModel;
 class QTimer;
@@ -124,6 +126,10 @@ private:
     void _sortEntriesByTimestamp();
 
     void _setTransport(Transport transport);
+    /// @return false if the listing could not be queued
+    bool _ftpListDirectory(const QString& path);
+    /// Ends the FTP request that waits or runs, without its completion
+    void _cancelFtpRequest();
     void _ftpStartListing();
     void _ftpListRoot();
     void _ftpListNextSubdir();
@@ -163,6 +169,7 @@ private:
     QQueue<QGCOnboardLogEntry*> _ftpDeleteQueue;
     bool _ftpDeleting = false;    ///< A selective erase is in progress
     QGCOnboardLogEntry *_ftpCurrentDownloadEntry = nullptr;
+    QPointer<FTPRequest> _ftpRequest;  ///< The listing, download or delete that waits or runs
     bool _ftpDownloadHadError = false;
     QElapsedTimer _ftpDownloadElapsed;
     size_t _ftpDownloadBytesAtLastUpdate = 0;

@@ -1,20 +1,25 @@
 ﻿#include "FirmwareUpgradeController.h"
-#include "PX4FirmwareUpgradeThread.h"
-#include "Bootloader.h"
-#include "QGCFileDownload.h"
-#include "QGCOptions.h"
-#include "QGCCorePlugin.h"
-#include "FirmwarePluginManager.h"
-#include "FirmwareUpgradeSettings.h"
-#include "SettingsManager.h"
-#include "JsonParsing.h"
-#include "LinkManager.h"
-#include "MultiVehicleManager.h"
-#include "FirmwareImage.h"
-#include "Fact.h"
-#include "QGCLoggingCategory.h"
+
+#include <algorithm>
 
 #include <QtCore/QDir>
+
+#include "Bootloader.h"
+#include "Compression.h"
+#include "Fact.h"
+#include "FirmwareImage.h"
+#include "FirmwarePluginManager.h"
+#include "FirmwareUpgradeSettings.h"
+#include "LinkManager.h"
+#include "MultiVehicleManager.h"
+#include "PX4FirmwareUpgradeThread.h"
+#include "QGCCorePlugin.h"
+#include "QGCFileDownload.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
+#include "QGCOptions.h"
+#include "SettingsManager.h"
+#include "WorkerJob.h"
 
 QGC_LOGGING_CATEGORY(FirmwareUpgradeControllerLog, "Vehicle.VehicleSetup.FirmwareUpgradeController")
 #include <QtCore/QStandardPaths>
@@ -156,10 +161,6 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     }
 
     _determinePX4StableVersion();
-
-    if (FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
-        _downloadArduPilotManifest();
-    }
 }
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
@@ -389,7 +390,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 /// @brief Begins the process of downloading the selected firmware file.
 void FirmwareUpgradeController::_downloadFirmware(void)
 {
-    Q_ASSERT(!_firmwareFilename.isEmpty());
+    if (_firmwareFilename.isEmpty()) {
+        _errorCancel(tr("No firmware file selected"));
+        return;
+    }
 
     _flashCancelled = false;
 
@@ -524,7 +528,9 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 /// Appends the specified text to the status log area in the ui
 void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        return;
+    }
 
     QString varText;
 
@@ -702,6 +708,15 @@ void FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete(bool success,
     }
 }
 
+void FirmwareUpgradeController::loadArduPilotFirmwareList()
+{
+    if (_downloadingFirmwareList || _arduPilotManifestRead ||
+        !FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        return;
+    }
+    _downloadArduPilotManifest();
+}
+
 void FirmwareUpgradeController::_downloadArduPilotManifest(void)
 {
     _downloadingFirmwareList = true;
@@ -710,8 +725,6 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::finished, downloader, &QObject::deleteLater);
     connect(downloader, &QGCFileDownload::finished, this, &FirmwareUpgradeController::_ardupilotManifestDownloadComplete);
-    // Use autoDecompress to stream-decompress directly during download
-    downloader->setAutoDecompress(true);
     if (!downloader->start(QStringLiteral("https://firmware.ardupilot.org/manifest.json.gz"))) {
         qCWarning(FirmwareUpgradeControllerLog) << "ArduPilot Manifest download did not start:" << downloader->errorString();
         downloader->deleteLater();
@@ -720,99 +733,475 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
     }
 }
 
+namespace {
+
+/// Largest size of the ArduPilot firmware manifest, decompressed. It was 92 MiB in 2026, and grows with every board
+/// and release: the limit leaves room for years of that, and keeps a damaged file from taking all memory
+constexpr qint64 kMaxArduPilotManifestBytes = 512LL * 1024 * 1024;
+
+}  // namespace
+
 void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(bool success, const QString &localFile, const QString &errorMsg)
 {
-    const auto clearDownloadState = [this]() {
-        if (_downloadingFirmwareList) {
-            _downloadingFirmwareList = false;
-            emit downloadingFirmwareListChanged(false);
-        }
-    };
-
     if (success) {
         qCDebug(FirmwareUpgradeControllerLog) << "_ardupilotManifestDownloadFinished" << localFile;
 
-        // localFile is already decompressed (autoDecompress=true streams directly to .json)
-        QString         errorString;
-        QJsonDocument   doc;
-        if (!JsonParsing::isJsonFile(localFile, doc, errorString)) {
-            qCWarning(FirmwareUpgradeControllerLog) << "Json file read failed" << errorString;
-            clearDownloadState();
-            return;
-        }
-
-        QJsonObject json =          doc.object();
-        QJsonArray  rgFirmware =    json[_manifestFirmwareJsonKey].toArray();
-
-        for (int i=0; i<rgFirmware.count(); i++) {
-            const QJsonObject& firmwareJson = rgFirmware[i].toObject();
-
-            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_manifestMavTypeJsonKey].toString());
-            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString());
-            QString                 format =                firmwareJson[_manifestFormatJsonKey].toString();
-            QString                 platform =              firmwareJson[_manifestPlatformKey].toString();
-
-            if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
-                if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
-                    continue;
-                }
-
-                _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
-                ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
-
-                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_manifestBoardIdJsonKey].toInt());
-                firmwareInfo.firmwareBuildType =    firmwareBuildType;
-                firmwareInfo.vehicleType =          firmwareVehicleType;
-                firmwareInfo.url =                  firmwareJson[_manifestUrlJsonKey].toString();
-                firmwareInfo.version =              firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
-                firmwareInfo.chibios =              format == QStringLiteral("apj");                firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
-
-                QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
-                for (int j=0; j<bootloaderArray.count(); j++) {
-                    firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
-                }
-
-                QJsonArray usbidArray = firmwareJson[_manifestUSBIDJsonKey].toArray();
-                for (int j=0; j<usbidArray.count(); j++) {
-                    QStringList vidpid = usbidArray[j].toString().split('/');
-                    QString vid = vidpid[0];
-                    QString pid = vidpid[1];
-
-                    bool ok;
-                    firmwareInfo.rgVID.append(vid.right(vid.length() - 2).toInt(&ok, 16));
-                    firmwareInfo.rgPID.append(pid.right(pid.length() - 2).toInt(&ok, 16));
-                }
-
-                QString brandName = firmwareJson[_manifestBrandNameKey].toString();
-                firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
-            }
-        }
-
-        if (_bootloaderFound) {
-            _buildAPMFirmwareNames();
-        }
-
-        clearDownloadState();
+        // The manifest is far too large to read and parse on the GUI thread. A result that is no longer wanted, of an
+        // earlier download, is dropped
+        delete _manifestJob.data();
+        const auto parse = [localFile, buildTypes = _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap,
+                            vehicleTypes = _manifestMavTypeToFirmwareVehicleTypeMap]() {
+            return _parseArduPilotManifest(localFile, buildTypes, vehicleTypes);
+        };
+        _manifestJob = QGC::runOnWorker(
+            this, parse, [this](const ArduPilotManifest& manifest) { _ardupilotManifestParsed(manifest); });
     } else if (!errorMsg.isEmpty()) {
         qCWarning(FirmwareUpgradeControllerLog) << "ArduPilot Manifest download failed" << errorMsg;
-        clearDownloadState();
+        _clearDownloadingFirmwareList();
     }
 }
 
-FirmwareUpgradeController::FirmwareBuildType_t FirmwareUpgradeController::_manifestMavFirmwareVersionTypeToFirmwareBuildType(const QString& manifestMavFirmwareVersionType)
+void FirmwareUpgradeController::_ardupilotManifestParsed(const ArduPilotManifest& manifest)
 {
-    if (_manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap.contains(manifestMavFirmwareVersionType)) {
-        return _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap[manifestMavFirmwareVersionType];
-    } else {
-        return CustomFirmware;
+    if (!manifest.errorString.isEmpty()) {
+        qCWarning(FirmwareUpgradeControllerLog) << "Json file read failed" << manifest.errorString;
+        _clearDownloadingFirmwareList();
+        return;
+    }
+
+    _rgManifestFirmwareInfo = manifest.firmware;
+    _arduPilotManifestRead = true;
+    if (_bootloaderFound) {
+        _buildAPMFirmwareNames();
+    }
+    _clearDownloadingFirmwareList();
+}
+
+void FirmwareUpgradeController::_clearDownloadingFirmwareList()
+{
+    if (_downloadingFirmwareList) {
+        _downloadingFirmwareList = false;
+        emit downloadingFirmwareListChanged(false);
     }
 }
 
-FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::_manifestMavTypeToFirmwareVehicleType(const QString& manifestMavType)
+namespace {
+
+// What the splitter of the ArduPilot manifest holds or follows at most: far more than the manifest needs
+constexpr qsizetype kMaxManifestDepth = 64;
+constexpr qsizetype kMaxManifestEntryBytes = 1024 * 1024;
+constexpr qsizetype kMaxManifestKeyBytes = 256;
+constexpr qsizetype kMaxManifestScalarBytes = 64;
+
+bool isJsonSpace(char c)
 {
-    if (_manifestMavTypeToFirmwareVehicleTypeMap.contains(manifestMavType)) {
-        return _manifestMavTypeToFirmwareVehicleTypeMap[manifestMavType];
-    } else {
-        return DefaultVehicleFirmware;
+    return (c == ' ') || (c == '\t') || (c == '\n') || (c == '\r');
+}
+
+/// Whether @a c can be part of a number or of true, false and null
+bool isJsonScalarChar(char c)
+{
+    return ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || (c == '-') ||
+           (c == '+') || (c == '.');
+}
+
+bool isHexDigit(char c)
+{
+    return ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F'));
+}
+
+}  // namespace
+
+FirmwareUpgradeController::ManifestSplitter::ManifestSplitter(ObjectHandler handler)
+    : _handler(std::move(handler))
+{}
+
+bool FirmwareUpgradeController::ManifestSplitter::_fail(const QString& error)
+{
+    if (_errorString.isEmpty()) {
+        _errorString = error;
     }
+    return false;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_failAt(const char* what, qsizetype index)
+{
+    return _fail(QStringLiteral("The firmware list is not valid JSON at byte %1: %2")
+                     .arg(_offset + index)
+                     .arg(QLatin1String(what)));
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::feed(QByteArrayView chunk)
+{
+    if (!_errorString.isEmpty()) {
+        return false;
+    }
+    // The manifest is 92 MiB, mostly strings and indentation: those are skipped in tight loops over the bytes
+    const char* const data = chunk.data();
+    const qsizetype size = chunk.size();
+    qsizetype index = 0;
+    while (index < size) {
+        if (!_inString && !_inScalar) {
+            while ((index < size) && isJsonSpace(data[index])) {
+                ++index;
+            }
+            if (index == size) {
+                break;
+            }
+        }
+        const bool read =
+            _inString ? _string(chunk, index) : (_inScalar ? _scalar(chunk, index) : _token(chunk, index));
+        if (!read) {
+            return false;
+        }
+    }
+    if (_capturing) {
+        _object.append(chunk.sliced(_captureFrom));
+        if (_object.size() > kMaxManifestEntryBytes) {
+            return _fail(QStringLiteral("An entry of the firmware list is larger than %1")
+                             .arg(QGC::bigSizeToString(static_cast<quint64>(kMaxManifestEntryBytes))));
+        }
+    }
+    _captureFrom = 0;
+    _offset += chunk.size();
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::finish()
+{
+    if (!_errorString.isEmpty()) {
+        return false;
+    }
+    if (_inString || _inScalar || !_containers.isEmpty() || (_expect != Expect::Nothing)) {
+        return _fail(QStringLiteral("The firmware list ends at byte %1, before its end").arg(_offset));
+    }
+    if (!_firmwareDone) {
+        return _fail(QStringLiteral("The manifest has no firmware list"));
+    }
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_token(QByteArrayView chunk, qsizetype& index)
+{
+    const char c = chunk.data()[index];
+    const bool valueExpected = (_expect == Expect::Value) || (_expect == Expect::ValueOrEnd);
+    switch (c) {
+        case '"':
+            if ((_expect == Expect::Key) || (_expect == Expect::KeyOrEnd)) {
+                _stringIsKey = true;
+            } else if (valueExpected && _valueStarts(c, index)) {
+                _stringIsKey = false;
+            } else {
+                return _failAt("a string where it cannot be", index);
+            }
+            _inString = true;
+            ++index;
+            return true;
+        case '{':
+        case '[':
+            if (!valueExpected || !_valueStarts(c, index)) {
+                return _failAt("a bracket where it cannot be", index);
+            }
+            return _open(c, index);
+        case '}':
+        case ']':
+            return _close(c, chunk, index);
+        case ':':
+            if (_expect != Expect::Colon) {
+                return _failAt("a colon where it cannot be", index);
+            }
+            _expect = Expect::Value;
+            ++index;
+            return true;
+        case ',':
+            if (_expect != Expect::CommaOrEnd) {
+                return _failAt("a comma where it cannot be", index);
+            }
+            _expect = (_containers.back() == '{') ? Expect::Key : Expect::Value;
+            ++index;
+            return true;
+        default:
+            break;
+    }
+    if (!isJsonScalarChar(c) || !valueExpected || !_valueStarts(c, index)) {
+        return _failAt("a character where it cannot be", index);
+    }
+    _inScalar = true;
+    _scalarText.clear();
+    return _scalar(chunk, index);
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_valueStarts(char first, qsizetype index)
+{
+    if (_containers.isEmpty() && (first != '{')) {
+        return _failAt("the manifest is not an object", index);
+    }
+    if ((_containers.size() != 1) || !_firmwareKey) {
+        return true;
+    }
+    _firmwareKey = false;
+    if (first != '[') {
+        return _failAt("the firmware list is not an array", index);
+    }
+    if (_firmwareFound) {
+        return _failAt("a second firmware list", index);
+    }
+    _firmwareFound = true;
+    _firmwareOpen = true;
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_string(QByteArrayView chunk, qsizetype& index)
+{
+    const char* const data = chunk.data();
+    const qsizetype size = chunk.size();
+    while (index < size) {
+        if ((_hexDigits == 0) && !_escape) {
+            // Skip to what ends the string or needs a look
+            const qsizetype start = index;
+            while ((index < size) && (data[index] != '"') && (data[index] != '\\') &&
+                   (static_cast<unsigned char>(data[index]) >= 0x20)) {
+                ++index;
+            }
+            if (_stringIsKey && (_key.size() <= kMaxManifestKeyBytes)) {
+                _key.append(data + start, std::min(index - start, kMaxManifestKeyBytes + 1 - _key.size()));
+            }
+            if (index == size) {
+                return true;
+            }
+        }
+        const char c = data[index];
+        if (_hexDigits > 0) {
+            if (!isHexDigit(c)) {
+                return _failAt("an escape that is not four hex digits", index);
+            }
+            --_hexDigits;
+        } else if (_escape) {
+            _escape = false;
+            if (c == 'u') {
+                _hexDigits = 4;
+            } else if (!QByteArrayView("\"\\/bfnrt").contains(c)) {
+                return _failAt("an escape that JSON does not have", index);
+            }
+        } else if (c == '\\') {
+            _escape = true;
+        } else if (c == '"') {
+            ++index;
+            _inString = false;
+            return _endString();
+        } else {
+            return _failAt("a control character in a string", index);
+        }
+        if (_stringIsKey && (_key.size() <= kMaxManifestKeyBytes)) {
+            _key.append(c);
+        }
+        ++index;
+    }
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_endString()
+{
+    if (!_stringIsKey) {
+        _valueDone();
+        return true;
+    }
+    if (_containers.size() == 1) {
+        QString key;
+        if (_key.size() > kMaxManifestKeyBytes) {
+            key.clear();
+        } else if (_key.contains('\\')) {
+            key = QJsonDocument::fromJson("[\"" + _key + "\"]").array().at(0).toString();
+        } else {
+            key = QString::fromUtf8(_key);
+        }
+        _firmwareKey = (key == QLatin1String(_manifestFirmwareJsonKey));
+    }
+    _key.clear();
+    _expect = Expect::Colon;
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_scalar(QByteArrayView chunk, qsizetype& index)
+{
+    const char* const data = chunk.data();
+    const qsizetype start = index;
+    while ((index < chunk.size()) && isJsonScalarChar(data[index])) {
+        ++index;
+    }
+    if (_scalarText.size() <= kMaxManifestScalarBytes) {
+        _scalarText.append(data + start, std::min(index - start, kMaxManifestScalarBytes + 1 - _scalarText.size()));
+    }
+    if (index == chunk.size()) {
+        return true;
+    }
+    // What ends the number or the literal is read as a token next
+    _inScalar = false;
+    if (_scalarText.size() > kMaxManifestScalarBytes) {
+        return _failAt("a number that is too long", index);
+    }
+    const char first = _scalarText.at(0);
+    const bool literal = (_scalarText == "true") || (_scalarText == "false") || (_scalarText == "null");
+    const bool number =
+        ((first == '-') || ((first >= '0') && (first <= '9'))) &&
+        std::all_of(_scalarText.cbegin(), _scalarText.cend(), [](char c) {
+            return ((c >= '0') && (c <= '9')) || (c == '-') || (c == '+') || (c == '.') || (c == 'e') || (c == 'E');
+        });
+    if (!literal && !number) {
+        return _failAt("a value that is not one", index);
+    }
+    _valueDone();
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_open(char bracket, qsizetype& index)
+{
+    if (_containers.size() >= kMaxManifestDepth) {
+        return _failAt("nested too deeply", index);
+    }
+    if ((bracket == '{') && _firmwareOpen && (_containers.size() == 2)) {
+        _capturing = true;
+        _captureFrom = index;
+        _object.clear();
+    }
+    _containers.append(bracket);
+    _expect = (bracket == '{') ? Expect::KeyOrEnd : Expect::ValueOrEnd;
+    ++index;
+    return true;
+}
+
+bool FirmwareUpgradeController::ManifestSplitter::_close(char bracket, QByteArrayView chunk, qsizetype& index)
+{
+    const bool object = (bracket == '}');
+    const bool closes = object ? ((_expect == Expect::KeyOrEnd) || (_expect == Expect::CommaOrEnd))
+                               : ((_expect == Expect::ValueOrEnd) || (_expect == Expect::CommaOrEnd));
+    if (!closes || _containers.isEmpty() || (_containers.back() != (object ? '{' : '['))) {
+        return _failAt("a bracket that closes nothing open", index);
+    }
+    _containers.chop(1);
+    if (_capturing && (_containers.size() == 2)) {
+        _capturing = false;
+        const QByteArrayView end = chunk.sliced(_captureFrom, index + 1 - _captureFrom);
+        bool taken = false;
+        if (_object.isEmpty()) {
+            taken = _handler(end);
+        } else {
+            _object.append(end);
+            taken = (_object.size() <= kMaxManifestEntryBytes) && _handler(_object);
+            _object.clear();
+        }
+        if (!taken) {
+            return _failAt("an entry of the firmware list that cannot be read", index);
+        }
+    }
+    if (_firmwareOpen && (_containers.size() == 1)) {
+        _firmwareOpen = false;
+        _firmwareDone = true;
+    }
+    ++index;
+    _valueDone();
+    return true;
+}
+
+void FirmwareUpgradeController::ManifestSplitter::_valueDone()
+{
+    _expect = _containers.isEmpty() ? Expect::Nothing : Expect::CommaOrEnd;
+}
+
+FirmwareUpgradeController::ArduPilotManifest FirmwareUpgradeController::_parseArduPilotManifest(
+    const QString& localFile, const QMap<QString, FirmwareBuildType_t>& buildTypes,
+    const QMap<QString, FirmwareVehicleType_t>& vehicleTypes)
+{
+    ArduPilotManifest manifest;
+    QList<ManifestFirmwareInfo_t> firmware;
+    QString entryError;
+    ManifestSplitter splitter([&](QByteArrayView object) {
+        // QGC keeps an entry only if its format is "apj" or "px4". As text, such an entry holds either string, or an
+        // escape that may spell it: the others are not parsed, which is most of the manifest
+        if (!object.contains("\"apj\"") && !object.contains("\"px4\"") && !object.contains("\\u")) {
+            return true;
+        }
+        QJsonParseError parseError;
+        const QJsonDocument document = QJsonDocument::fromJson(object.toByteArray(), &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            entryError =
+                QStringLiteral("An entry of the firmware list is not valid JSON: %1").arg(parseError.errorString());
+            return false;
+        }
+        if (std::optional<ManifestFirmwareInfo_t> info =
+                _manifestFirmwareInfo(document.object(), buildTypes, vehicleTypes)) {
+            firmware.append(std::move(*info));
+        }
+        return true;
+    });
+
+    // Compressed with gzip. A manifest that is cut or damaged fails here, after entries were taken: they are dropped
+    const Compression::Outcome read = Compression::decompressFileToSink(
+        localFile, kMaxArduPilotManifestBytes, [&splitter](QByteArrayView chunk) { return splitter.feed(chunk); });
+    if (!read || !splitter.finish()) {
+        if (!entryError.isEmpty()) {
+            manifest.errorString = entryError;
+        } else if (!read && (read.error != Compression::Error::Cancelled)) {
+            manifest.errorString = read.description();
+        } else {
+            manifest.errorString = splitter.errorString();
+        }
+        return manifest;
+    }
+
+    manifest.firmware = std::move(firmware);
+    return manifest;
+}
+
+std::optional<FirmwareUpgradeController::ManifestFirmwareInfo_t> FirmwareUpgradeController::_manifestFirmwareInfo(
+    const QJsonObject& firmwareJson, const QMap<QString, FirmwareBuildType_t>& buildTypes,
+    const QMap<QString, FirmwareVehicleType_t>& vehicleTypes)
+{
+    FirmwareVehicleType_t firmwareVehicleType =
+        vehicleTypes.value(firmwareJson[_manifestMavTypeJsonKey].toString(), DefaultVehicleFirmware);
+    FirmwareBuildType_t firmwareBuildType =
+        buildTypes.value(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString(), CustomFirmware);
+    QString format = firmwareJson[_manifestFormatJsonKey].toString();
+    QString platform = firmwareJson[_manifestPlatformKey].toString();
+
+    if (firmwareVehicleType == DefaultVehicleFirmware || firmwareBuildType == CustomFirmware ||
+        (format != QStringLiteral("apj") && format != QStringLiteral("px4"))) {
+        return std::nullopt;
+    }
+    if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
+        return std::nullopt;
+    }
+
+    ManifestFirmwareInfo_t firmwareInfo;
+    firmwareInfo.boardId = static_cast<uint32_t>(firmwareJson[_manifestBoardIdJsonKey].toInt());
+    firmwareInfo.firmwareBuildType = firmwareBuildType;
+    firmwareInfo.vehicleType = firmwareVehicleType;
+    firmwareInfo.url = firmwareJson[_manifestUrlJsonKey].toString();
+    firmwareInfo.version = firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
+    firmwareInfo.chibios = format == QStringLiteral("apj");
+    firmwareInfo.fmuv2 = platform.contains(QStringLiteral("fmuv2"));
+
+    QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
+    for (int j = 0; j < bootloaderArray.count(); j++) {
+        firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
+    }
+
+    QJsonArray usbidArray = firmwareJson[_manifestUSBIDJsonKey].toArray();
+    for (int j = 0; j < usbidArray.count(); j++) {
+        QStringList vidpid = usbidArray[j].toString().split('/');
+        if (vidpid.size() < 2) {
+            continue;
+        }
+        QString vid = vidpid[0];
+        QString pid = vidpid[1];
+
+        bool ok;
+        firmwareInfo.rgVID.append(vid.right(vid.length() - 2).toInt(&ok, 16));
+        firmwareInfo.rgPID.append(pid.right(pid.length() - 2).toInt(&ok, 16));
+    }
+
+    QString brandName = firmwareJson[_manifestBrandNameKey].toString();
+    firmwareInfo.friendlyName =
+        QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName, firmwareInfo.version);
+    return firmwareInfo;
 }

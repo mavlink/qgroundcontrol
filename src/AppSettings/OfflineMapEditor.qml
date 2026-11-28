@@ -51,7 +51,11 @@ FlightMap {
 
     Connections {
         target: QGroundControl.mapEngineManager
-        function onErrorMessageChanged() { errorDialogFactory.open() }
+        function onErrorMessageChanged() {
+            if (QGroundControl.mapEngineManager.errorMessage) {
+                errorDialogFactory.open()
+            }
+        }
     }
 
     function handleChanges() {

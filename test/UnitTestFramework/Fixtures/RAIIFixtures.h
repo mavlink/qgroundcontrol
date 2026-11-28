@@ -17,6 +17,7 @@
 
 #include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
+#include "ProcessFixtures.h"
 
 class RunGuard;
 class Fact;
@@ -185,51 +186,6 @@ public:
 
 private:
     TempFileFixture _file;
-};
-
-// ============================================================================
-// EnvVarFixture - RAII guard for environment variable save/restore
-// ============================================================================
-
-/// RAII guard that saves an environment variable on construction and restores it on destruction.
-class EnvVarFixture
-{
-public:
-    explicit EnvVarFixture(const char* name)
-        : _name(name)
-        , _wasSet(qEnvironmentVariableIsSet(name))
-    {
-        if (_wasSet) {
-            _value = qgetenv(name);
-        }
-    }
-
-    ~EnvVarFixture()
-    {
-        if (!_name) return; // moved-from
-        if (_wasSet) {
-            qputenv(_name, _value);
-        } else {
-            qunsetenv(_name);
-        }
-    }
-
-    EnvVarFixture(EnvVarFixture&& other) noexcept
-        : _name(other._name)
-        , _value(std::move(other._value))
-        , _wasSet(other._wasSet)
-    {
-        other._name = nullptr;
-    }
-
-    EnvVarFixture(const EnvVarFixture&) = delete;
-    EnvVarFixture& operator=(const EnvVarFixture&) = delete;
-    EnvVarFixture& operator=(EnvVarFixture&&) = delete;
-
-private:
-    const char* _name;
-    QByteArray _value;
-    bool _wasSet;
 };
 
 // ============================================================================

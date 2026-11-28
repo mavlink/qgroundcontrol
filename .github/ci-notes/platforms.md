@@ -103,7 +103,11 @@ How CI runs, retries, and reports the application tests is described in
   arguments that C++ gave it to each of its native callbacks, and answers calls about a port that does
   not exist.
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
-  label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
+  label, and is the one leg that builds the optional compression formats: the BZip2, LZ4, Zstandard
+  and legacy lzma decoders and the 7z and TAR archive readers (`QGC_ENABLE_BZIP2`, `QGC_ENABLE_LZ4`,
+  `QGC_ENABLE_ZSTD`, `QGC_ENABLE_LZMA`, `QGC_ENABLE_7ZIP`, `QGC_ENABLE_TAR`); the coverage leg tests
+  how a build without them refuses those formats.
+  Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
   manual Code Analysis dispatch.
 - **Coverage**: manual Linux coverage dispatches also run the normally excluded `Network|Flaky`
@@ -111,10 +115,12 @@ How CI runs, retries, and reports the application tests is described in
   still fail the job.
 - Reproduce either Linux lane with `cmake --workflow --preset Linux-sanitizers` or
   `--preset Linux-coverage` (`just coverage` uses `Linux-coverage`).
-- **Portable tests**: Windows x64 and the macOS Release leg build and run ten standalone portable
-  utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). They share test
-  bodies with the full harness and do not enable test hooks in the packaged application. There is
-  no separate Extended Tests workflow.
+- **Portable tests**: Windows x64 and the macOS Release leg build and run seventeen standalone portable
+  utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). Fifteen share test
+  bodies with the full harness, among them the three Compression suites, and do not enable test hooks
+  in the packaged application; one runs the Compression fuzz harness on its fixed inputs, and one, in
+  five CTest entries, checks that the portable harness fails a test that misbehaves.
+  There is no separate Extended Tests workflow.
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
   (`run-unit-tests`' `tests-regex`
@@ -301,10 +307,14 @@ How CI runs, retries, and reports the application tests is described in
   smoke-tests, and always uninstalls the package. `attest_helper.py checksum` requires and
   verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
 - Pushes and manual runs generate CycloneDX SBOMs for CPM dependencies and the builder image and
-  scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. CPM metadata is read
-  inside the builder, with the build tree mounted where it was built, so container-local
-  dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX snapshot to the
-  dependency graph.
+  scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. Grype matches a CPM
+  library only by the CPE that `generate_cpm_sbom.py` writes from its `NVD_PRODUCTS` table (NVD's
+  vendor and product, such as `tukaani:xz` for liblzma), and only for a release version, not a
+  commit, and for GStreamer only when the build downloaded the official SDK: NVD's version ranges
+  do not know the fixes a distribution backports, which the builder image scan covers. CPM
+  metadata is read inside the builder, with the build tree mounted where it was built, so
+  container-local dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX
+  snapshot to the dependency graph.
 - The planner gives every leg the builder image's push target (`resolve_push_target()` in
   `qgc_tools/docker_variants.py`): upstream pushes publish master and `Stable*` builds to GHCR and
   release tags to Docker Hub; pull requests, forks, and manual runs push nothing. The build,

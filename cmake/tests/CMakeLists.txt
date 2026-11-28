@@ -38,6 +38,15 @@ qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid
 qgc_add_cmake_contract_test(QmlCodegenConfigureListOutputs qml-codegen-configure-list-outputs)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
+qgc_add_cmake_contract_test(LibArchiveDecodersPresent libarchive-decoders-present)
+qgc_add_cmake_contract_test(LibArchiveDecodersUnbuildable libarchive-decoders-unbuildable)
+qgc_add_cmake_contract_test(LibArchiveDecodersMixed libarchive-decoders-mixed)
+# A check that cannot be built warns, and lets the configure go on
+set_tests_properties(
+    CMake.LibArchiveDecodersPresent CMake.LibArchiveDecodersMixed
+    PROPERTIES FAIL_REGULAR_EXPRESSION "cannot check that"
+)
+set_tests_properties(CMake.LibArchiveDecodersUnbuildable PROPERTIES PASS_REGULAR_EXPRESSION "cannot check that")
 
 qgc_add_expected_failure_test(
     NAME CMake.CustomDirEscape
@@ -52,6 +61,17 @@ add_test(
 )
 set_tests_properties(
     CMake.DownloadHelper
+    PROPERTIES
+        LABELS "CMake;Unit"
+        FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
+)
+
+add_test(
+    NAME CMake.BundledDecoderExports COMMAND "${CMAKE_COMMAND}" -P
+                                             "${CMAKE_CURRENT_SOURCE_DIR}/test_bundled_decoder_exports.cmake"
+)
+set_tests_properties(
+    CMake.BundledDecoderExports
     PROPERTIES
         LABELS "CMake;Unit"
         FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
@@ -93,7 +113,9 @@ set(_qgc_expected_failure_cases
     "HelpersCpmInvalidName|helpers-cpm-invalid-name|exactly one valid CPM package name is required"
     "HelpersJsonUnknownArgument|helpers-json-unknown-argument|unknown arguments"
     "HelpersJsonEscapedPattern|helpers-json-escaped-pattern|PATTERN must remain under the current source directory"
+    "HelpersLicenseMissingFile|helpers-license-missing-file|missing/LICENSE does not exist"
     "PythonVenvMissingUv|python-venv-missing-uv|uv was not found"
+    "LibArchiveDecodersMissing|libarchive-decoders-missing|built without zlib or liblzma"
 )
 # <test name>|<ModuleContracts TEST_CASE>|<expected diagnostic>
 foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)
@@ -109,6 +131,16 @@ foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)
              "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${_qgc_test_case}"
     )
 endforeach()
+
+add_test(
+    NAME CMake.HelpersInstallLicense
+    COMMAND
+        "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
+        "-DFIXTURE_SOURCE_DIR=${_qgc_cmake_fixture_source}"
+        "-DFIXTURE_BINARY_DIR=${_qgc_cmake_fixture_root}/HelpersInstallLicense" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_install_license_test.cmake"
+)
+set_tests_properties(CMake.HelpersInstallLicense PROPERTIES LABELS "CMake;Unit")
 
 add_test(
     NAME CMake.QGCTestMultiConfig

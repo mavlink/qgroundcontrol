@@ -1,17 +1,4 @@
 #include "OnboardLogController.h"
-#include "AppSettings.h"
-#include "FTPManager.h"
-#include "OnboardLogEntry.h"
-#include "MAVLinkLib.h"
-#include "MAVLinkProtocol.h"
-#include "MultiVehicleManager.h"
-#include "ParameterManager.h"
-#include "QGCFormat.h"
-#include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
 
 #include <algorithm>
 
@@ -19,6 +6,21 @@
 #include <QtCore/QDir>
 #include <QtCore/QTimeZone>
 #include <QtCore/QTimer>
+
+#include "AppSettings.h"
+#include "FTPManager.h"
+#include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
+#include "OnboardLogEntry.h"
+#include "ParameterManager.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogController")
 
@@ -184,11 +186,7 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
         (void) disconnect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
         (void) disconnect(_vehicle, &Vehicle::armedChanged, this, &OnboardLogController::_vehicleArmedChanged);
 
-        FTPManager *const ftp = _vehicle->ftpManager();
-        (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
-        (void) disconnect(ftp, &FTPManager::downloadComplete,      this, &OnboardLogController::_ftpDownloadComplete);
-        (void) disconnect(ftp, &FTPManager::commandProgress,       this, &OnboardLogController::_ftpDownloadProgress);
-        (void) disconnect(ftp, &FTPManager::deleteComplete,        this, &OnboardLogController::_ftpDeleteComplete);
+        _cancelFtpRequest();
 
         _ftpListState = FtpListState::Idle;
         _ftpDirsToList.clear();
@@ -208,12 +206,6 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
         (void) connect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
         (void) connect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
         (void) connect(_vehicle, &Vehicle::armedChanged, this, &OnboardLogController::_vehicleArmedChanged);
-
-        FTPManager *const ftp = _vehicle->ftpManager();
-        (void) connect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
-        (void) connect(ftp, &FTPManager::downloadComplete,      this, &OnboardLogController::_ftpDownloadComplete);
-        (void) connect(ftp, &FTPManager::commandProgress,       this, &OnboardLogController::_ftpDownloadProgress);
-        (void) connect(ftp, &FTPManager::deleteComplete,        this, &OnboardLogController::_ftpDeleteComplete);
     }
 }
 
@@ -574,11 +566,9 @@ void OnboardLogController::cancel()
     if (_transport == Transport::Ftp) {
         if (_vehicle) {
             if (_requestingLogEntries) {
-                // Idle first: cancelListDirectory() completes synchronously and the abort
-                // completion must not start the fallback-root listing
                 _ftpListState = FtpListState::Idle;
                 _ftpDirsToList.clear();
-                _vehicle->ftpManager()->cancelListDirectory();
+                _cancelFtpRequest();
                 _setListing(false);
             }
 
@@ -591,13 +581,12 @@ void OnboardLogController::cancel()
             }
 
             if (_downloadingLogs) {
-                // cancelDownload completes synchronously; detach the entry first so it is not stamped as an error
                 if (_ftpCurrentDownloadEntry) {
                     _ftpCurrentDownloadEntry->setStatus(tr("Canceled"));
                     _ftpCurrentDownloadEntry = nullptr;
                 }
                 _ftpDownloadQueue.clear();
-                _vehicle->ftpManager()->cancelDownload();
+                _cancelFtpRequest();
             }
         }
     } else {
@@ -839,7 +828,10 @@ void OnboardLogController::_ftpDeleteNext()
 
     qCDebug(OnboardLogControllerLog) << "ftp: deleting" << entry->ftpPath();
 
-    if (!_vehicle->ftpManager()->deleteFile(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath())) {
+    _ftpRequest = _vehicle->ftpManager()->deleteFile(
+        this, MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(),
+        [this](const QString& file, const QString& errorMsg) { _ftpDeleteComplete(file, errorMsg); });
+    if (!_ftpRequest) {
         qCWarning(OnboardLogControllerLog) << "ftp: failed to start delete for" << entry->ftpPath();
         entry->setStatus(tr("Error"));
         _ftpDeleteNext();
@@ -1006,9 +998,24 @@ void OnboardLogController::_ftpListRoot()
 
     qCDebug(OnboardLogControllerLog) << "ftp: listing root" << _ftpLogRoot;
 
-    if (!_vehicle->ftpManager()->listDirectory(MAV_COMP_ID_AUTOPILOT1, _ftpLogRoot)) {
+    if (!_ftpListDirectory(_ftpLogRoot)) {
         qCWarning(OnboardLogControllerLog) << "ftp: failed to start root listing for" << _ftpLogRoot;
         _ftpFallbackToMessages();
+    }
+}
+
+bool OnboardLogController::_ftpListDirectory(const QString& path)
+{
+    _ftpRequest = _vehicle->ftpManager()->listDirectory(
+        this, MAV_COMP_ID_AUTOPILOT1, path,
+        [this](const QStringList& dirList, const QString& errorMsg) { _ftpListDirComplete(dirList, errorMsg); });
+    return !_ftpRequest.isNull();
+}
+
+void OnboardLogController::_cancelFtpRequest()
+{
+    if (_ftpRequest) {
+        _ftpRequest->cancel();
     }
 }
 
@@ -1177,7 +1184,7 @@ void OnboardLogController::_ftpListNextSubdir()
 
     qCDebug(OnboardLogControllerLog) << "ftp: listing subdir" << path;
 
-    if (!_vehicle->ftpManager()->listDirectory(MAV_COMP_ID_AUTOPILOT1, path)) {
+    if (!_ftpListDirectory(path)) {
         qCWarning(OnboardLogControllerLog) << "ftp: failed to list subdir" << path;
         _ftpDirsToList.removeFirst();
         _ftpListNextSubdir();
@@ -1262,13 +1269,19 @@ void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
 
     entry->setStatus(tr("Downloading"));
 
-    // Save under the remote log file name
-    QString localFilename = entry->ftpPath().section(QLatin1Char('/'), -1);
+    // Save under the remote log file name, as FTPManager would take it from the path, so that the check for an
+    // existing file below is on the file that is written. A name that FTPManager would refuse gets one of our own.
+    const QString extension = entry->ftpPath().endsWith(QStringLiteral(".bin"), Qt::CaseInsensitive)
+                                  ? QStringLiteral(".bin")
+                                  : QStringLiteral(".ulg");
+    const QString fallbackBase = QStringLiteral("log_") + QString::number(entry->id());
+    QString localFilename = QGCFileHelper::localFileName(entry->ftpPath());
     if (localFilename.isEmpty()) {
-        localFilename = QStringLiteral("log_") + QString::number(entry->id()) + QStringLiteral(".ulg");
+        localFilename = fallbackBase + extension;
     }
 
-    if (QFile::exists(_downloadPath + localFilename)) {
+    const QDir downloadDir(_downloadPath);
+    if (QFile::exists(downloadDir.filePath(localFilename))) {
         const int dotIdx = localFilename.lastIndexOf(QLatin1Char('.'));
         const QString base = (dotIdx > 0) ? localFilename.left(dotIdx) : localFilename;
         const QString ext = (dotIdx > 0) ? localFilename.mid(dotIdx) : QString();
@@ -1276,12 +1289,22 @@ void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
         do {
             numDups++;
             localFilename = base + QStringLiteral("_") + QString::number(numDups) + ext;
-        } while (QFile::exists(_downloadPath + localFilename));
+            // The suffix can make a long name too long
+            if (QGCFileHelper::localFileName(localFilename) != localFilename) {
+                localFilename = fallbackBase + QStringLiteral("_") + QString::number(numDups) + extension;
+            }
+        } while (QFile::exists(downloadDir.filePath(localFilename)));
     }
 
-    qCDebug(OnboardLogControllerLog) << "ftp: downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
+    qCDebug(OnboardLogControllerLog) << "ftp: downloading" << entry->ftpPath() << "to"
+                                     << downloadDir.filePath(localFilename);
 
-    if (!_vehicle->ftpManager()->download(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, localFilename, true)) {
+    _ftpRequest = _vehicle->ftpManager()->download(
+        this, MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, {.fileName = localFilename},
+        [this](const QString& file, const QString& errorMsg) { _ftpDownloadComplete(file, errorMsg); });
+    if (_ftpRequest) {
+        (void) connect(_ftpRequest, &FTPRequest::progressChanged, this, &OnboardLogController::_ftpDownloadProgress);
+    } else {
         qCWarning(OnboardLogControllerLog) << "ftp: failed to start download for" << entry->ftpPath();
         entry->setStatus(tr("Error"));
         _ftpCurrentDownloadEntry = nullptr;

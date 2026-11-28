@@ -1,8 +1,5 @@
 #include "FTPController.h"
 
-#include "QGCArchiveModel.h"
-#include "QGCCompression.h"
-#include "QGCCompressionJob.h"
 #include "FTPManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCFileHelper.h"
@@ -18,18 +15,11 @@ QGC_LOGGING_CATEGORY(FTPControllerLog, "Vehicle.FTPController")
 
 FTPController::FTPController(QObject *parent)
     : QObject(parent)
-    , _vehicle(MultiVehicleManager::instance()->activeVehicle())
-    , _ftpManager(_vehicle->ftpManager())
-    , _archiveModel(new QGCArchiveModel(this))
 {
-    connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::_handleDownloadComplete);
-    connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::downloadComplete);
-    connect(_ftpManager, &FTPManager::uploadComplete, this, &FTPController::_handleUploadComplete);
-    connect(_ftpManager, &FTPManager::uploadComplete, this, &FTPController::uploadComplete);
-    connect(_ftpManager, &FTPManager::listDirectoryComplete, this, &FTPController::_handleDirectoryComplete);
-    connect(_ftpManager, &FTPManager::commandProgress, this, &FTPController::_handleCommandProgress);
-    connect(_ftpManager, &FTPManager::deleteComplete, this, &FTPController::_handleDeleteComplete);
-    connect(_ftpManager, &FTPManager::deleteComplete, this, &FTPController::deleteComplete);
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (vehicle) {
+        _ftpManager = vehicle->ftpManager();
+    }
 }
 
 bool FTPController::listDirectory(const QString &uri, int componentId)
@@ -52,7 +42,12 @@ bool FTPController::listDirectory(const QString &uri, int componentId)
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->listDirectory(compId, uri)) {
+    if (_ftpManager) {
+        _request = _ftpManager->listDirectory(
+            this, compId, uri,
+            [this](const QStringList& entries, const QString& error) { _handleDirectoryComplete(entries, error); });
+    }
+    if (!_request) {
         qCWarning(FTPControllerLog) << "Failed to start list operation for" << uri;
         _setErrorString(tr("Failed to list %1").arg(uri));
         _currentPath = previousPath;
@@ -93,9 +88,18 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->download(compId, uri, absoluteLocalDir, fileName)) {
+    QString refusal;
+    if (_ftpManager) {
+        _request = _ftpManager->download(
+            this, compId, uri, absoluteLocalDir, {.fileName = fileName},
+            [this](const QString& filePath, const QString& error) { _handleDownloadComplete(filePath, error); },
+            &refusal);
+    }
+    if (_request) {
+        (void) connect(_request, &FTPRequest::progressChanged, this, &FTPController::_handleCommandProgress);
+    } else {
         qCWarning(FTPControllerLog) << "Failed to start download" << uri << absoluteLocalDir;
-        const QString error = tr("Failed to download %1").arg(uri);
+        const QString error = refusal.isEmpty() ? tr("Failed to download %1").arg(uri) : refusal;
         _setErrorString(error);
         _setBusy(false);
         _clearOperation();
@@ -133,7 +137,14 @@ bool FTPController::uploadFile(const QString &localFile, const QString &uri, int
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->upload(compId, uri, sourceInfo.absoluteFilePath())) {
+    if (_ftpManager) {
+        _request = _ftpManager->upload(
+            this, compId, uri, sourceInfo.absoluteFilePath(),
+            [this](const QString& remotePath, const QString& error) { _handleUploadComplete(remotePath, error); });
+    }
+    if (_request) {
+        (void) connect(_request, &FTPRequest::progressChanged, this, &FTPController::_handleCommandProgress);
+    } else {
         qCWarning(FTPControllerLog) << "Failed to start upload" << sourceInfo.absoluteFilePath() << uri;
         const QString error = tr("Failed to upload %1").arg(sourceInfo.fileName());
         _setErrorString(error);
@@ -160,7 +171,12 @@ bool FTPController::deleteFile(const QString &uri, int componentId)
     _setOperation(Operation::Delete);
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->deleteFile(compId, uri)) {
+    if (_ftpManager) {
+        _request = _ftpManager->deleteFile(this, compId, uri, [this](const QString& remotePath, const QString& error) {
+            _handleDeleteComplete(remotePath, error);
+        });
+    }
+    if (!_request) {
         qCWarning(FTPControllerLog) << "Failed to start delete" << uri;
         const QString error = tr("Failed to delete %1").arg(uri);
         _setErrorString(error);
@@ -175,18 +191,24 @@ bool FTPController::deleteFile(const QString &uri, int componentId)
 
 void FTPController::cancelActiveOperation()
 {
+    if (_request) {
+        _request->cancel();
+    }
+
+    // A cancelled request calls nothing back: it ends here, as an aborted one did
+    const QString error = tr("Aborted");
     switch (_operation) {
     case Operation::Download:
-        _ftpManager->cancelDownload();
+        _handleDownloadComplete(QString(), error);
         break;
     case Operation::Upload:
-        _ftpManager->cancelUpload();
+        _handleUploadComplete(QString(), error);
         break;
     case Operation::List:
-        _ftpManager->cancelListDirectory();
+        _handleDirectoryComplete(QStringList(), error);
         break;
     case Operation::Delete:
-        _ftpManager->cancelDelete();
+        _handleDeleteComplete(QString(), error);
         break;
     case Operation::None:
         break;
@@ -204,18 +226,17 @@ void FTPController::_handleDownloadComplete(const QString &filePath, const QStri
     if (error.isEmpty()) {
         if (!filePath.isEmpty()) {
             _lastDownloadFile = filePath;
-            _lastDownloadIsArchive = QGCCompression::isArchiveFile(filePath);
             emit lastDownloadFileChanged();
         }
         _setErrorString(QString());
     } else {
         _setErrorString(error);
         _lastDownloadFile.clear();
-        _lastDownloadIsArchive = false;
         emit lastDownloadFileChanged();
     }
 
     _clearOperation();
+    emit downloadComplete(filePath, error);
 }
 
 void FTPController::_handleUploadComplete(const QString &remotePath, const QString &error)
@@ -237,6 +258,7 @@ void FTPController::_handleUploadComplete(const QString &remotePath, const QStri
     }
 
     _clearOperation();
+    emit uploadComplete(remotePath, error);
 }
 
 void FTPController::_handleDirectoryComplete(const QStringList &entries, const QString &error)
@@ -263,8 +285,6 @@ void FTPController::_handleDirectoryComplete(const QStringList &entries, const Q
 
 void FTPController::_handleDeleteComplete(const QString &remotePath, const QString &error)
 {
-    Q_UNUSED(remotePath)
-
     if (_operation != Operation::Delete) {
         return;
     }
@@ -278,6 +298,7 @@ void FTPController::_handleDeleteComplete(const QString &remotePath, const QStri
     }
 
     _clearOperation();
+    emit deleteComplete(remotePath, error);
 }
 
 void FTPController::_handleCommandProgress(float value)
@@ -344,106 +365,4 @@ uint8_t FTPController::_componentIdForRequest(int componentId) const
     }
 
     return static_cast<uint8_t>(componentId);
-}
-
-bool FTPController::browseArchive(const QString &archivePath)
-{
-    if (archivePath.isEmpty()) {
-        _setErrorString(tr("No archive path specified"));
-        return false;
-    }
-
-    if (!QFile::exists(archivePath)) {
-        _setErrorString(tr("Archive file not found: %1").arg(archivePath));
-        return false;
-    }
-
-    if (!QGCCompression::isArchiveFile(archivePath)) {
-        _setErrorString(tr("Not a supported archive format: %1").arg(archivePath));
-        return false;
-    }
-
-    _archiveModel->setArchivePath(archivePath);
-    _setErrorString(QString());
-    return true;
-}
-
-bool FTPController::extractArchive(const QString &archivePath, const QString &outputDir)
-{
-    if (_extracting) {
-        _setErrorString(tr("Extraction already in progress"));
-        return false;
-    }
-
-    if (archivePath.isEmpty()) {
-        _setErrorString(tr("No archive path specified"));
-        return false;
-    }
-
-    if (!QFile::exists(archivePath)) {
-        _setErrorString(tr("Archive file not found: %1").arg(archivePath));
-        return false;
-    }
-
-    QString targetDir = outputDir;
-    if (targetDir.isEmpty()) {
-        targetDir = QFileInfo(archivePath).absolutePath();
-    }
-
-    if (!QGCFileHelper::ensureDirectoryExists(targetDir)) {
-        _setErrorString(tr("Could not create output directory: %1").arg(targetDir));
-        return false;
-    }
-
-    _extractionOutputDir = targetDir;
-
-    if (_extractionJob == nullptr) {
-        _extractionJob = new QGCCompressionJob(this);
-        connect(_extractionJob, &QGCCompressionJob::progressChanged,
-                this, &FTPController::_handleExtractionProgress);
-        connect(_extractionJob, &QGCCompressionJob::finished,
-                this, &FTPController::_handleExtractionFinished);
-    }
-
-    _extracting = true;
-    _extractionProgress = 0.0F;
-    emit extractingChanged();
-    emit extractionProgressChanged();
-
-    _extractionJob->extractArchive(archivePath, targetDir);
-    return true;
-}
-
-void FTPController::cancelExtraction()
-{
-    if (_extractionJob != nullptr && _extracting) {
-        _extractionJob->cancel();
-    }
-}
-
-void FTPController::_handleExtractionProgress(qreal progress)
-{
-    const auto newProgress = static_cast<float>(progress);
-    if (std::fabs(_extractionProgress - newProgress) > std::numeric_limits<float>::epsilon()) {
-        _extractionProgress = newProgress;
-        emit extractionProgressChanged();
-    }
-}
-
-void FTPController::_handleExtractionFinished(bool success)
-{
-    _extracting = false;
-    emit extractingChanged();
-
-    if (success) {
-        _setErrorString(QString());
-        emit extractionComplete(_extractionOutputDir, QString());
-    } else {
-        const QString error = _extractionJob != nullptr ? _extractionJob->errorString() : tr("Extraction failed");
-        _setErrorString(error);
-        emit extractionComplete(QString(), error);
-    }
-
-    _extractionProgress = 0.0F;
-    emit extractionProgressChanged();
 }

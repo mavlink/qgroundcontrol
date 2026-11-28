@@ -10,12 +10,14 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "FileFixtures.h"
 #include "GeoFenceController.h"
 #include "MissionController.h"
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
 #include "PlanMasterController.h"
+#include "QGCFormat.h"
 #include "QGCMapCircle.h"
 #include "QGCMapPolygon.h"
 #include "QGroundControlQmlGlobal.h"
@@ -406,6 +408,74 @@ void PlanMasterControllerTest::_testFailedLoadClearsFileAssociation()
         QVERIFY2(_masterController->currentPlanFile().isEmpty(), qPrintable(context));
         QVERIFY2(_masterController->currentPlanFileName().isEmpty(), qPrintable(context));
     }
+}
+
+void PlanMasterControllerTest::_testPlanFileReadAsIs_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<bool>("overLimit");
+    QTest::addColumn<QString>("refusal");
+
+    const QByteArray plan = TestFixtures::readFile(QStringLiteral(":/unittest/SectionTest.plan"));
+    QTest::newRow("plain") << plan << false << QString();
+    QTest::newRow("gzip") << TestFixtures::gzipMember(plan) << false << QStringLiteral("The content is compressed");
+    QTest::newRow("over-limit") << plan << true
+                                << QStringLiteral("The file is larger than %1")
+                                       .arg(QGC::bigSizeToString(PlanMasterController::kMaxPlanFileBytes));
+}
+
+void PlanMasterControllerTest::_testPlanFileReadAsIs()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(bool, overLimit);
+    QFETCH(QString, refusal);
+
+    QVERIFY(!content.isEmpty());
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    // A file name may hold what looks like a placeholder of the message
+    const QString planPath = tempDir.filePath(QStringLiteral("ReadAsIs%1%2.plan"));
+    QVERIFY(TestFixtures::writeFile(planPath, content));
+    // Sparse where the file system allows it: the plan is refused for its size, before it is read
+    if (overLimit) {
+        QVERIFY(QFile::resize(planPath, PlanMasterController::kMaxPlanFileBytes + 1));
+    }
+
+    if (refusal.isEmpty()) {
+        _masterController->loadFromFile(planPath);
+        QCOMPARE(_masterController->currentPlanFile(), planPath);
+        return;
+    }
+
+    // The file is named once, as it is, by the plan loader, and the reason follows
+    expectLogMessage(
+        "API.QGCApplication.AppMessage", QtDebugMsg,
+        QRegularExpression(QStringLiteral("Error loading Plan file \\(") + QRegularExpression::escape(planPath) +
+                           QStringLiteral("\\)\\. ") + QRegularExpression::escape(refusal)));
+    _masterController->loadFromFile(planPath);
+    verifyExpectedLogMessage();
+    QVERIFY(_masterController->currentPlanFile().isEmpty());
+}
+
+// A file that cannot be written is named as it is, also when its name holds what looks like a placeholder
+void PlanMasterControllerTest::_testSaveErrorNamesFile()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planPath = tempDir.filePath(QStringLiteral("missing/Plan%1.plan"));
+    const QString kmlPath = tempDir.filePath(QStringLiteral("missing/Plan%1.kml"));
+
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Plan save error ") + QRegularExpression::escape(planPath) +
+                                        QStringLiteral(" : [^%]")));
+    QVERIFY(!_masterController->saveToFile(planPath));
+    verifyExpectedLogMessage();
+
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("KML save error ") + QRegularExpression::escape(kmlPath) +
+                                        QStringLiteral(" : [^%]")));
+    _masterController->saveToKml(kmlPath);
+    verifyExpectedLogMessage();
 }
 
 void PlanMasterControllerTest::_testDownloadClearsFileAssociation()

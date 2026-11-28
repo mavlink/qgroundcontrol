@@ -1,15 +1,15 @@
 #pragma once
 
-#include "BaseClasses/VehicleTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 
-class FTPControllerTest : public VehicleTestNoInitialConnect
+/// Tests the QML-facing controller of MAVLink FTP against MockLinkFTP
+class FTPControllerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
 private slots:
-    void _extractArchiveRejectsInvalidInput();
-    void _extractArchiveHappyPath();
-    void _extractArchiveConcurrentRejected();
-    void _browseArchiveRejectsInvalidInput();
-    void _browseArchiveHappyPath();
+    UT_PARAMETERIZED_TEST(_testCancelReportsAbortedOnce);
+    void _testVehicleGoneEndsOperation();
+    void _testWithoutVehicle();
+    void _testNamesRefusedFileName();
 };

@@ -6,8 +6,11 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpy.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PropertyTestHelper.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/TestTimeout.h
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestBase.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestBase.h
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestTileGenerator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestTileGenerator.h
 )

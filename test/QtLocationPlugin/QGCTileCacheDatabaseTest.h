@@ -27,7 +27,19 @@ private slots:
     void _testComputeSetTotalsDefault();
     void _testPruneCache();
     void _testUpdateTileDownloadState();
-    void _testExportImportReplace();
+    UT_PARAMETERIZED_TEST(_testExportImportReplace);
+    UT_PARAMETERIZED_TEST(_testImportRefused);
+    UT_PARAMETERIZED_TEST(_testImportReplaceFailsHalfway);
+    void _testImportReplaceKeepsBackupItCannotPutBack();
+    void _testImportReplaceAfterInterruptedCopy();
+    UT_PARAMETERIZED_TEST(_testImportFromPickedDirectory);
+    UT_PARAMETERIZED_TEST(_testImportRefusesFileInUse);
+    UT_PARAMETERIZED_TEST(_testImportReplaceKeepsLeftoverBackup);
+    UT_PARAMETERIZED_TEST(_testInitPutsBackupBack);
+    void _testInitRemovesStaleUnpackDirectories();
+    UT_PARAMETERIZED_TEST(_testImmutableFileUri);
+    UT_PARAMETERIZED_TEST(_testImportFileNameAsUri);
+    void _testReadOnlyCacheHeals();
     void _testGetTileDownloadList();
     void _testImportSetsMerge();
     void _testComputeSetTotalsNonDefault();
@@ -36,6 +48,7 @@ private slots:
     void _testPruneCacheCleansSetTiles();
     void _testDeleteTileSetCleansTiles();
     void _testImportSetsMergeDeduplicatesName();
+    void _testDeduplicatedNameKeepsMarkers();
     void _testGetTileDownloadListBatch();
     void _testSaveTileLinksToDifferentSet();
     void _testExportImportNoLingeringConnections();
@@ -60,4 +73,6 @@ private:
     void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
     void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
     void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);
+    /// The cache of @a db holds the tile @a keptHash and takes a new one
+    void _verifyCacheUsable(QGCTileCacheDatabase* db, const QString& keptHash);
 };

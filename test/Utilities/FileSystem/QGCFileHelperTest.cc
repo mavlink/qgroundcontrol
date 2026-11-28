@@ -4,11 +4,10 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 
-#include "QGCCompression.h"
 #include "QGCFileHelper.h"
-#include <QtCore/QTemporaryDir>
 
 // ============================================================================
 // exists() tests
@@ -51,6 +50,177 @@ void QGCFileHelperTest::_testExistsQtResource()
     // Even non-existent resource paths return true (by design - Qt handles validation)
     // This is intentional: the function assumes :/ paths are valid resources
     QVERIFY(QGCFileHelper::exists(":/any/resource/path"));
+}
+
+// ============================================================================
+// isInDirectory() tests
+// ============================================================================
+void QGCFileHelperTest::_testIsInDirectory_data()
+{
+    QTest::addColumn<QString>("directory");
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<bool>("inside");
+
+    // "/" or the drive, whose path ends in the separator as no other directory's does
+    const QString root = QDir::rootPath();
+    const QString directory = root + QStringLiteral("output");
+
+    QTest::newRow("the directory") << directory << directory << true;
+    QTest::newRow("below it") << directory << directory + QStringLiteral("/nested/file.txt") << true;
+    QTest::newRow("its name continued") << directory << directory + QStringLiteral("-other/file.txt") << false;
+    QTest::newRow("beside it") << directory << root + QStringLiteral("file.txt") << false;
+    QTest::newRow("above it") << directory << root << false;
+    QTest::newRow("the root") << root << root << true;
+    QTest::newRow("below the root") << root << directory + QStringLiteral("/file.txt") << true;
+}
+
+void QGCFileHelperTest::_testIsInDirectory()
+{
+    QFETCH(QString, directory);
+    QFETCH(QString, path);
+    QFETCH(bool, inside);
+
+    QCOMPARE(QGCFileHelper::isInDirectory(directory, path), inside);
+}
+
+// ============================================================================
+// fileNameIssue() and localFileName() tests
+// ============================================================================
+namespace {
+
+QString issueName(QGCFileHelper::FileNameIssue issue)
+{
+    switch (issue) {
+        case QGCFileHelper::FileNameIssue::None:
+            return QStringLiteral("none");
+        case QGCFileHelper::FileNameIssue::Empty:
+            return QStringLiteral("empty");
+        case QGCFileHelper::FileNameIssue::ForbiddenCharacter:
+            return QStringLiteral("character");
+        case QGCFileHelper::FileNameIssue::TrailingDotOrSpace:
+            return QStringLiteral("ending");
+        case QGCFileHelper::FileNameIssue::DeviceName:
+            return QStringLiteral("device");
+        case QGCFileHelper::FileNameIssue::TooLong:
+            return QStringLiteral("length");
+    }
+    return QStringLiteral("unknown");
+}
+
+}  // namespace
+
+void QGCFileHelperTest::_testFileNameIssue_data()
+{
+    QTest::addColumn<QString>("name");
+    QTest::addColumn<QString>("issue");
+
+    const auto row = [](const char* tag, const QString& name, const char* issue) {
+        QTest::newRow(tag) << name << QString::fromLatin1(issue);
+    };
+
+    row("a name", QStringLiteral("parameters.json.xz"), "none");
+    row("empty", QString(), "empty");
+
+    // Windows does not allow these characters, and a separator ends a name everywhere
+    row("an alternate data stream", QStringLiteral("evil.json:stream"), "character");
+    row("relative to a drive", QStringLiteral("C:evil.json"), "character");
+    for (const char* const character : {"<", ">", "\"", "|", "?", "*", "/", "\\"}) {
+        row(qPrintable(QStringLiteral("the character %1").arg(QLatin1String(character))),
+            QStringLiteral("a%1b").arg(QLatin1String(character)), "character");
+    }
+    row("a line feed", QStringLiteral("evil\n.json"), "character");
+    row("a bell", QStringLiteral("bell\a.txt"), "character");
+    row("U+0000", QStringLiteral("a") + QChar(0) + QStringLiteral("b"), "character");
+    row("U+001F", QStringLiteral("a") + QChar(0x1F) + QStringLiteral("b"), "character");
+    // Not a control character for Windows, which forbids 1 to 31 only
+    row("U+007F", QStringLiteral("a") + QChar(0x7F) + QStringLiteral("b"), "none");
+
+    // Windows drops a trailing dot or space
+    row("a trailing dot", QStringLiteral("evil.json."), "ending");
+    row("a trailing space", QStringLiteral("evil.json "), "ending");
+    row("dot", QStringLiteral("."), "ending");
+    row("dot dot", QStringLiteral(".."), "ending");
+    row("three dots", QStringLiteral("..."), "ending");
+    row("dots and a space", QStringLiteral(".. "), "ending");
+    row("a leading dot", QStringLiteral(".hidden"), "none");
+    row("a leading space", QStringLiteral(" leading"), "none");
+
+    // Device names of Windows, in any case, also with an extension and with spaces before it
+    for (const char* const device : {"CON", "PRN", "AUX", "NUL", "COM0", "COM1", "COM9", "LPT0", "LPT1", "LPT9",
+                                     "CONIN$", "CONOUT$", "con", "Nul", "conout$"}) {
+        row(qPrintable(QStringLiteral("the device %1").arg(QLatin1String(device))), QLatin1String(device), "device");
+    }
+    row("a device with an extension", QStringLiteral("com1.json"), "device");
+    row("a device with the extension of a tile set", QStringLiteral("COM1.db"), "device");
+    row("a device with two extensions", QStringLiteral("NUL.tar.gz"), "device");
+    row("console input with an extension", QStringLiteral("conin$.txt"), "device");
+    row("a device with a space before the extension", QStringLiteral("CON .json"), "device");
+    row("a device with spaces before the extension", QStringLiteral("aux  .log"), "device");
+    row("a serial port with a superscript 1", QStringLiteral("COM\u00B9"), "device");
+    row("a printer port with a superscript 2", QStringLiteral("lpt\u00B2.txt"), "device");
+    row("a printer port with a superscript 3", QStringLiteral("LPT\u00B3"), "device");
+    // The first issue counts
+    row("a device with a trailing dot", QStringLiteral("CON."), "ending");
+    row("a device with a colon", QStringLiteral("CON:"), "character");
+    // Names that only start like a device
+    row("a serial port of two digits", QStringLiteral("COM10.json"), "none");
+    row("a serial port with a superscript 4", QStringLiteral("COM\u2074"), "none");
+    row("a serial port without a digit", QStringLiteral("COM"), "none");
+    row("a device name inside a word", QStringLiteral("console.txt"), "none");
+    row("a device name before a hyphen", QStringLiteral("nul-device.txt"), "none");
+    row("a device name after a dot", QStringLiteral(".CON"), "none");
+
+    // At most 255 bytes in UTF-8, whatever the number of characters
+    row("255 bytes", QString(255, QLatin1Char('a')), "none");
+    row("256 bytes", QString(256, QLatin1Char('a')), "length");
+    row("255 bytes of UTF-8", QString(127, QChar(0x00E9)) + QLatin1Char('a'), "none");
+    row("256 bytes of UTF-8", QString(128, QChar(0x00E9)), "length");
+    row("255 bytes of three-byte characters", QString(85, QChar(0x65E5)), "none");
+    row("258 bytes of three-byte characters", QString(86, QChar(0x65E5)), "length");
+    row("255 bytes with four-byte characters", QString::fromUcs4(U"\U0001F600").repeated(63) + QStringLiteral("abc"),
+        "none");
+    row("256 bytes of four-byte characters", QString::fromUcs4(U"\U0001F600").repeated(64), "length");
+}
+
+void QGCFileHelperTest::_testFileNameIssue()
+{
+    QFETCH(QString, name);
+    QFETCH(QString, issue);
+
+    QCOMPARE(issueName(QGCFileHelper::fileNameIssue(name)), issue);
+}
+
+void QGCFileHelperTest::_testLocalFileName_data()
+{
+    QTest::addColumn<QString>("name");
+    // Empty if the name is refused
+    QTest::addColumn<QString>("fileName");
+
+    QTest::newRow("a name") << "parameters.json.xz" << "parameters.json.xz";
+    QTest::newRow("a path") << "/etc/extras/parameters.json.xz" << "parameters.json.xz";
+    QTest::newRow("backslashes") << "..\\..\\evil.json" << "evil.json";
+    QTest::newRow("both separators") << "a/..\\b\\../evil.json" << "evil.json";
+    QTest::newRow("a drive path") << "C:\\Windows\\evil.json" << "evil.json";
+    // Callers give a URL's name decoded: what is left encoded is a part of the name
+    QTest::newRow("an encoded separator") << "..%5C..%5Cevil.json" << "..%5C..%5Cevil.json";
+    QTest::newRow("empty") << "" << "";
+    QTest::newRow("dot") << "." << "";
+    QTest::newRow("dot dot") << "a\\.." << "";
+    QTest::newRow("a trailing slash") << "dir/" << "";
+    QTest::newRow("a trailing backslash") << "dir\\" << "";
+    // The last component has to pass fileNameIssue(), whose cases _testFileNameIssue checks
+    QTest::newRow("a device") << "dir/NUL" << "";
+    QTest::newRow("an alternate data stream") << "evil.json:stream" << "";
+    QTest::newRow("a device name and more") << "COM10.json" << "COM10.json";
+    QTest::newRow("256 bytes of UTF-8") << QString(128, QChar(0x00E9)) << "";
+}
+
+void QGCFileHelperTest::_testLocalFileName()
+{
+    QFETCH(QString, name);
+    QFETCH(QString, fileName);
+
+    QCOMPARE(QGCFileHelper::localFileName(name), fileName);
 }
 
 // ============================================================================
@@ -222,24 +392,6 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
     QCOMPARE(file.size(), 0);
 }
 
-void QGCFileHelperTest::_testReadCompressedFile()
-{
-    QString error;
-    const QByteArray data = QGCCompression::readFile(":/unittest/manifest.json.gz", &error);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!data.isEmpty());
-    QVERIFY(data.contains("\"name\""));
-}
-
-void QGCFileHelperTest::_testReadCompressedFileMaxBytes()
-{
-    QString error;
-    const QByteArray partial = QGCCompression::readFile(":/unittest/manifest.json.gz", &error, 8);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!partial.isEmpty());
-    QVERIFY(partial.size() <= 8);
-}
-
 // ============================================================================
 // Disk space utilities tests
 // ============================================================================
@@ -308,6 +460,11 @@ void QGCFileHelperTest::_testToLocalPathPlainPaths()
     QCOMPARE(QGCFileHelper::toLocalPath(""), QString(""));
     // Qt resource paths should pass through
     QCOMPARE(QGCFileHelper::toLocalPath(":/resource/path"), QString(":/resource/path"));
+    // A path with a drive letter is a path, not a URL whose scheme is the letter: it keeps its case and its
+    // characters
+    QCOMPARE(QGCFileHelper::toLocalPath("C:/Users/a b/log#1 100%.ulg"), QString("C:/Users/a b/log#1 100%.ulg"));
+    QCOMPARE(QGCFileHelper::toLocalPath("d:\\logs\\flight.ulg"), QString("d:\\logs\\flight.ulg"));
+    QCOMPARE(QGCFileHelper::toLocalPath("E:"), QString("E:"));
 }
 
 void QGCFileHelperTest::_testToLocalPathFileUrls()
@@ -335,29 +492,6 @@ void QGCFileHelperTest::_testToLocalPathQrcUrls()
     QCOMPARE(QGCFileHelper::toLocalPath(QUrl(QStringLiteral(":/resource/path"))), QStringLiteral(":/resource/path"));
 }
 
-void QGCFileHelperTest::_testToLocalPathCompressionInterop()
-{
-    QTemporaryDir tempDir;
-    const QString archivePath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.zip")));
-    QCOMPARE(archivePath, QStringLiteral(":/unittest/manifest.json.zip"));
-    QCOMPARE(QGCCompression::detectFormat(archivePath), QGCCompression::Format::ZIP);
-    QVERIFY(QGCCompression::validateArchive(archivePath));
-
-    const QStringList entries = QGCCompression::listArchive(archivePath);
-    QVERIFY(entries.contains(QStringLiteral("manifest.json")));
-
-    const QString extractDir = tempDir.filePath("from_url_extract");
-    QVERIFY(QGCCompression::extractArchive(archivePath, extractDir));
-    QVERIFY(QFile::exists(extractDir + QStringLiteral("/manifest.json")));
-
-    const QString gzipPath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.gz")));
-    QCOMPARE(gzipPath, QStringLiteral(":/unittest/manifest.json.gz"));
-
-    const QString decompressedPath = tempDir.filePath("from_url_manifest.json");
-    QVERIFY(QGCCompression::decompressFile(gzipPath, decompressedPath));
-    QVERIFY(QFile::exists(decompressedPath));
-}
-
 void QGCFileHelperTest::_testIsLocalPath()
 {
     // Local paths
@@ -366,6 +500,8 @@ void QGCFileHelperTest::_testIsLocalPath()
     QVERIFY(QGCFileHelper::isLocalPath(":/resource/path"));
     QVERIFY(QGCFileHelper::isLocalPath("file:///path/to/file"));
     QVERIFY(QGCFileHelper::isLocalPath("qrc:/resource"));
+    QVERIFY(QGCFileHelper::isLocalPath("C:/Users/a b/log#1.ulg"));
+    QVERIFY(QGCFileHelper::isLocalPath("d:\\logs\\flight.ulg"));
     // Empty path
     QVERIFY(!QGCFileHelper::isLocalPath(""));
     // Network URLs (not local)
@@ -435,28 +571,6 @@ void QGCFileHelperTest::_testComputeFileHash()
     expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
     QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
     verifyExpectedLogMessage();
-}
-
-void QGCFileHelperTest::_testComputeDecompressedFileHash()
-{
-    const QString gzPath = QStringLiteral(":/unittest/manifest.json.gz");
-    QString error;
-    const QByteArray plainData = QGCCompression::readFile(gzPath, &error);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!plainData.isEmpty());
-
-    const QString expectedPlainHash = QGCFileHelper::computeHash(plainData);
-    QVERIFY(!expectedPlainHash.isEmpty());
-
-    const QString decompressedHash = QGCCompression::computeFileHash(gzPath);
-    QVERIFY(!decompressedHash.isEmpty());
-    QCOMPARE(decompressedHash, expectedPlainHash);
-
-    // For uncompressed files, QGCCompression::computeFileHash should match QGCFileHelper::computeFileHash().
-    const QString passthroughPath = QStringLiteral(":/unittest/arducopter.apj");
-    const QString regularHash = QGCFileHelper::computeFileHash(passthroughPath);
-    const QString passthroughHash = QGCCompression::computeFileHash(passthroughPath);
-    QCOMPARE(passthroughHash, regularHash);
 }
 
 void QGCFileHelperTest::_testVerifyFileHash()

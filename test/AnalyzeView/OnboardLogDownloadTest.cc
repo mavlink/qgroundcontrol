@@ -7,6 +7,7 @@
 #include <QtCore/QTimer>
 
 #include "FTPManager.h"
+#include "FileFixtures.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "MockLinkFTP.h"
@@ -607,9 +608,11 @@ void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
     // Prime FTPManager's cached NAK of kCmdListDirectoryWithTime with a listing which
     // doesn't involve the controller
     FTPManager* const ftpManager = _vehicle->ftpManager();
-    QSignalSpy listSpy(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
-    QVERIFY(listSpy.wait(FTPManager::kTestOperationMaxWaitMs));
+    QObject owner;
+    bool listed = false;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG"),
+                                      [&listed](const QStringList&, const QString&) { listed = true; }));
+    QVERIFY_TRUE_WAIT(listed, FTPManager::kTestOperationMaxWaitMs);
     QVERIFY(ftpManager->listDirectoryWithTimeUnsupported());
 
     OnboardLogController* const controller = new OnboardLogController(this);
@@ -625,11 +628,8 @@ void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
     QVERIFY(!controller->_getRequestingList());
     QCOMPARE(controller->transport(), QStringLiteral("ftp"));
 
-    // The synchronous Abort completion must not spawn a replacement root listing:
-    // FTPManager must be idle immediately after cancel
-    QSignalSpy idleCheckSpy(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
-    QVERIFY(idleCheckSpy.wait(FTPManager::kTestOperationMaxWaitMs));
+    // The cancel must not spawn a replacement root listing: FTPManager must be idle immediately after it
+    QCOMPARE(ftpManager->requestCount(), 0);
 }
 
 void OnboardLogFtpDownloadTest::_ftpListFallbackTest()
@@ -749,6 +749,101 @@ void OnboardLogFtpDownloadTest::_ftpDownloadErrorDisablesFtpTest()
     QCOMPARE(controller->_getModel()->count(), 1);
 }
 
+void OnboardLogFtpDownloadTest::_ftpExistingLogKeptTest_data()
+{
+    QTest::addColumn<bool>("transferFails");
+
+    QTest::newRow("transfer succeeds") << false;
+    QTest::newRow("transfer fails") << true;
+}
+
+// FTPManager takes a name after its last backslash, on every system. A log the user already has under that name is
+// neither truncated nor removed, also when the transfer of the new one fails and its file is removed.
+void OnboardLogFtpDownloadTest::_ftpExistingLogKeptTest()
+{
+    QFETCH(bool, transferFails);
+
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed())
+        return;
+
+    _mockLink->mockLinkFTP()->setLogFiles({{QStringLiteral("sub\\10_30_00.ulg"), 5000, 1700000000}});
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 1);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QByteArray earlierLog = QByteArrayLiteral("a log downloaded before");
+    const QString earlierLogPath = QDir(tempDir.path()).filePath(QStringLiteral("10_30_00.ulg"));
+    QVERIFY(TestFixtures::writeFile(earlierLogPath, earlierLog));
+
+    if (transferFails) {
+        // The local file is opened, then the data ends before the size the vehicle announced
+        _mockLink->mockLinkFTP()->setAnnouncedFileLength(10000);
+        expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("ftp: download error")));
+    }
+    model->value<QGCOnboardLogEntry*>(0)->setSelected(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+    if (transferFails) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(TestFixtures::readFile(earlierLogPath), earlierLog);
+    QStringList expectedFiles{QStringLiteral("10_30_00.ulg")};
+    if (!transferFails) {
+        expectedFiles.append(QStringLiteral("10_30_00_1.ulg"));
+        QCOMPARE(TestFixtures::readFile(QDir(tempDir.path()).filePath(expectedFiles.last())),
+                 _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("sub\\10_30_00.ulg")));
+    }
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files, QDir::Name), expectedFiles);
+}
+
+// A log whose name cannot be written as it is on every system is saved under a name of the controller's, which keeps
+// the extension that says how the log is read, and FTP stays in use
+void OnboardLogFtpDownloadTest::_ftpRefusedNameFallbackTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed())
+        return;
+
+    const QString ulgLog = QStringLiteral("COM1.ulg");
+    const QString binLog = QStringLiteral("COM2.bin");
+    _mockLink->mockLinkFTP()->setLogFiles({{ulgLog, 5000, 1700000000}, {binLog, 4000, 1700086400}});
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 2);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    controller->selectAll(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+
+    QStringList fallbackNames;
+    for (int i = 0; i < model->count(); i++) {
+        QGCOnboardLogEntry* const entry = model->value<QGCOnboardLogEntry*>(i);
+        QCOMPARE(entry->status(), QStringLiteral("Downloaded"));
+        const QString& log = (entry->size() == 5000) ? ulgLog : binLog;
+        fallbackNames.append(QStringLiteral("log_%1.%2").arg(entry->id()).arg(log.section(QLatin1Char('.'), -1)));
+        QCOMPARE(TestFixtures::readFile(QDir(tempDir.path()).filePath(fallbackNames.last())),
+                 _mockLink->mockLinkFTP()->logFileContents(log));
+    }
+    fallbackNames.sort();
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files, QDir::Name), fallbackNames);
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QCOMPARE(controller->transport(), QStringLiteral("ftp"));
+}
+
 void OnboardLogFtpDownloadTest::_ftpSortOrderTest()
 {
     _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
@@ -807,10 +902,48 @@ void OnboardLogFtpDownloadTest::_ftpCancelDownloadTest()
     QVERIFY(tempDir.isValid());
     controller->download(tempDir.path());
     QVERIFY(controller->_getDownloadingLogs());
+    // Under way: a cancel before the transfer has begun would only take it out of the queue
+    QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(QDir(tempDir.path()).filePath(QStringLiteral("log_big.ulg"))),
+                             TestTimeout::longMs());
     controller->cancel();
 
     QVERIFY(!controller->_getDownloadingLogs());
     QCOMPARE(entry->status(), QStringLiteral("Canceled"));
+    // The transfer is ended on the vehicle, and what it has written is removed
+    QCOMPARE(_vehicle->ftpManager()->requestCount(), 0);
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files), QStringList());
+}
+
+// The requests of the controller are for the vehicle they were made for. Another vehicle becoming the active one ends
+// them: a listing that ran on would give the logs of the old vehicle as those of the new one.
+void OnboardLogFtpDownloadTest::_ftpVehicleChangeEndsRequestTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed())
+        return;
+
+    _mockLink->mockLinkFTP()->setLogFiles({{QStringLiteral("log_1.ulg"), 5000, 1700000000}});
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    controller->refresh();
+    QVERIFY(controller->_getRequestingList());
+    QVERIFY(controller->_ftpRequest);
+    QSignalSpy startedSpy(controller->_ftpRequest, &FTPRequest::started);
+    QVERIFY(UnitTest::waitForSignal(startedSpy, TestTimeout::mediumMs(), QStringLiteral("started")));
+
+    controller->_setActiveVehicle(nullptr);
+    QCOMPARE(_vehicle->ftpManager()->requestCount(), 0);
+    QVERIFY(!controller->_getRequestingList());
+    QCOMPARE(controller->_getModel()->count(), 0);
+
+    // Active again, the vehicle is listed anew, by the new listing alone
+    controller->_setActiveVehicle(_vehicle);
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QCOMPARE(controller->transport(), QStringLiteral("ftp"));
+    QCOMPARE(controller->_getModel()->count(), 1);
 }
 
 void OnboardLogFtpDownloadTest::_ftpRefreshDuringDownloadTest()

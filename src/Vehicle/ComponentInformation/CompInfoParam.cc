@@ -1,13 +1,11 @@
 #include "CompInfoParam.h"
 #include "FirmwarePlugin.h"
 #include "JsonParsing.h"
-#include "JsonSchemaValidator.h"
 #include "ParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
 #include <QtCore/QJsonArray>
-#include <QtCore/QJsonDocument>
 #include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "ComponentInformation.CompInfoParam")
@@ -17,26 +15,28 @@ CompInfoParam::CompInfoParam(uint8_t compId_, Vehicle *vehicle_, QObject *parent
 {
 }
 
-void CompInfoParam::setJson(const QString &metadataJsonFileName)
+QString CompInfoParam::jsonSchema() const
 {
-    if (metadataJsonFileName.isEmpty()) {
+    return QStringLiteral(":/json/component_metadata/parameter.schema.json");
+}
+
+void CompInfoParam::setJson(const QString& fileName, const ParsedJson& json)
+{
+    if (fileName.isEmpty()) {
         return;
+    }
+
+    if (json.document.isNull()) {
+        qCWarning(CompInfoParamLog) << "Metadata json file open failed: compid:" << compId << json.readError;
+        return;
+    }
+
+    if (!json.schemaError.isEmpty()) {
+        qCWarning(CompInfoParamLog) << "Metadata json schema validation failed: compid:" << compId << json.schemaError;
     }
 
     QString errorString;
-    QJsonDocument jsonDoc;
-
-    if (!JsonParsing::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
-        qCWarning(CompInfoParamLog) << "Metadata json file open failed: compid:" << compId << errorString;
-        return;
-    }
-
-    QString schemaError;
-    if (!JsonSchemaValidator::validate(jsonDoc, QStringLiteral(":/json/component_metadata/parameter.schema.json"), schemaError)) {
-        qCWarning(CompInfoParamLog) << "Metadata json schema validation failed: compid:" << compId << schemaError;
-    }
-
-    const QJsonObject jsonObj = jsonDoc.object();
+    const QJsonObject jsonObj = json.document.object();
     const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         {JsonParsing::jsonVersionKey, QJsonValue::Double, true},
         {kJsonParametersKey,         QJsonValue::Array,  true},

@@ -14,7 +14,13 @@ Download map tiles for use without an internet connection. You can create multip
 
 - **Add New Set** — opens a full-screen map where you drag to the area of interest, set the name and zoom range, then click **Download** to cache the tiles
 - **Tile set list** — shows all downloaded tile sets with name, tile count, size, and status
-- **Import** — load a previously exported tile set file (append to or replace existing tiles)
+- **Import** — load a previously exported tile set file (append to or replace existing tiles). A file that isn't a
+  tile set file is refused, and an import that can't replace the tiles leaves the existing ones as they were. You can
+  also pick an archive that holds one tile set file (`.zip`): its tile set file is unpacked first, beside the
+  offline map cache, so the disk of the cache needs room for it. An archive that holds more than one tile set file
+  is refused, and so is one whose tile set would unpack to more than 20 times the size of the archive (64 MiB at
+  least). `.7z` and TAR archives (`.tar`, `.tar.gz` and the like) need a build of QGroundControl with the option
+  `QGC_ENABLE_7ZIP` or `QGC_ENABLE_TAR`
 - **Export** — save selected tile sets to a file for transfer to another device
 
 ## Tokens

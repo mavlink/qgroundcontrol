@@ -13,8 +13,12 @@ namespace events {
 class HealthAndArmingChecks;
 namespace parser {
 class ParsedEvent;
+class Parser;
 } // namespace parser
 } // namespace events
+
+/// Event definitions read from an events metadata file, for EventHandler::setMetadata()
+using EventMetadata = std::shared_ptr<events::parser::Parser>;
 
 /// \brief Drives the MAVLink events protocol for a single component.
 ///
@@ -33,7 +37,15 @@ public:
     ~EventHandler() override;
 
     void handleEvents(const mavlink_message_t &message);
-    void setMetadata(const QString &metadataJsonFileName);
+
+    /// Reads and parses an events metadata file, decompressed if it is compressed and held to
+    /// VehicleFileFetch::kMaxSmallFileBytes. It uses nothing but its argument, so that it can run on a worker thread.
+    /// Null, after a warning, if the file cannot be read or parsed.
+    static EventMetadata loadMetadata(const QString& metadataJsonFileName);
+
+    /// Uses the definitions of @p metadata from now on, in place of any earlier ones, and handles the events that
+    /// came before. Null @p metadata leaves the definitions as they are.
+    void setMetadata(EventMetadata metadata);
 
     const events::HealthAndArmingChecks *healthAndArmingChecks() const;
     bool healthAndArmingCheckResultsValid() const;

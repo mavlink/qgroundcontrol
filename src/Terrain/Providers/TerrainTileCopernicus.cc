@@ -5,7 +5,6 @@
 #include <QtCore/QJsonObject>
 
 #include "JsonParsing.h"
-#include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
@@ -22,11 +21,16 @@ TerrainTileCopernicus::~TerrainTileCopernicus()
 
 QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
 {
-    QJsonParseError parseError;
-    const QJsonDocument document = QGCCompression::parseCompressedJson(input, &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
+    if (input.size() > kMaxResponseBytes) {
         qCWarning(TerrainTileCopernicusLog)
-            << "Terrain tile json doc parse error" << parseError.errorString();
+            << "Terrain tile response has" << input.size() << "bytes, more than the limit of" << kMaxResponseBytes;
+        return QJsonValue();
+    }
+
+    QJsonDocument document;
+    QString parseError;
+    if (!JsonParsing::parseJson(input, document, parseError)) {
+        qCWarning(TerrainTileCopernicusLog) << "Terrain tile json doc parse error" << parseError;
         return QJsonValue();
     }
 

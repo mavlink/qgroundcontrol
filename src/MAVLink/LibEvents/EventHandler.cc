@@ -1,12 +1,15 @@
 #include "EventHandler.h"
-#include "QGCLoggingCategory.h"
-#include "LibEvents.h"
+
+#include <utility>
 
 #include <QtCore/QSharedPointer>
 #include <QtCore/QTimer>
 #include <QtCore/QVector>
 
-#include <utility>
+#include "Compression.h"
+#include "LibEvents.h"
+#include "QGCLoggingCategory.h"
+#include "VehicleFileFetch.h"
 
 QGC_LOGGING_CATEGORY(EventHandlerLog, "MAVLink.LibEvents.EventHandler")
 
@@ -19,6 +22,7 @@ struct EventHandler::Impl
         , timer(q_)
         , handleEventCB(std::move(handleEventCB_))
         , sendRequestCB(std::move(sendRequestCB_))
+        , parserProfile(profile.toStdString())
         , compid(componentId)
     {
         auto error_cb = [this](int num_events_lost) {
@@ -36,16 +40,7 @@ struct EventHandler::Impl
             }
         };
 
-        parser.setProfile(profile.toStdString());
-        parser.formatters().url = [](const std::string &content, const std::string &link) {
-            return "<a href=\"" + link + "\">" + content + "</a>";
-        };
-        parser.formatters().param = [](const std::string &content) {
-            return "<a href=\"param://" + content + "\">" + content + "</a>";
-        };
-        parser.formatters().escape = [](const std::string &str) {
-            return QString::fromStdString(str).toHtmlEscaped().toStdString();
-        };
+        configureParser(*parser);
 
         events::ReceiveProtocol::Callbacks callbacks{
             error_cb,
@@ -60,23 +55,38 @@ struct EventHandler::Impl
 
     ~Impl() { delete protocol; }
 
+    void configureParser(events::parser::Parser& eventParser) const
+    {
+        eventParser.setProfile(parserProfile);
+        eventParser.formatters().url = [](const std::string& content, const std::string& link) {
+            return "<a href=\"" + link + "\">" + content + "</a>";
+        };
+        eventParser.formatters().param = [](const std::string& content) {
+            return "<a href=\"param://" + content + "\">" + content + "</a>";
+        };
+        eventParser.formatters().escape = [](const std::string& str) {
+            return QString::fromStdString(str).toHtmlEscaped().toStdString();
+        };
+    }
+
     void gotEvent(const mavlink_event_t &event);
 
     EventHandler *q;
     events::ReceiveProtocol *protocol{nullptr};
     QTimer timer;
-    events::parser::Parser parser;
+    EventMetadata parser{std::make_shared<events::parser::Parser>()};
     events::HealthAndArmingChecks healthAndArmingChecks;
     bool healthAndArmingChecksValid{false};
     QVector<mavlink_event_t> pendingEvents; ///< stores incoming events until we have the metadata loaded
     handle_event_f handleEventCB;
     send_request_event_message_f sendRequestCB;
+    const std::string parserProfile;
     const uint8_t compid;
 };
 
 void EventHandler::Impl::gotEvent(const mavlink_event_t &event)
 {
-    if (!parser.hasDefinitions()) {
+    if (!parser->hasDefinitions()) {
         if (pendingEvents.size() > 50) { // limit size (not expected to happen)
             pendingEvents.clear();
         }
@@ -86,7 +96,7 @@ void EventHandler::Impl::gotEvent(const mavlink_event_t &event)
         return;
     }
 
-    std::unique_ptr<events::parser::ParsedEvent> parsed_event = parser.parse(events::EventType(event));
+    std::unique_ptr<events::parser::ParsedEvent> parsed_event = parser->parse(events::EventType(event));
     if (parsed_event == nullptr) {
         qCWarning(EventHandlerLog) << "Got Event w/o known metadata: ID:" << event.id
                                    << "comp id:" << compid;
@@ -123,18 +133,40 @@ void EventHandler::handleEvents(const mavlink_message_t &message)
     _impl->protocol->processMessage(message);
 }
 
-void EventHandler::setMetadata(const QString &metadataJsonFileName)
+EventMetadata EventHandler::loadMetadata(const QString& metadataJsonFileName)
 {
-    if (_impl->parser.loadDefinitionsFile(metadataJsonFileName.toStdString())) {
-        if (_impl->parser.hasDefinitions()) {
-            // Flush queued events now that metadata is available.
-            for (const auto &event : _impl->pendingEvents) {
-                _impl->gotEvent(event);
-            }
-            _impl->pendingEvents.clear();
+    QByteArray json;
+    if (const Compression::Outcome read =
+            Compression::decompressFileToMemory(metadataJsonFileName, json, VehicleFileFetch::kMaxSmallFileBytes);
+        !read) {
+        qCWarning(EventHandlerLog) << "Failed to load events JSON metadata file:" << read.description();
+        return nullptr;
+    }
+    auto metadata = std::make_shared<events::parser::Parser>();
+    if (!metadata->loadDefinitions(json.toStdString())) {
+        qCWarning(EventHandlerLog) << "Failed to load events JSON metadata file: it cannot be parsed"
+                                   << metadataJsonFileName;
+        return nullptr;
+    }
+    return metadata;
+}
+
+void EventHandler::setMetadata(EventMetadata metadata)
+{
+    if (!metadata) {
+        qCDebug(EventHandlerLog) << "No events metadata: the definitions stay as they are";
+        return;
+    }
+
+    // No parsed event outlives its handling, so nothing refers into the parser that is replaced
+    _impl->configureParser(*metadata);
+    _impl->parser = std::move(metadata);
+    if (_impl->parser->hasDefinitions()) {
+        // Flush queued events now that metadata is available.
+        for (const auto& event : _impl->pendingEvents) {
+            _impl->gotEvent(event);
         }
-    } else {
-        qCWarning(EventHandlerLog) << "Failed to load events JSON metadata file";
+        _impl->pendingEvents.clear();
     }
 }
 
@@ -150,7 +182,7 @@ bool EventHandler::healthAndArmingCheckResultsValid() const
 
 int EventHandler::getModeGroup(int32_t customMode) const
 {
-    events::parser::Parser::NavigationModeGroups groups = _impl->parser.navigationModeGroups(_impl->compid);
+    events::parser::Parser::NavigationModeGroups groups = _impl->parser->navigationModeGroups(_impl->compid);
     for (const auto &groupIter : groups.groups) {
         if (groupIter.second.find(customMode) != groupIter.second.end()) {
             return groupIter.first;
@@ -161,6 +193,6 @@ int EventHandler::getModeGroup(int32_t customMode) const
 
 bool EventHandler::healthAndArmingChecksSupported() const
 {
-    const auto &protocols = _impl->parser.supportedProtocols(_impl->compid);
+    const auto& protocols = _impl->parser->supportedProtocols(_impl->compid);
     return protocols.find("health_and_arming_check") != protocols.end();
 }

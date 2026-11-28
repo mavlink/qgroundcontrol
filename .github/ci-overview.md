@@ -117,6 +117,7 @@ Rules CI relies on, each with the test that fails when it breaks. Tests are in
 | The PR title check and the `commit-msg` hook agree | `test_workflow_security_policy.py::test_pr_title_check_agrees_with_the_commit_message_hook` |
 | Renovate tracks the CMake, Ninja, OpenSSL, `tools`, AppImage, and iOS CA bundle pins in `build-config.json`; those with hand-updated digests wait for approval | `test_build_tools_contract.py::test_schema_requires_the_pins_and_renovate_tracks_them` |
 | Renovate tracks every GitHub package CMake fetches, or the test lists it as exempt | `test_renovate_cpm_pins.py::test_every_github_cpm_package_is_tracked_by_renovate_or_exempt` |
+| The CPM dependency SBOM names the NVD product of every package CMake fetches, or that NVD has none | `test_cpm_sbom_products.py::test_every_cpm_package_has_an_nvd_product_entry` |
 | The locked local CMake has the major version CI pins | `test_cmake_version_alignment.py::test_the_locked_cmake_has_the_major_version_ci_pins` |
 | `just test-python` and CI install the same dependency groups | `test_ci_scripts_workflow.py::test_just_test_python_installs_the_dependency_groups_ci_does` |
 | Every file the CI Scripts jobs check out also triggers the workflow | `test_ci_scripts_workflow.py::test_every_file_the_test_jobs_check_out_triggers_the_workflow` |
@@ -207,10 +208,13 @@ without containers or VMs (`test_deploy_scripts.py`, `test_vm_build_vagrant.py`)
 2. If its tags are not `vX.Y.Z`, add a `packageRules` entry with `extractVersion` to
    `.github/renovate.json`. A commit pin cannot be tracked: add it to `UNTRACKED` in
    `test_renovate_cpm_pins.py` with the reason.
-3. Leave the cache keys alone: `tools/ci/cache/cpm_helper.py` fingerprints every CMake file that
+3. Add its NVD vendor and product, or `None`, to `NVD_PRODUCTS` in
+   `tools/ci/security/generate_cpm_sbom.py`, so that the vulnerability scan of the dependency
+   SBOM can match it.
+4. Leave the cache keys alone: `tools/ci/cache/cpm_helper.py` fingerprints every CMake file that
    declares a dependency, so the key changes by itself and builds fetch the sources until a
    Release job saves the new snapshot ([caching.md](ci-notes/caching.md#cpm-and-gstreamer-sdk-caches)).
-4. Validate with `just configure && just build`, then `just test-python`. Renovate opens each
+5. Validate with `just configure && just build`, then `just test-python`. Renovate opens each
    later update as its own PR, after approval on the Dependency Dashboard.
 
 ### Add a Python dependency

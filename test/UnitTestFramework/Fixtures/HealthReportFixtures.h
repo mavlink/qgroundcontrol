@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
@@ -10,6 +11,10 @@
 
 /// @file
 /// @brief libevents health and arming check report fixtures
+
+namespace events::parser {
+class Parser;
+}
 
 namespace TestFixtures {
 namespace HealthReport {
@@ -32,6 +37,12 @@ constexpr uint32_t AllModeGroups =
 /// @return Metadata file path, or an empty string on failure
 QString writeMetadata(const QString& directory, uint32_t manualCustomMode, uint32_t takeoffCustomMode,
                       uint32_t missionCustomMode);
+
+/// The events metadata that writeMetadata() writes, as EventHandler::loadMetadata() reads it, for
+/// EventHandler::setMetadata() and Vehicle::setEventsMetadata()
+/// @return The metadata, or null on failure
+std::shared_ptr<events::parser::Parser> loadedMetadata(uint32_t manualCustomMode, uint32_t takeoffCustomMode,
+                                                       uint32_t missionCustomMode);
 
 /// Builds the EVENT message sequences of successive health and arming check reports from the autopilot
 class EventStream

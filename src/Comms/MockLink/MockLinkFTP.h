@@ -44,6 +44,12 @@ public:
     /// Empty if the name is unknown.
     QByteArray logFileContents(const QString &name) const;
 
+    /// Serves the local file @p localFileName to OpenFileRO of @p path, also in place of a file the mock makes itself
+    void setServedFile(const QString& path, const QString& localFileName) { _servedFiles.insert(path, localFileName); }
+
+    /// Announces @p length as the size of the next file opened with OpenFileRO, whatever its size is
+    void setAnnouncedFileLength(uint32_t length) { _announcedFileLength = length; }
+
     /// Delays each burst read by delayMs to simulate a slow link. Runs on the
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
@@ -85,6 +91,9 @@ public:
 
     /// hdr.size of the most recent ReadFile request, -1 if none received yet.
     int lastReadFileRequestSize() const { return _lastReadFileRequestSize; }
+
+    /// Component that the most recent request addressed, -1 if none received yet.
+    int lastRequestTargetComponent() const { return _lastRequestTargetComponent; }
 
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
@@ -227,6 +236,7 @@ private:
     int _readFileCount = 0;
     int _lastBurstReadRequestSize = -1;
     int _lastReadFileRequestSize = -1;
+    int _lastRequestTargetComponent = -1;
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;
@@ -246,6 +256,8 @@ private:
     QStringList _fileList;                      ///< List of files returned by List command
     QList<LogFile> _logFiles;                   ///< Log files served from the @MAV_LOG virtual directory
     QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads
+    QHash<QString, QString> _servedFiles;       ///< Local files served by setServedFile(), by path
+    std::optional<uint32_t> _announcedFileLength;  ///< Set by setAnnouncedFileLength(), for one OpenFileRO
     uint16_t _lastReplySequence = 0;
 
     static constexpr uint8_t _sessionId = 1;    ///< We only support a single fixed session

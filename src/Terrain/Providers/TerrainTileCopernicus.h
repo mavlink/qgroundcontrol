@@ -24,6 +24,11 @@ public:
     static constexpr double kTileValueSpacingDegrees = (1.0 / 3600); ///< 1 Arc-Second spacing of elevation values
     static constexpr double kTileValueSpacingMeters = 30.0;
 
+    /// Largest response that is parsed. A tile carpet holds 37 x 37 elevations (0.01 degree at one arc-second). As
+    /// JSON numbers with all the digits of a double, indented one to a line, they take about 60 KiB. The limit leaves
+    /// a wide margin above that. A larger response is refused without being parsed: tiles are parsed on the GUI thread
+    static constexpr qint64 kMaxResponseBytes = 1024 * 1024;
+
 private:
     static constexpr const char *_jsonStatusKey = "status";
     static constexpr const char *_jsonDataKey = "data";

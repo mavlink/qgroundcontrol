@@ -13,14 +13,19 @@ private slots:
     void _testFileDownloadHashVerificationFailure();
     void _testFileDownloadHashVerificationSuccess();
     void _testFileDownloadCustomOutputPath();
+    void _testFileDownloadOutputDirectory();
+    UT_PARAMETERIZED_TEST(_testFileDownloadNameFromUrl);
     void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();
-    void _testAutoDecompressGzip();
-    void _testAutoDecompressDisabled();
-    void _testAutoDecompressUncompressedFile();
-
-    // Integration tests (download + compression)
-    void _testDownloadAndExtractZip();
-    void _testDownloadDecompressAndParse();
+    void _testFileDownloadRestartFromCancelHandler();
+    UT_PARAMETERIZED_TEST(_testFileDownloadSizeLimit);
+    UT_PARAMETERIZED_TEST(_testAutoDecompress);
+    UT_PARAMETERIZED_TEST(_testAutoDecompressFailure);
+    void _testAutoDecompressCancelled();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressEndedWithoutResult);
+    void _testAutoDecompressCancelledWhileRunning();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressLeavesNewerFile);
+    void _testAutoDecompressRemovesStaleDirectories();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressReplacesExistingFile);
 };

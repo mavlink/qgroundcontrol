@@ -16,9 +16,15 @@ ComponentInformationCache::ComponentInformationCache(const QDir& path, int maxNu
 
 ComponentInformationCache& ComponentInformationCache::defaultInstance()
 {
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
-    static ComponentInformationCache instance(cacheDir, 50);
+    static ComponentInformationCache instance(defaultDirectory(), 50);
     return instance;
+}
+
+QString ComponentInformationCache::defaultDirectory()
+{
+    // Not "QGCCompInfoCache", where an earlier QGC keeps its entries of version 0 and removes every other one when it
+    // starts
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCacheV1");
 }
 
 QString ComponentInformationCache::metaFileName(const QString& fileTag)
@@ -73,11 +79,21 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
     QFile meta(metaFileName(fileTag));
     QFile data(dataFileName(fileTag));
     QFile fileToCache(fileName);
-    if (meta.exists() || data.exists()) {
+    if (meta.exists() && data.exists()) {
         qCDebug(ComponentInformationCacheLog) << "Not inserting, entry already exists" << fileTag;
         fileToCache.remove();
         return data.fileName();
     }
+
+    // A file without its counterpart, e.g. a data file whose removal failed while it was open, is not an entry:
+    // access() never finds it, so it is replaced. If it is still in the way, the new file is used where it is
+    if (data.exists() && !data.remove()) {
+        qCWarning(ComponentInformationCacheLog)
+            << "Failed to remove incomplete entry" << data.fileName() << data.errorString();
+        return fileName;
+    }
+    _numFiles -=
+        static_cast<int>(_cachedFiles.removeIf([&fileTag](const auto& entry) { return entry.value() == fileTag; }));
 
     // move the file to the cache location (fall back to copy+remove for cross-device)
     if (!fileToCache.rename(data.fileName())) {
@@ -109,6 +125,17 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
 
     removeOldEntries();
     return data.fileName();
+}
+
+void ComponentInformationCache::remove(const QString& fileTag)
+{
+    qCDebug(ComponentInformationCacheLog) << "Removing" << fileTag;
+    // The meta file first: without it the entry is not found, also while its data file cannot be removed, which
+    // insert() then replaces
+    (void) QFile::remove(metaFileName(fileTag));
+    (void) QFile::remove(dataFileName(fileTag));
+    _numFiles -=
+        static_cast<int>(_cachedFiles.removeIf([&fileTag](const auto& entry) { return entry.value() == fileTag; }));
 }
 
 void ComponentInformationCache::initializeDirectory()

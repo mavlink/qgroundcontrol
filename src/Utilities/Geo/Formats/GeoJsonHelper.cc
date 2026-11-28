@@ -22,6 +22,8 @@ namespace GeoJsonHelper
 
     constexpr int _maxRecursionDepth = 32;
     constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
+    /// Largest size of a GeoJSON file. Detailed shapes, such as a coastline, reach tens of MiB
+    constexpr qint64 kMaxGeoJsonFileBytes = 256LL * 1024 * 1024;
 }
 
 void GeoJsonHelper::_extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth)
@@ -60,23 +62,14 @@ QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorSt
 {
     errorString.clear();
 
-    QFile file(filePath);
-    if (!file.exists()) {
+    if (!QFile::exists(filePath)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "File not found: %1").arg(filePath));
         return QJsonDocument();
     }
 
-    if (!file.open(QIODevice::ReadOnly)) {
-        errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
-            QCoreApplication::translate("GeoJson", "Unable to open file: %1 error: %2")
-                .arg(filePath, file.errorString()));
-        return QJsonDocument();
-    }
-
     QJsonDocument jsonDoc;
-    const QByteArray bytes = file.readAll();
-    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
+    if (!JsonParsing::readJsonFile(filePath, jsonDoc, errorString, kMaxGeoJsonFileBytes)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(errorString);
     }
 

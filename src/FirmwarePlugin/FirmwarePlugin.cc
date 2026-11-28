@@ -11,12 +11,12 @@
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
 #include "GenericAutoPilotPlugin.h"
+#include "JsonParsing.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
-#include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
@@ -354,14 +354,19 @@ void FirmwarePlugin::checkIfIsLatestStable(Vehicle *vehicle) const
     const QString versionFile = _getLatestVersionFileUrl(vehicle);
     qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
     QGCFileDownload *const downloader = new QGCFileDownload(vehicle);
-    (void) connect(downloader, &QGCFileDownload::finished, this, [vehicle, this, versionFile](bool success, const QString &localFile, const QString &errorMsg) {
-        if (success) {
-            _versionFileDownloadFinished(versionFile, localFile, vehicle);
-        } else if (!errorMsg.isEmpty()) {
-            qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error:" << errorMsg;
-        }
-        sender()->deleteLater();
-    });
+    // A name of its own: vehicles of one firmware, and the firmware upgrade page, download the same URL at once
+    downloader->setOutputPath(QGCFileHelper::uniqueTempPath(QStringLiteral("qgc_latest_version_XXXXXX")));
+    (void) connect(
+        downloader, &QGCFileDownload::finished, this,
+        [vehicle, this, versionFile, downloader](bool success, const QString& localFile, const QString& errorMsg) {
+            if (success) {
+                _versionFileDownloadFinished(versionFile, localFile, vehicle);
+            } else if (!errorMsg.isEmpty()) {
+                qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error:" << errorMsg;
+            }
+            (void) QFile::remove(downloader->localPath());
+            downloader->deleteLater();
+        });
 
     if (!downloader->start(versionFile)) {
         downloader->deleteLater();
@@ -633,10 +638,12 @@ void FirmwarePlugin::cacheParameterMetaDataFile(const QString &metaDataFile)
         return;
     }
 
-    QString readError;
-    const QByteArray data = QGCCompression::readFile(metaDataFile, &readError);
-    if (data.isEmpty()) {
-        qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile << readError;
+    QByteArray data;
+    QString errorString;
+    if (!JsonParsing::readJsonText(metaDataFile, data, errorString, ParameterMetaData::kMaxMetaDataFileBytes) ||
+        data.isEmpty()) {
+        qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile
+                                     << errorString;
         return;
     }
 

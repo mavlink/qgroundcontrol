@@ -1,6 +1,7 @@
 #include "MockLinkFTP.h"
 
 #include <cerrno>
+#include <utility>
 
 #include <QtCore/QDataStream>
 #include <QtCore/QDir>
@@ -151,7 +152,9 @@ void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId
 
     QString tmpFilename;
     const QString sizePrefix = sizeFilenamePrefix;
-    if (path.startsWith(sizePrefix)) {
+    if (_servedFiles.contains(path)) {
+        tmpFilename = _servedFiles.value(path);
+    } else if (path.startsWith(sizePrefix)) {
         const QString sizeString = path.right(path.length() - sizePrefix.length());
         tmpFilename = _createTestTempFile(sizeString.toInt());
     } else if (path == "/general.json" || path == "general.json") {
@@ -193,6 +196,9 @@ void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId
 
     // Ardupilot sends constant wrong file size for parameter file due to dynamic on the fly generation
     response.openFileLength = ((path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) ? qPow(1024, 2) : _currentFile.size());
+    if (_announcedFileLength) {
+        response.openFileLength = *std::exchange(_announcedFileLength, std::nullopt);
+    }
 
     _openFileROCount++;
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
@@ -553,6 +559,8 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
     if (mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) != _systemIdServer) {
         return;
     }
+
+    _lastRequestTargetComponent = requestFTP.target_component;
 
     MavlinkFTP::Request *request = reinterpret_cast<MavlinkFTP::Request*>(&requestFTP.payload[0]);
 

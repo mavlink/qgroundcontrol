@@ -238,10 +238,18 @@ SetupPage {
                         //px4FlightStackRadio2.text = qsTr("PX4 Pro ") + versionString
                     }
 
+                    // The list of ArduPilot firmware is downloaded only when it is to be shown
+                    function loadArduPilotFirmwareList() {
+                        if (!_singleFirmwareMode && QGroundControl.apmFirmwareSupported && apmFlightStack.checked) {
+                            controller.loadArduPilotFirmwareList()
+                        }
+                    }
+
                     Component.onCompleted: {
                         firmwarePage.advanced = false
                         firmwarePage.showAdvanced = false
                         updatePX4VersionDisplay()
+                        loadArduPilotFirmwareList()
                     }
 
                     Connections {
@@ -386,6 +394,7 @@ SetupPage {
                                 onClicked: {
                                     _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
                                     firmwareVersionChanged(firmwareBuildTypeList)
+                                    loadArduPilotFirmwareList()
                                 }
                             }
                         }
@@ -417,14 +426,14 @@ SetupPage {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("Downloading list of available firmwares...")
-                            visible:            controller.downloadingFirmwareList
+                            visible:            !_singleFirmwareMode && apmFlightStack.checked && controller.downloadingFirmwareList
                         }
 
                         QGCLabel {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("No Firmware Available")
-                            visible:            !controller.downloadingFirmwareList && (QGroundControl.apmFirmwareSupported && controller.apmFirmwareNames.length === 0)
+                            visible:            !_singleFirmwareMode && apmFlightStack.checked && !controller.downloadingFirmwareList && (QGroundControl.apmFirmwareSupported && controller.apmFirmwareNames.length === 0)
                         }
 
                         QGCCheckBox {

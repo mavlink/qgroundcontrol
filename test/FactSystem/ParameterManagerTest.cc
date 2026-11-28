@@ -6,20 +6,28 @@
 #include <limits>
 #include <memory>
 
+#include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "BulkRefreshJob.h"
+#include "FTPManager.h"
+#include "FileFixtures.h"
 #include "LogManager.h"
 #include "MAVLinkLib.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
+#include "ProcessFixtures.h"
 #include "QGCApplication.h"
 #include "QGCMath.h"
 #include "QGCStateMachine.h"
+#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
@@ -141,8 +149,9 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
     QVERIFY(spyProgress);
-    // We should get progress bar updates during load
-    QVERIFY_SIGNAL_COUNT_WAIT(*spyProgress, 1, TestTimeout::mediumMs());
+    // We should get progress bar updates during load. The first vehicle of a process takes several times as long
+    // to get there as a later one
+    QVERIFY_SIGNAL_COUNT_WAIT(*spyProgress, 1, TestTimeout::longMs());
     arguments = spyProgress->takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
@@ -995,6 +1004,162 @@ void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams()
     const QList<int> requestListTargets = _mockLink->paramRequestListTargetLog();
     QVERIFY(!requestListTargets.contains(MAV_COMP_ID_AUTOPILOT1));
     QVERIFY(!requestListTargets.contains(MAV_COMP_ID_ALL));
+}
+
+// The param.pck download may wait behind another transfer of the vehicle. A wait longer than the request-list timer
+// is no failed request: the download keeps its one retry over FTP, rather than going on with the parameter stream.
+void ParameterManagerTest::_FTPWaitInQueueKeepsRetry()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+
+    // Queued as the vehicle appears, before the parameter manager asks for param.pck: a large file, slowly
+    MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+    QObject owner;
+    QPointer<FTPRequest> blocker;
+    (void) connect(vehicleMgr, &MultiVehicleManager::vehicleAdded, &owner, [&owner, &blocker](Vehicle* vehicle) {
+        if (vehicle && !blocker) {
+            blocker = vehicle->ftpManager()->download(
+                &owner, MAV_COMP_ID_AUTOPILOT1,
+                QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(1024 * 1024),
+                QStandardPaths::writableLocation(QStandardPaths::TempLocation), {},
+                [](const QString&, const QString&) {});
+        }
+    });
+    // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+
+    // The parameter stream never answers, so a fall back to it would never load the parameters
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone,
+                                                    MockConfiguration::FailParamNoResponseToRequestList);
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setBurstReadDelayMs(50);
+    QVERIFY_TRUE_WAIT(
+        blocker && vehicleMgr->activeVehicle() && (vehicleMgr->activeVehicle()->ftpManager()->requestCount() == 2),
+        TestTimeout::longMs());
+    FTPManager* const ftpManager = vehicleMgr->activeVehicle()->ftpManager();
+
+    // Twice the request-list timer in the queue. A timer that ran while the download waited would have used up the
+    // retry, which needs this many milliseconds to show.
+    QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, 2 * ParameterManager::kTestInitialRequestIntervalMs);
+
+    // The first download of param.pck fails, the retry succeeds
+    mockFtp->setErrorMode(MockLinkFTP::errModeNakResponse);
+    mockFtp->setBurstReadDelayMs(0);
+    blocker->cancel();
+    QVERIFY_TRUE_WAIT(ftpManager->requestCount() == 0, TestTimeout::mediumMs());
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
+
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
+    QVERIFY(spyParamsReady.first().at(0).toBool());
+    QCOMPARE(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 0);
+}
+
+// Each vehicle has a queue of its own, so the parameter file downloads of two vehicles run at once. Each is written
+// into a directory of the vehicle's own: the end of one, here its vehicle going away during its download, leaves the
+// file of the other alone.
+void ParameterManagerTest::_FTPDownloadsOfTwoVehiclesStayApart()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+    const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    const auto downloadsLeft = [&tempDir]() {
+        return tempDir.entryList({QStringLiteral("qgc_params_*")}, QDir::Dirs | QDir::NoDotAndDotDot);
+    };
+    const QString paramFilePath = QStringLiteral("@PARAM/param.pck?withdefaults=1");
+
+    // The first vehicle sends a parameter file of 4 MiB, a burst every 50 ms: its download runs for minutes, and is
+    // ended only by its vehicle going away
+    QTemporaryDir servedDir;
+    QVERIFY(servedDir.isValid());
+    const QString largeFile = servedDir.filePath(QStringLiteral("param.pck"));
+    QVERIFY(TestFixtures::writeFile(largeFile, QByteArray(4 * 1024 * 1024, '\0')));
+    QSignalSpy spyVehicles(vehicleMgr, &MultiVehicleManager::vehicleAdded);
+    MockLink* const leavingLink = MockLink::startAPMArduPlaneMockLink();
+    leavingLink->mockLinkFTP()->setServedFile(paramFilePath, largeFile);
+    leavingLink->mockLinkFTP()->setBurstReadDelayMs(50);
+    QVERIFY_SIGNAL_COUNT_WAIT(spyVehicles, 1, TestTimeout::mediumMs());
+    const QPointer<Vehicle> leavingVehicle = spyVehicles.takeFirst().at(0).value<Vehicle*>();
+    QVERIFY(leavingVehicle);
+    QVERIFY_TRUE_WAIT(leavingLink->mockLinkFTP()->lastBurstReadRequestSize() >= 0, TestTimeout::longMs());
+
+    // The parameter stream of the second vehicle never answers, so only its file can load its parameters. Its file is
+    // sent slowly too, so that its download spans the end of the first vehicle (about two seconds)
+    expectAppMessage(QRegularExpression(QStringLiteral("Connected to Vehicle [0-9]+")));
+    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone,
+                                                    MockConfiguration::FailParamNoResponseToRequestList);
+    _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("RC1_MIN"), 1111);
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(80);
+    QVERIFY_SIGNAL_COUNT_WAIT(spyVehicles, 1, TestTimeout::mediumMs());
+    Vehicle* const vehicle = spyVehicles.first().at(0).value<Vehicle*>();
+    QVERIFY(vehicle);
+    QVERIFY_TRUE_WAIT(_mockLink->mockLinkFTP()->lastBurstReadRequestSize() >= 0, TestTimeout::longMs());
+    verifyExpectedLogMessage();
+
+    // Both downloads have their file open
+    QVERIFY(leavingVehicle);
+    QCOMPARE(leavingVehicle->ftpManager()->requestCount(), 1);
+    QVERIFY(!leavingVehicle->parameterManager()->parametersReady());
+    QCOMPARE(vehicle->ftpManager()->requestCount(), 1);
+
+    leavingLink->disconnect();
+    QVERIFY_TRUE_WAIT(!leavingVehicle, TestTimeout::mediumMs());
+    // The download of the second vehicle has outlasted the first vehicle
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    QVERIFY(!parameterManager->parametersReady());
+    QCOMPARE(vehicle->ftpManager()->requestCount(), 1);
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+
+    QVERIFY_TRUE_WAIT(parameterManager->parametersReady() ||
+                          (_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST) > 0),
+                      TestTimeout::longMs());
+    QCOMPARE(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 0);
+    QCOMPARE(parameterManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("RC1_MIN"))->rawValue().toInt(),
+             1111);
+
+    // The parsed file is removed at once, the directory with its vehicle
+    QCOMPARE(downloadsLeft().count(), 1);
+    QVERIFY(QDir(tempDir.filePath(downloadsLeft().constFirst())).isEmpty());
+    _mockLink->disconnect();
+    _mockLink = nullptr;
+    QVERIFY_TRUE_WAIT(downloadsLeft().isEmpty(), TestTimeout::mediumMs());
+}
+
+// Without a directory to download the parameter file into, the parameters load over the parameter stream, whose
+// values the manager drops while it tries FTP
+void ParameterManagerTest::_FTPWithoutDownloadDirectoryLoadsOverStream()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+
+    // A temporary location below a file: no directory can be made there, also by root
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString notADirectory = tempDir.filePath(QStringLiteral("file"));
+    QVERIFY(TestFixtures::writeFile(notADirectory, QByteArray()));
+
+    // Unix reads TMPDIR for the temporary location, Windows TMP and then TEMP
+    const TestFixtures::EnvVarFixture restoreTmpdir("TMPDIR");
+    const TestFixtures::EnvVarFixture restoreTmp("TMP");
+    const TestFixtures::EnvVarFixture restoreTemp("TEMP");
+    for (const char* name : {"TMPDIR", "TMP", "TEMP"}) {
+        qputenv(name, QFile::encodeName(QDir::toNativeSeparators(notADirectory + QStringLiteral("/tmp"))));
+    }
+    QVERIFY2(
+        QStandardPaths::writableLocation(QStandardPaths::TempLocation).startsWith(notADirectory, Qt::CaseInsensitive),
+        qPrintable(QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+
+    MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                     QRegularExpression("Cannot create a download directory, loading parameters without FTP"));
+    _mockLink = MockLink::startAPMArduPlaneMockLink();
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
+    QVERIFY(spyParamsReady.first().at(0).toBool());
+    verifyExpectedLogMessage();
+    QCOMPARE_GT(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 0);
+    QVERIFY(vehicleMgr->activeVehicle());
+    QVERIFY(vehicleMgr->activeVehicle()->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1,
+                                                                             QStringLiteral("RC1_MIN")));
 }
 
 void ParameterManagerTest::_FTPChangeParam()

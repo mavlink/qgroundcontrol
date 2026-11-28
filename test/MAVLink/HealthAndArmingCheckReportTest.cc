@@ -5,6 +5,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "EventHandler.h"
+#include "FileFixtures.h"
 #include "HealthAndArmingCheckReport.h"
 #include "HealthReportFixtures.h"
 #include "LibEvents.h"
@@ -73,15 +74,13 @@ void HealthAndArmingCheckReportTest::_testFirstReportInUnmappedMode()
 {
     using namespace TestFixtures::HealthReport;
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile = writeMetadata(metadataDir.path(), 10, 20, 30);
-    QVERIFY(!metadataFile.isEmpty());
+    const EventMetadata metadata = loadedMetadata(10, 20, 30);
+    QVERIFY(metadata);
 
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(metadata);
     EventStream eventStream(1);
     const uint32_t canArmModeGroups = modeGroupBit(ManualModeGroup) | modeGroupBit(MissionModeGroup);
     for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, AllModeGroups)) {
@@ -133,16 +132,13 @@ void HealthAndArmingCheckReportTest::_testUpdateFromHealthReport()
     constexpr uint32_t takeoffCustomMode = 20;
     constexpr uint32_t missionCustomMode = 30;
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile =
-        writeMetadata(metadataDir.path(), manualCustomMode, takeoffCustomMode, missionCustomMode);
-    QVERIFY(!metadataFile.isEmpty());
+    const EventMetadata metadata = loadedMetadata(manualCustomMode, takeoffCustomMode, missionCustomMode);
+    QVERIFY(metadata);
 
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(metadata);
     QVERIFY(handler.healthAndArmingChecksSupported());
     QCOMPARE(handler.getModeGroup(manualCustomMode), ManualModeGroup);
     QCOMPARE(handler.getModeGroup(takeoffCustomMode), TakeoffModeGroup);
@@ -172,15 +168,13 @@ void HealthAndArmingCheckReportTest::_testUnmappedModeKeepsResultsFresh()
     using namespace TestFixtures::HealthReport;
 
     constexpr uint32_t manualCustomMode = 10;
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile = writeMetadata(metadataDir.path(), manualCustomMode, 20, 30);
-    QVERIFY(!metadataFile.isEmpty());
+    const EventMetadata metadata = loadedMetadata(manualCustomMode, 20, 30);
+    QVERIFY(metadata);
 
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(metadata);
     EventStream eventStream(1);
     const auto sendReport = [&handler, &eventStream](uint32_t canArmModeGroups, uint32_t canRunModeGroups) {
         for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, canRunModeGroups)) {
@@ -348,6 +342,97 @@ void HealthAndArmingCheckReportTest::_testNewWarningNotAcknowledged()
 
     QCOMPARE(report.warningCount(), 1);
     QVERIFY(report.hasWarningsOrErrors());
+}
+
+// ---------------------------------------------------------------------------
+// EventHandler metadata
+// ---------------------------------------------------------------------------
+
+void HealthAndArmingCheckReportTest::_testLoadMetadata_data()
+{
+    using namespace TestFixtures::HealthReport;
+
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<QString>("warning");
+
+    QTemporaryDir metadataDir;
+    const QByteArray metadata = TestFixtures::readFile(writeMetadata(metadataDir.path(), 10, 20, 30));
+
+    // A null content stands for a file that is not there
+    QTest::newRow("missing file") << QByteArray() << QStringLiteral("does not exist");
+    QTest::newRow("not JSON") << QByteArray("{ not json") << QStringLiteral("it cannot be parsed");
+    QTest::newRow("version that is no number")
+        << QByteArray(R"({"version":"two"})") << QStringLiteral("it cannot be parsed");
+    QTest::newRow("compressed") << TestFixtures::gzipMember(metadata) << QString();
+}
+
+// The metadata file comes from the vehicle and is read on a worker thread: one that cannot be read, or that libevents
+// refuses, which it does by catching an exception, gives no metadata and a warning
+void HealthAndArmingCheckReportTest::_testLoadMetadata()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(QString, warning);
+
+    QTemporaryDir metadataDir;
+    QVERIFY(metadataDir.isValid());
+    const QString metadataFile = metadataDir.filePath(QStringLiteral("events.json"));
+    if (!content.isNull()) {
+        QVERIFY(TestFixtures::writeFile(metadataFile, content));
+    }
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("MAVLink.LibEvents.EventHandler", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Failed to load events JSON metadata file.*") + warning));
+    }
+    const EventMetadata metadata = EventHandler::loadMetadata(metadataFile);
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+        QVERIFY(!metadata);
+        return;
+    }
+
+    QVERIFY(metadata);
+    EventHandler handler(
+        nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
+        MAV_COMP_ID_AUTOPILOT1);
+    handler.setMetadata(metadata);
+    QVERIFY(handler.healthAndArmingChecksSupported());
+}
+
+// A vehicle reports before its metadata is there: those events are handled once it is set. Metadata that could not be
+// read, which is null, leaves the definitions in use, and other metadata replaces them.
+void HealthAndArmingCheckReportTest::_testSetMetadataKeepsOrReplacesDefinitions()
+{
+    using namespace TestFixtures::HealthReport;
+
+    EventHandler handler(
+        nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
+        MAV_COMP_ID_AUTOPILOT1);
+    QSignalSpy checksUpdatedSpy(&handler, &EventHandler::healthAndArmingChecksUpdated);
+    EventStream eventStream(1);
+    for (const mavlink_message_t& message : eventStream.report(AllModeGroups, AllModeGroups)) {
+        handler.handleEvents(message);
+    }
+    QCOMPARE(checksUpdatedSpy.count(), 0);
+    QVERIFY(!handler.healthAndArmingChecksSupported());
+
+    const EventMetadata metadata = loadedMetadata(10, 20, 30);
+    QVERIFY(metadata);
+    handler.setMetadata(metadata);
+    QCOMPARE(checksUpdatedSpy.count(), 1);
+    QVERIFY(handler.healthAndArmingCheckResultsValid());
+    QVERIFY(handler.healthAndArmingChecksSupported());
+    QCOMPARE(handler.getModeGroup(10), ManualModeGroup);
+
+    handler.setMetadata(nullptr);
+    QVERIFY(handler.healthAndArmingChecksSupported());
+    QCOMPARE(handler.getModeGroup(10), ManualModeGroup);
+
+    const EventMetadata otherMetadata = loadedMetadata(11, 21, 31);
+    QVERIFY(otherMetadata);
+    handler.setMetadata(otherMetadata);
+    QCOMPARE(handler.getModeGroup(11), ManualModeGroup);
+    QCOMPARE(handler.getModeGroup(10), -1);
 }
 
 // ---------------------------------------------------------------------------

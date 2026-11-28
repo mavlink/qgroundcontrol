@@ -1,16 +1,19 @@
 #pragma once
 
-#include "QGCStateMachine.h"
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QFuture>
+#include <QtCore/QPointer>
+
 #include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
+#include "QGCStateMachine.h"
 #include "VehicleTypes.h"
-
-#include <QtCore/QElapsedTimer>
 class Vehicle;
 class ComponentInformationManager;
 class CompInfo;
 class AsyncFunctionState;
 class CompletionWaitState;
+class VehicleFileFetch;
 class QGCState;
 
 class RequestMetaDataTypeStateMachine : public QGCStateMachine
@@ -24,11 +27,14 @@ public:
         int compInfoRequest;
         int metaDataDownload;
         int translation;
+        int metaDataLoad;
     };
 
     /// Vehicle gives a message request up by itself, after three command attempts and the wait for the message
-    /// at the latest (about 6.7 s). The request timeout is a backstop above that.
-    static constexpr Timeouts defaultTimeouts{8000, 30000, 15000};
+    /// at the latest (about 6.7 s). The request timeout is a backstop above that. Reading and parsing the largest
+    /// metadata file the readers accept takes several seconds (about 7 s in a debug build); the load timeout is a
+    /// backstop above that.
+    static constexpr Timeouts defaultTimeouts{8000, 30000, 15000, 30000};
 
     explicit RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent = nullptr,
                                              const Timeouts& timeouts = defaultTimeouts);
@@ -54,6 +60,7 @@ private:
     void _requestMetaDataJsonFallback();
     void _requestTranslationJson();
     void _requestTranslate();
+    void _loadMetaData();
     void _completeRequest();
 
     // Skip predicates
@@ -65,13 +72,15 @@ private:
     // Download helpers
     void _requestFile(CompletionWaitState* state, const QString& cacheFileTag, bool crcValid, const QString& uri,
                       QString& outputFileName, bool trackMetadataSource);
-    QString _downloadCompleteJsonWorker(const QString& jsonFileName, const QString& cacheFileTag, bool crcValid);
-    void _ftpDownloadProgress(float progress);
-    static bool _uriIsMAVLinkFTP(const QString& uri);
+    /// Caches the metadata file once it has been read, or removes it from the cache if it came from there and could
+    /// not be read
+    void _updateFileCache(bool read);
+    void _ftpDownloadProgress(CompletionWaitState* state, float progress);
 
     // What a state that is left gives up, so that nothing of it reaches a later state
     void _cancelMessageRequest();
     void _cancelTransfer();
+    void _cancelLoad();
 
     enum class MetadataSource {
         None,
@@ -89,8 +98,8 @@ private:
     enum class Transfer
     {
         None,
-        Ftp,
-        Http,
+        Download,
+        Translation,
     };
 
     ComponentInformationManager* _compMgr = nullptr;
@@ -100,13 +109,23 @@ private:
     QString _jsonMetadataFileName;
     QString _jsonMetadataTranslatedFileName;
     bool _jsonMetadataCrcValid = false;
+    /// Tag of _jsonMetadataFileName in the file cache, empty if it is not cached for lack of a CRC
+    QString _jsonMetadataCacheTag;
+    /// _jsonMetadataFileName is a download that is not in the file cache, removed when the request completes
+    bool _jsonMetadataDownloaded = false;
     QString _jsonTranslationFileName;
 
     Transfer _transferInFlight = Transfer::None;
+    QPointer<VehicleFileFetch> _fetch;
     QElapsedTimer _downloadStartTime;
     MetadataSource _metadataSource = MetadataSource::None;
     QString _metadataUri;
     bool _metadataIsFallback = false;
+
+    /// Reads and parses the metadata file on a worker thread while the load state waits for it
+    QPointer<QObject> _loadJob;
+    /// Ends when the last load has stopped reading its file, also one whose state has given it up
+    QFuture<void> _loadEnded;
 
     // State pointers
     AsyncFunctionState* _stateRequestCompInfo = nullptr;
@@ -115,6 +134,7 @@ private:
     AsyncFunctionState* _stateRequestMetaDataJsonFallback = nullptr;
     AsyncFunctionState* _stateRequestTranslationJson = nullptr;
     AsyncFunctionState* _stateRequestTranslate = nullptr;
+    AsyncFunctionState* _stateLoadMetaData = nullptr;
     QGCState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
 };

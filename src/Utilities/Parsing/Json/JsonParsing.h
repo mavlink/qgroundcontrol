@@ -14,12 +14,28 @@ namespace JsonParsing {
 constexpr const char *jsonVersionKey = "version";
 constexpr const char *jsonFileTypeKey = "fileType";
 
+/// Reads and parses a JSON file as it is. Compressed content is refused, not decompressed: use this for every file
+/// that is not known to arrive compressed.
+/// @param errorString Why it could not; empty when it could
+/// @param maxBytes Largest size of the file. A larger file is refused before it is read
+[[nodiscard]] bool readJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes);
 
-/// Determines whether a file path contains parseable JSON content.
-bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString);
+/// Reads the text of a JSON file as it is, without parsing it. Compressed content is not decompressed.
+/// @param text Receives the content; empty after a failure
+/// @param errorString Why it could not
+/// @param maxBytes Largest size of the file. A larger file is refused before it is read
+[[nodiscard]] bool readJsonText(const QString& fileName, QByteArray& text, QString& errorString, qint64 maxBytes);
 
-/// Determines whether an in-memory byte buffer contains parseable JSON content.
-bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString);
+/// Parses JSON text. Compressed content is refused, not decompressed.
+/// @param errorString Why it could not; empty when it could
+[[nodiscard]] bool parseJson(const QByteArray& json, QJsonDocument& jsonDoc, QString& errorString);
+
+/// Reads and parses a JSON file that may be compressed (gzip, xz, ...): compressed content is decompressed first.
+/// Only for files that arrive compressed: those a vehicle sends or points to.
+/// Any other file is read with readJsonFile().
+/// @param errorString Why it could not; empty when it could
+/// @param maxBytes Largest size of the content, once decompressed. A larger file is not parsed
+bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes);
 
 /// Returns NaN if the value is null, or the value converted to double otherwise.
 double possibleNaNJsonValue(const QJsonValue& value);

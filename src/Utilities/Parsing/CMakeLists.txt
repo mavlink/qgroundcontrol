@@ -185,6 +185,7 @@ target_link_libraries(
         ulog_cpp::ulog_cpp
     PRIVATE
         QGCCompression
+        QGCFormat
         QGCLogging
         QGCWire
         ValiJSON::valijson

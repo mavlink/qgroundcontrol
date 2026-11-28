@@ -1,21 +1,23 @@
 #include "GeoTagController.h"
-#include "DataFlashParser.h"
-#include "ExifParser.h"
-#include "GeoTagImageModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-#include "ULogParser.h"
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QMultiMap>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
+
+#include "DataFlashParser.h"
+#include "ExifParser.h"
+#include "GeoTagImageModel.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
+#include "ULogParser.h"
 
 QGC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
 
@@ -740,7 +742,8 @@ GeoTagController::ExifResult GeoTagController::_parseExifForImage(const QFileInf
     QString errorString;
     const QByteArray imageBuffer = _readImageCached(imageInfo.absoluteFilePath(), &errorString);
     if (imageBuffer.isEmpty()) {
-        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1").arg(imageInfo.fileName());
+        result.errorMessage =
+            tr("Geotagging failed. Couldn't open image: %1 (%2)").arg(imageInfo.fileName(), errorString);
         return result;
     }
 
@@ -963,7 +966,7 @@ GeoTagController::TagResult GeoTagController::_tagImage(const TagTask &task)
     QString errorString;
     QByteArray imageBuffer = _readImageCached(task.imageInfo.absoluteFilePath(), &errorString);
     if (imageBuffer.isEmpty()) {
-        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1").arg(result.fileName);
+        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1 (%2)").arg(result.fileName, errorString);
         return result;
     }
 
@@ -1003,11 +1006,27 @@ QByteArray GeoTagController::_readImageCached(const QString &path, QString *erro
         }
     }
 
-    // Read from disk (outside lock to allow parallel reads)
+    // Read from disk (outside lock to allow parallel reads). An image is read as it is: it is not a compressed file
+    QFile file(path);
+    QByteArray data;
     QString error;
-    QByteArray data = QGCCompression::readFile(path, &error);
-
-    if (data.isEmpty()) {
+    if (!file.open(QIODevice::ReadOnly)) {
+        error = tr("Cannot read the file: %1").arg(file.errorString());
+    } else if (file.size() > kMaxImageBytes) {
+        error = tr("The file is larger than %1").arg(QGC::bigSizeToString(static_cast<quint64>(kMaxImageBytes)));
+    } else {
+        // One byte more than its size tells a file that grows while it is read
+        const qint64 size = file.size();
+        data = file.read(size + 1);
+        if (file.error() != QFileDevice::NoError) {
+            error = tr("Cannot read the file: %1").arg(file.errorString());
+        } else if (data.isEmpty()) {
+            error = tr("The file is empty");
+        } else if (data.size() != size) {
+            error = tr("The file changed while it was read");
+        }
+    }
+    if (!error.isEmpty()) {
         if (errorString) {
             *errorString = error;
         }

@@ -1,34 +1,34 @@
-#include "QmlObjectListModel.h"
 #include "ParameterManager.h"
-#include "BulkRefreshJob.h"
 
 #include <algorithm>
 
 #include <QtCore/QDir>
+#include <QtCore/QEasingCurve>
+#include <QtCore/QFile>
 #include <QtCore/QSet>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
+#include <QtCore/QVariantAnimation>
 
+#include "AppMessages.h"
 #include "AutoPilotPlugin.h"
+#include "BulkRefreshJob.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationManager.h"
+#include "FTPManager.h"
 #include "FactGroup.h"
 #include "FirmwarePlugin.h"
-#include "FTPManager.h"
 #include "MAVLinkProtocol.h"
-#include "AppMessages.h"
-#include "QGCMath.h"
+#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
+#include "QGCMath.h"
+#include "QGCStateMachine.h"
+#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "QGCStateMachine.h"
-#include "MultiVehicleManager.h"
-
-#include <QtCore/QEasingCurve>
-#include <QtCore/QFile>
-#include <QtCore/QStandardPaths>
-#include <QtCore/QVariantAnimation>
 
 QGC_LOGGING_CATEGORY(ParameterManagerLog, "FactSystem.ParameterManager")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "FactSystem.ParameterManager:verbose1")
@@ -64,6 +64,9 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 ParameterManager::~ParameterManager()
 {
     qCDebug(ParameterManagerLog) << this;
+
+    // The request closes the file it writes before its directory goes: Windows cannot remove an open file
+    delete _ftpRequest.data();
 }
 
 void ParameterManager::setScheduler(RuntimeScheduler* scheduler)
@@ -561,13 +564,11 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
     bool continueWithDefaultParameterdownload = true;
     bool immediateRetry = false;
 
-    _ftpDownloadInProgress = false;
-    (void) disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
-    (void) disconnect(_vehicle->ftpManager(), &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
-
     if (errorMsg.isEmpty()) {
         qCDebug(ParameterManagerLog) << "ParameterManager::_ftpDownloadComplete : Parameter file received:" << fileName;
-        if (_parseParamFile(fileName)) {
+        const bool parsed = _parseParamFile(fileName);
+        (void) QFile::remove(fileName);
+        if (parsed) {
             qCDebug(ParameterManagerLog) << "ParameterManager::_ftpDownloadComplete : Parsed!";
             _ftpParamsLoaded = true;
             for (const int componentId : _heartbeatComponentIds) {
@@ -607,6 +608,24 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
     } else {
         _startParamRequestListTimer();
     }
+}
+
+QString ParameterManager::_ftpDownloadDirectory()
+{
+    // Each vehicle has a queue of its own, so the downloads of two vehicles can run together: a shared file would mix
+    // them, and a failed one would remove the other's
+    if (!_ftpDownloadDir) {
+        const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        _ftpDownloadDir = std::make_unique<QTemporaryDir>(tempDir.filePath(QStringLiteral("qgc_params_XXXXXX")));
+        if (!_ftpDownloadDir->isValid()) {
+            qCWarning(ParameterManagerLog) << "Cannot create a download directory, loading parameters without FTP:"
+                                           << _ftpDownloadDir->errorString();
+            // The parameter stream loads them instead, and its values are dropped while FTP is tried
+            _tryftp = false;
+        }
+    }
+
+    return _ftpDownloadDir->isValid() ? _ftpDownloadDir->path() : QString();
 }
 
 void ParameterManager::_handleHeartbeat(int componentId)
@@ -716,33 +735,38 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
             ? static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1)
             : componentId;
         _requestHashCheck(hashCheckCompId);
-    } else if (_tryftp && ((componentId == MAV_COMP_ID_ALL) || (componentId == MAV_COMP_ID_AUTOPILOT1))) {
-        if (_ftpDownloadInProgress) {
-            // A retry while the file is still transferring would disconnect the completion handler below
+    } else if (_tryftp && ((componentId == MAV_COMP_ID_ALL) || (componentId == MAV_COMP_ID_AUTOPILOT1)) &&
+               !_ftpDownloadDirectory().isEmpty()) {
+        if (_ftpRequest) {
+            // A retry while the file is still transferring would download it twice
             qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Parameter file download already in progress";
             _refreshAllProgressActive = false;
             return;
         }
-        if (!_initialLoadComplete) {
-            _startParamRequestListTimer();
-        }
-        FTPManager *const ftpManager = _vehicle->ftpManager();
-        (void) connect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
+        // The download may wait behind other transfers of the vehicle: the timer counts from when it begins, so that
+        // the wait uses up no retry
+        _paramRequestListTimer.reset();
         // Other components may still be re-reading over the stream path; only their timer keeps them going
         if (!_anyComponentWaiting()) {
             _waitingParamTimeoutTimer.reset();
         }
-        if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1,
-                                 QStringLiteral("@PARAM/param.pck?withdefaults=1"),
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation),
-                                 QStringLiteral("param.pck"),
-                                 false /* No filesize check */)) {
-            _ftpDownloadInProgress = true;
-            (void) connect(ftpManager, &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
+        _ftpRequest = _vehicle->ftpManager()->download(
+            this, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@PARAM/param.pck?withdefaults=1"), _ftpDownloadDirectory(),
+            {.fileName = QStringLiteral("param.pck"), .checksize = false /* No filesize check */},
+            [this](const QString& fileName, const QString& errorMsg) { _ftpDownloadComplete(fileName, errorMsg); });
+        if (_ftpRequest) {
+            (void) connect(_ftpRequest, &FTPRequest::started, this, [this]() {
+                if (!_initialLoadComplete) {
+                    _startParamRequestListTimer();
+                }
+            });
+            (void) connect(_ftpRequest, &FTPRequest::progressChanged, this, &ParameterManager::_ftpDownloadProgress);
         } else {
             qCWarning(ParameterManagerLog) << "ParameterManager::_startParameterDownload FTPManager::download returned failure";
-            (void) disconnect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
             _refreshAllProgressActive = false;
+            if (!_initialLoadComplete) {
+                _startParamRequestListTimer();
+            }
         }
     } else {
         if (!_initialLoadComplete) {

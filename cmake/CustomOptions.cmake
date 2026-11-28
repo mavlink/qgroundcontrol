@@ -131,11 +131,15 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER
 # ============================================================================
 # Compression Format Options
 # ============================================================================
-# Core formats (gzip, xz, zstd, zip) are always enabled.
-# These optional formats are rarely used in the drone ecosystem.
+# Always read: gzip and xz streams, and ZIP archives.
+# Nothing QGC reads uses these optional formats: a build without one refuses a file in it.
 
 option(QGC_ENABLE_BZIP2 "Enable BZip2 decompression support" OFF)
 option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
+option(QGC_ENABLE_ZSTD "Enable Zstandard decompression support" OFF)
+option(QGC_ENABLE_LZMA "Enable decompression of legacy .lzma streams (xz streams are always read)" OFF)
+option(QGC_ENABLE_7ZIP "Enable extraction of 7z archives" OFF)
+option(QGC_ENABLE_TAR "Enable extraction of TAR archives, plain or compressed (.tar, .tar.gz, ...)" OFF)
 
 # ============================================================================
 # Communication Options

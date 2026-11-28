@@ -1,17 +1,19 @@
 #include "QGCCachedFileDownloadTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtNetwork/QNetworkCacheMetaData>
 #include <QtNetwork/QNetworkDiskCache>
 #include <QtNetwork/QNetworkRequest>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "LocalHttpTestServer.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QDir>
 
 // ============================================================================
 // QGCCachedFileDownload Tests
@@ -181,6 +183,40 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadCachedPath()
     QVERIFY(file.open(QIODevice::ReadOnly));
     QCOMPARE(file.readAll(), payload);
     file.close();
+    QFile::remove(cachedPath);
+}
+
+// With decompression turned on, the cache keeps what the server sent, and each result, also the one from the cache,
+// is that content decompressed
+void QGCCachedFileDownloadTest::_testCachedFileDownloadDecompresses()
+{
+    QTemporaryDir tempDir;
+    QGCCachedFileDownload downloader(tempDir.path(), this);
+    downloader.fileDownloader()->setAutoDecompress(true);
+
+    const QByteArray payload(R"({"name": "decompressed"})");
+    const QByteArray compressed = TestFixtures::gzipMember(payload);
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/data.json.gz"));
+    server.installHttpResponder(compressed, 200, "application/gzip", 3600);
+
+    for (const bool fromCache : {false, true}) {
+        QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
+        QVERIFY(downloader.download(url, 3600));
+        QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+        const QList<QVariant> args = finishedSpy.first();
+        QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+        QCOMPARE(args.at(3).toBool(), fromCache);
+        const QString localPath = args.at(1).toString();
+        QCOMPARE(QFileInfo(localPath).fileName(), QStringLiteral("data.json"));
+        QCOMPARE(TestFixtures::readFile(localPath), payload);
+        QVERIFY(QFile::remove(localPath));
+        server.close();
+    }
+
+    const QString cachedPath = downloader.cachedPath(url);
+    QCOMPARE(TestFixtures::readFile(cachedPath), compressed);
     QFile::remove(cachedPath);
 }
 
@@ -397,4 +433,4 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadSignals()
     QVERIFY(!downloader.isRunning());
 }
 
-UT_REGISTER_TEST(QGCCachedFileDownloadTest, TestLabel::Integration, TestLabel::Network, TestLabel::Utilities)
+UT_REGISTER_TEST(QGCCachedFileDownloadTest, TestLabel::Integration, TestLabel::Utilities)

@@ -354,29 +354,30 @@ void PlanMasterController::sendToVehicle(void)
 void PlanMasterController::loadFromFile(const QString& filename)
 {
     QString errorString;
-    QString errorMessage = tr("Error loading Plan file (%1). %2").arg(filename).arg("%1");
+    const auto errorMessage = [&filename](const QString& error) {
+        return tr("Error loading Plan file (%1). %2").arg(filename, error);
+    };
 
     if (filename.isEmpty()) {
         return;
     }
 
     QFileInfo fileInfo(filename);
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString() + QStringLiteral(" ") + filename;
-        QGC::showAppMessage(errorMessage.arg(errorString));
-        return;
-    }
 
     bool success = false;
     if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
+        QFile file(filename);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            errorString = file.errorString() + QStringLiteral(" ") + filename;
+            QGC::showAppMessage(errorMessage(errorString));
+            return;
+        }
         success = _missionController.loadTextFile(file, errorString);
     } else {
-        success = _loadPlanJson(file.readAll(), errorString);
+        success = _loadPlanJson(filename, errorString);
     }
     if (!success) {
-        QGC::showAppMessage(errorMessage.arg(errorString));
+        QGC::showAppMessage(errorMessage(errorString));
     }
 
     if (success){
@@ -388,10 +389,10 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 }
 
-bool PlanMasterController::_loadPlanJson(const QByteArray& bytes, QString& errorString)
+bool PlanMasterController::_loadPlanJson(const QString& filename, QString& errorString)
 {
     QJsonDocument jsonDoc;
-    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
+    if (!JsonParsing::readJsonFile(filename, jsonDoc, errorString, kMaxPlanFileBytes)) {
         return false;
     }
 
@@ -471,13 +472,13 @@ bool PlanMasterController::saveToFile(const QString& filename)
     QFile file(planFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QGC::showAppMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
+        QGC::showAppMessage(tr("Plan save error %1 : %2").arg(filename, file.errorString()));
         return false;
     } else {
         const QByteArray saveBytes = saveToJson().toJson();
         const qint64 bytesWritten = file.write(saveBytes);
         if (bytesWritten != saveBytes.size()) {
-            QGC::showAppMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
+            QGC::showAppMessage(tr("Plan save error %1 : %2").arg(filename, file.errorString()));
             return false;
         }
         if(_currentPlanFile != planFilename) {
@@ -504,7 +505,7 @@ void PlanMasterController::saveToKml(const QString& filename)
     QFile file(kmlFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QGC::showAppMessage(tr("KML save error %1 : %2").arg(filename).arg(file.errorString()));
+        QGC::showAppMessage(tr("KML save error %1 : %2").arg(filename, file.errorString()));
     } else {
         KMLPlanDomDocument planKML;
         _missionController.addMissionToKML(planKML);

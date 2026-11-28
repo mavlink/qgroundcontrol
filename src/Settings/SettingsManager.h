@@ -139,6 +139,8 @@ public:
     Viewer3DSettings *viewer3DSettings() const;
 
 private:
+    friend class SettingsManagerTest;
+
     void _loadSettingsFiles();
 
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;

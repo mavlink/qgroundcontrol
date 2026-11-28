@@ -6,6 +6,8 @@ qt_add_library(
     QGCFileWatcher.h
     QGCFileWriter.cc
     QGCFileWriter.h
+    QGCWorkDirectory.cc
+    QGCWorkDirectory.h
 )
 
 target_include_directories(QGCFileSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

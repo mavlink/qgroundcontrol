@@ -1,5 +1,7 @@
 #include "QGCNetworkHelper.h"
 
+#include <chrono>
+
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
@@ -12,9 +14,8 @@
 #include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxyFactory>
 #include <QtNetwork/QSslSocket>
-#include <chrono>
 
-#include "QGCCompression.h"
+#include "Compression.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")

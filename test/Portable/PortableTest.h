@@ -1,16 +1,28 @@
 #pragma once
 
 #ifdef QGC_PORTABLE_TEST
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtTest/QTest>
 
-class PortableTest : public QObject
+#include "UnitTestBase.h"
+
+/// Harness of a standalone test executable: UnitTestBase without the application, capturing the log itself
+class PortableTest : public UnitTestBase
 {
     Q_OBJECT
 
-private slots:
+protected slots:
+    /// Turns off debug and info messages, and installs the capture of the log on top of QTest's message handler
+    virtual void initTestCase();
 
-    void init() { QTest::failOnWarning(); }
+    /// Restores QTest's message handler
+    virtual void cleanupTestCase();
+
+protected:
+    void startLogCapture() override;
+    void stopLogCapture() override;
+    QList<TestLogMessage> capturedLogMessages() const override;
 };
 
 #define QGC_REGISTER_PORTABLE_TEST(className, ...) QTEST_GUILESS_MAIN(className)

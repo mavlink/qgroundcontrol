@@ -55,8 +55,14 @@
       "inherits": ["debug", "lean-debug", "linux-base"],
       "binaryDir": "${sourceDir}/build/Linux-sanitizers",
       "cacheVariables": {
+        "QGC_ENABLE_7ZIP": "ON",
         "QGC_ENABLE_ASAN": "ON",
+        "QGC_ENABLE_BZIP2": "ON",
+        "QGC_ENABLE_LZ4": "ON",
+        "QGC_ENABLE_LZMA": "ON",
+        "QGC_ENABLE_TAR": "ON",
         "QGC_ENABLE_UBSAN": "ON",
+        "QGC_ENABLE_ZSTD": "ON",
         "QGC_TEST_DETECT_LEAKS": "ON"
       }
     },

@@ -1,97 +1,174 @@
 #include "FTPControllerTest.h"
 
-#include <QtCore/QFile>
+#include <functional>
+
+#include <QtCore/QDir>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
-#include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
 #include "FTPController.h"
-#include "QGCArchiveModel.h"
-#include "UnitTest.h"
+#include "FTPManager.h"
+#include "FileFixtures.h"
+#include "MockLink.h"
+#include "MockLinkFTP.h"
+#include "Vehicle.h"
 
-void FTPControllerTest::_extractArchiveRejectsInvalidInput()
+void FTPControllerTest::_testCancelReportsAbortedOnce_data()
 {
-    FTPController controller(this);
+    QTest::addColumn<QString>("operation");
 
-    QVERIFY(!controller.extractArchive(QString()));
-    QVERIFY(controller.errorString().contains(QStringLiteral("No archive path specified")));
-
-    QVERIFY(!controller.extractArchive(QStringLiteral("/nonexistent/archive.zip")));
-    QVERIFY(controller.errorString().contains(QStringLiteral("Archive file not found")));
+    QTest::newRow("list") << "list";
+    QTest::newRow("download") << "download";
+    QTest::newRow("upload") << "upload";
+    QTest::newRow("delete") << "delete";
 }
 
-void FTPControllerTest::_extractArchiveHappyPath()
+// A cancelled request calls nothing back, so the controller ends the operation itself: as aborted, once, with the
+// request gone from the queue of the vehicle, and ready for the next operation
+void FTPControllerTest::_testCancelReportsAbortedOnce()
 {
-    FTPController controller(this);
-    QTemporaryDir outputDir;
-    QVERIFY(outputDir.isValid());
+    QFETCH(QString, operation);
 
-    QSignalSpy completeSpy(&controller, &FTPController::extractionComplete);
-    QSignalSpy extractingSpy(&controller, &FTPController::extractingChanged);
-    QVERIFY(completeSpy.isValid());
-    QVERIFY(extractingSpy.isValid());
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    FTPController controller;
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString localFile = directory.filePath(QStringLiteral("upload.bin"));
+    QVERIFY(TestFixtures::writeFile(localFile, QByteArray(4 * 1024, 'u')));
 
-    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
-    QVERIFY(controller.extracting());
+    QSignalSpy downloadSpy(&controller, &FTPController::downloadComplete);
+    QSignalSpy uploadSpy(&controller, &FTPController::uploadComplete);
+    QSignalSpy deleteSpy(&controller, &FTPController::deleteComplete);
+    // A listing has no signal of its own
+    QSignalSpy* completeSpy = nullptr;
+    if (operation == QStringLiteral("list")) {
+        QVERIFY(controller.listDirectory(QStringLiteral("/")));
+    } else if (operation == QStringLiteral("download")) {
+        QVERIFY(controller.downloadFile(QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(4 * 1024),
+                                        directory.path()));
+        completeSpy = &downloadSpy;
+    } else if (operation == QStringLiteral("upload")) {
+        QVERIFY(controller.uploadFile(localFile, QStringLiteral("/mock/upload/cancelled.bin")));
+        completeSpy = &uploadSpy;
+    } else {
+        QVERIFY(controller.deleteFile(QStringLiteral("/no-such-file")));
+        completeSpy = &deleteSpy;
+    }
+    QVERIFY(controller.busy());
 
-    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::longMs());
-    QCOMPARE(completeSpy.count(), 1);
-    const QList<QVariant> args = completeSpy.takeFirst();
-    QCOMPARE(args.at(0).toString(), outputDir.path());
-    QVERIFY(args.at(1).toString().isEmpty());
+    // Under way on the vehicle
+    FTPRequest* const request = controller.findChild<FTPRequest*>();
+    QVERIFY(request);
+    QSignalSpy startedSpy(request, &FTPRequest::started);
+    QVERIFY(UnitTest::waitForSignal(startedSpy, TestTimeout::mediumMs(), QStringLiteral("started")));
 
-    QVERIFY(QFile::exists(outputDir.path() + QStringLiteral("/manifest.json")));
-    QVERIFY(!controller.extracting());
-    QVERIFY(controller.errorString().isEmpty());
-    QVERIFY(extractingSpy.count() >= 2);
+    controller.cancelActiveOperation();
+    QVERIFY(!controller.busy());
+    QCOMPARE(controller.errorString(), QStringLiteral("Aborted"));
+    QCOMPARE(ftpManager->requestCount(), 0);
+    QCOMPARE(downloadSpy.count() + uploadSpy.count() + deleteSpy.count(), completeSpy ? 1 : 0);
+    if (completeSpy) {
+        QCOMPARE(completeSpy->first().at(1).toString(), QStringLiteral("Aborted"));
+    }
+
+    // The controller takes the next operation, and nothing more comes of the cancelled one
+    QVERIFY(controller.listDirectory(QStringLiteral("/")));
+    QTRY_VERIFY_WITH_TIMEOUT(!controller.busy(), TestTimeout::longMs());
+    QCOMPARE(controller.errorString(), QString());
+    QCOMPARE(controller.directoryEntries().count(), 6);
+    QCOMPARE(downloadSpy.count() + uploadSpy.count() + deleteSpy.count(), completeSpy ? 1 : 0);
+    QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QStringLiteral("upload.bin")});
 }
 
-void FTPControllerTest::_extractArchiveConcurrentRejected()
+// The vehicle may go away during an operation, and its FTPManager with it: the operation ends with the error, once,
+// and the next one is refused rather than asked of a manager that is gone
+void FTPControllerTest::_testVehicleGoneEndsOperation()
 {
-    FTPController controller(this);
-    QTemporaryDir outputDir;
-    QVERIFY(outputDir.isValid());
+    _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(100);
+    FTPController controller;
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString uri = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(100 * 1024);
 
-    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
-    QVERIFY(controller.extracting());
+    QSignalSpy downloadSpy(&controller, &FTPController::downloadComplete);
+    QVERIFY(controller.downloadFile(uri, directory.path()));
+    QTRY_VERIFY_WITH_TIMEOUT(controller.progress() > 0.0F, TestTimeout::longMs());
 
-    QVERIFY(!controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
-    QVERIFY(controller.errorString().contains(QStringLiteral("Extraction already in progress")));
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+    _disconnectMockLink();
 
-    QSignalSpy completeSpy(&controller, &FTPController::extractionComplete);
-    QVERIFY(completeSpy.isValid());
-    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::longMs());
-    QVERIFY(!controller.extracting());
+    QTRY_VERIFY_WITH_TIMEOUT(!controller.busy(), TestTimeout::mediumMs());
+    QCOMPARE(downloadSpy.count(), 1);
+    QCOMPARE(downloadSpy.first().at(1).toString(), QStringLiteral("Vehicle disconnected"));
+    QCOMPARE(controller.errorString(), QStringLiteral("Vehicle disconnected"));
+    QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList());
+
+    expectLogMessage("Vehicle.FTPController", QtWarningMsg, QRegularExpression("Failed to start download"));
+    QVERIFY(!controller.downloadFile(uri, directory.path()));
+    verifyExpectedLogMessage();
+    QCOMPARE(controller.errorString(), QStringLiteral("Failed to download %1").arg(uri));
+    QVERIFY(!controller.busy());
+    QCOMPARE(downloadSpy.count(), 2);
 }
 
-void FTPControllerTest::_browseArchiveRejectsInvalidInput()
+// A controller made while no vehicle is active, as the page that shows it can be, fails every operation with its error
+void FTPControllerTest::_testWithoutVehicle()
 {
-    FTPController controller(this);
+    FTPController controller;
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString localFile = directory.filePath(QStringLiteral("upload.bin"));
+    QVERIFY(TestFixtures::writeFile(localFile, "data"));
+    const QString uri = QStringLiteral("/general.json");
 
-    QVERIFY(!controller.browseArchive(QString()));
-    QVERIFY(controller.errorString().contains(QStringLiteral("No archive path specified")));
+    struct Operation
+    {
+        const char* name;
+        std::function<bool()> start;
+        QString warning;
+        QString error;
+    };
 
-    QVERIFY(!controller.browseArchive(QStringLiteral("/nonexistent/archive.zip")));
-    QVERIFY(controller.errorString().contains(QStringLiteral("Archive file not found")));
-
-    QTemporaryFile tempFile;
-    QVERIFY(tempFile.open());
-    tempFile.write("not an archive");
-    tempFile.flush();
-
-    QVERIFY(!controller.browseArchive(tempFile.fileName()));
-    QVERIFY(controller.errorString().contains(QStringLiteral("Not a supported archive format")));
+    const QList<Operation> operations = {
+        {"list", [&]() { return controller.listDirectory(uri); }, QStringLiteral("Failed to start list operation"),
+         QStringLiteral("Failed to list %1").arg(uri)},
+        {"download", [&]() { return controller.downloadFile(uri, directory.path()); },
+         QStringLiteral("Failed to start download"), QStringLiteral("Failed to download %1").arg(uri)},
+        {"upload", [&]() { return controller.uploadFile(localFile, uri); }, QStringLiteral("Failed to start upload"),
+         QStringLiteral("Failed to upload upload.bin")},
+        {"delete", [&]() { return controller.deleteFile(uri); }, QStringLiteral("Failed to start delete"),
+         QStringLiteral("Failed to delete %1").arg(uri)},
+    };
+    for (const Operation& operation : operations) {
+        expectLogMessage("Vehicle.FTPController", QtWarningMsg, QRegularExpression(operation.warning));
+        QVERIFY2(!operation.start(), operation.name);
+        verifyExpectedLogMessage();
+        QVERIFY2(!QTest::currentTestFailed(), operation.name);
+        QVERIFY2(controller.errorString() == operation.error, qPrintable(controller.errorString()));
+        QVERIFY2(!controller.busy(), operation.name);
+    }
 }
 
-void FTPControllerTest::_browseArchiveHappyPath()
+// The MAVLink FTP browser tells the user that the file name is why a download was refused
+void FTPControllerTest::_testNamesRefusedFileName()
 {
-    FTPController controller(this);
+    _connectMockLinkNoInitialConnectSequence();
+    FTPController controller;
+    QTemporaryDir destination;
+    QVERIFY(destination.isValid());
 
-    QVERIFY(controller.browseArchive(QStringLiteral(":/unittest/manifest.json.zip")));
-    QVERIFY(controller.errorString().isEmpty());
-    QCOMPARE(controller.archiveModel()->archivePath(), QStringLiteral(":/unittest/manifest.json.zip"));
-    QVERIFY(controller.archiveModel()->count() > 0);
-    QVERIFY(controller.archiveModel()->contains(QStringLiteral("manifest.json")));
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression("Not a file name"));
+    expectLogMessage("Vehicle.FTPController", QtWarningMsg, QRegularExpression("Failed to start download"));
+    QVERIFY(!controller.downloadFile(QStringLiteral("/general.json"), destination.path(), QStringLiteral("COM1.json")));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(controller.errorString(),
+             QStringLiteral("\"COM1.json\" is not a file name that every system can save, so it was not downloaded"));
+    QCOMPARE(QDir(destination.path()).entryList(QDir::AllEntries | QDir::NoDotAndDotDot), QStringList());
+    _disconnectMockLink();
 }
 
 UT_REGISTER_TEST(FTPControllerTest, TestLabel::Integration, TestLabel::Vehicle)

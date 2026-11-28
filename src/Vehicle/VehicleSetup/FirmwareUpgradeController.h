@@ -1,5 +1,10 @@
 ﻿#pragma once
 
+#include <functional>
+#include <optional>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
@@ -10,6 +15,7 @@
 #include "QGCSerialPortInfo.h"
 
 class QGCFileDownload;
+class QJsonObject;
 
 class PX4FirmwareUpgradeThread;
 class PX4FirmwareUpgradeThreadController;
@@ -118,6 +124,12 @@ public:
 
     Q_INVOKABLE FirmwareVehicleType_t vehicleTypeFromFirmwareSelectionIndex(int index);
 
+    /// Downloads and reads the ArduPilot firmware list, unless it has been read, is being downloaded or read, or the
+    /// build does not offer ArduPilot. The firmware selection calls it when it shows ArduPilot firmware: the list is
+    /// 2 MiB to download and 92 MiB to read, which nobody else needs. downloadingFirmwareList is true until it has
+    /// been read. A list that could not be downloaded or read is downloaded again at the next call
+    Q_INVOKABLE void loadArduPilotFirmwareList();
+
     // overload, not exposed to qml side
     void flash(const FirmwareIdentifier& firmwareId);
 
@@ -210,7 +222,7 @@ private:
     QList<FirmwareVehicleType_t>                                _apmVehicleTypeFromCurrentVersionList;
 
     /// Information which comes back from the bootloader
-    bool        _bootloaderFound;           ///< true: we have received the foundBootloader signals
+    bool _bootloaderFound = false;          ///< true: we have received the foundBootloader signals
     uint32_t    _bootloaderVersion;         ///< Bootloader version
     uint32_t    _bootloaderBoardID;         ///< Board ID
     uint32_t    _bootloaderBoardFlashSize;  ///< Flash size in bytes of board
@@ -291,8 +303,97 @@ private:
     QPointer<QGCFileDownload>               _activeDownloader;          ///< in-flight firmware download, aborted on cancel
     bool                                    _flashCancelled = false;    ///< cancel was issued; ignore late download completions
 
-    FirmwareBuildType_t     _manifestMavFirmwareVersionTypeToFirmwareBuildType  (const QString& manifestMavFirmwareVersionType);
-    FirmwareVehicleType_t   _manifestMavTypeToFirmwareVehicleType               (const QString& manifestMavType);
+    /// The ArduPilot firmware manifest, as a worker reads it
+    struct ArduPilotManifest
+    {
+        QList<ManifestFirmwareInfo_t> firmware;
+        QString errorString;  ///< Why the manifest could not be read, empty if it was read
+    };
+
+    /// \brief Cuts the objects of the "firmware" array out of the text of the ArduPilot manifest as it is
+    /// decompressed, a chunk at a time, so that the manifest is never held whole
+    ///
+    /// The manifest must be one JSON object, with one "firmware" array among its members. Every object of that array
+    /// is given to the handler whole, as text. The structure of the rest is checked: brackets, strings and their
+    /// escapes, colons and commas, and that nothing follows the object. Numbers and literals outside the objects
+    /// given are checked for their characters only; the handler parses what it keeps.
+    class ManifestSplitter
+    {
+    public:
+        /// Takes an object of the firmware array, which is valid only during the call. Returning false ends the
+        /// split as malformed
+        using ObjectHandler = std::function<bool(QByteArrayView object)>;
+
+        explicit ManifestSplitter(ObjectHandler handler);
+
+        /// Take the next chunk of the manifest
+        /// @return false once the manifest is found malformed (errorString())
+        bool feed(QByteArrayView chunk);
+
+        /// Whether the manifest ended where it may: after the object, which held a firmware array
+        bool finish();
+
+        QString errorString() const { return _errorString; }
+
+    private:
+        enum class Expect
+        {
+            Value,
+            KeyOrEnd,    ///< After '{'
+            Key,         ///< After ',' in an object
+            Colon,
+            ValueOrEnd,  ///< After '['
+            CommaOrEnd,
+            Nothing      ///< After the manifest object
+        };
+
+        bool _fail(const QString& error);
+        bool _failAt(const char* what, qsizetype index);
+        bool _token(QByteArrayView chunk, qsizetype& index);
+        bool _valueStarts(char first, qsizetype index);
+        bool _string(QByteArrayView chunk, qsizetype& index);
+        bool _endString();
+        bool _scalar(QByteArrayView chunk, qsizetype& index);
+        bool _open(char bracket, qsizetype& index);
+        bool _close(char bracket, QByteArrayView chunk, qsizetype& index);
+        void _valueDone();
+
+        ObjectHandler _handler;
+        QString _errorString;
+        qint64 _offset = 0;      ///< Of the chunk being read, in the manifest
+        QByteArray _containers;  ///< The open objects '{' and arrays '[', outermost first
+        Expect _expect = Expect::Value;
+        bool _inString = false;
+        bool _stringIsKey = false;
+        bool _escape = false;        ///< After a backslash in a string
+        int _hexDigits = 0;          ///< Left of a \u escape
+        bool _inScalar = false;
+        QByteArray _scalarText;      ///< The number or the literal read so far
+        QByteArray _key;             ///< A member name of the manifest object, as written
+        bool _firmwareKey = false;   ///< The member whose value comes next is "firmware"
+        bool _firmwareFound = false;
+        bool _firmwareOpen = false;  ///< The firmware array is being read
+        bool _firmwareDone = false;
+        bool _capturing = false;     ///< An object of the firmware array is being read
+        qsizetype _captureFrom = 0;  ///< Start of that object in the chunk being read
+        QByteArray _object;          ///< The object read so far, when it spans chunks
+    };
+
+    /// Reads, parses and filters the ArduPilot firmware manifest. It uses nothing but its arguments, so that it can
+    /// run on a worker thread. The manifest is split as it is decompressed, and only the entries that may be kept are
+    /// parsed
+    static ArduPilotManifest _parseArduPilotManifest(const QString& localFile,
+                                                     const QMap<QString, FirmwareBuildType_t>& buildTypes,
+                                                     const QMap<QString, FirmwareVehicleType_t>& vehicleTypes);
+    /// The firmware an entry of the manifest describes, if QGC offers it
+    static std::optional<ManifestFirmwareInfo_t> _manifestFirmwareInfo(
+        const QJsonObject& firmwareJson, const QMap<QString, FirmwareBuildType_t>& buildTypes,
+        const QMap<QString, FirmwareVehicleType_t>& vehicleTypes);
+    void _ardupilotManifestParsed(const ArduPilotManifest& manifest);
+    void _clearDownloadingFirmwareList();
+
+    QPointer<QObject> _manifestJob;       ///< Reads the ArduPilot firmware manifest on a worker
+    bool _arduPilotManifestRead = false;  ///< The firmware list has been downloaded and read
 };
 
 // global hashing function

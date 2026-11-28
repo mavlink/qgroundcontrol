@@ -1,13 +1,19 @@
 #pragma once
 
+#include <memory>
+
+#include <QtCore/QLocale>
+#include <QtCore/QPointer>
 #include <QtCore/QSet>
 
 #include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
+#include "VehicleFileFetch.h"
 
 class QGCVideoStreamInfo;
-class QNetworkAccessManager;
+class QTemporaryDir;
+class QDomDocument;
 class QDomNode;
 class QDomNodeList;
 
@@ -241,8 +247,10 @@ protected slots:
     virtual void    _requestParamUpdates    ();
     virtual void    _requestCaptureStatus   ();
     virtual void    _requestStorageInfo     ();
-    virtual void    _downloadFinished       ();
     virtual void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
+    /// Loads the camera definition in @p data, or the offline one if @p data is empty, then initialises the camera.
+    /// The definition is parsed on a worker thread, so the camera is initialised after this returns, unless there is
+    /// no definition to parse. A later call drops the definition that an earlier one is still parsing.
     virtual void    _dataReady              (QByteArray data);
     virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();
@@ -254,9 +262,20 @@ protected slots:
     void            _paramDone              () override;
 
 private:
-    bool    _handleLocalization             (QByteArray& bytes);
-    bool    _replaceLocaleStrings           (const QDomNode node, QByteArray& bytes);
-    bool    _loadCameraDefinitionFile       (QByteArray& bytes);
+    struct DefinitionFile;
+    struct ParsedDefinition;
+
+    // These use nothing but their arguments: they run on worker threads, as the definition comes from the camera
+    /// Reads a definition file, decompressed if it is compressed and held to @p maxBytes
+    static DefinitionFile _readDefinitionFile(const QString& fileName, qint64 maxBytes, bool checkWellFormed);
+    static ParsedDefinition _parseDefinition(const QByteArray& bytes, const QString& localeName);
+    /// Puts the strings of @p localeName in @p bytes. @return false if there are none to put in
+    static bool _localize(const QDomDocument& doc, const QString& localeName, QByteArray& bytes,
+                          ParsedDefinition& parsed);
+    static void _replaceLocaleStrings(const QDomNode node, QByteArray& bytes);
+    void _parseAndLoadDefinition(const QByteArray& bytes);
+    void _startDefinitionJob(QObject* job);
+    bool _loadCameraDefinitionFile(const ParsedDefinition& parsed);
     bool    _loadConstants                  (const QDomNodeList nodeList);
     bool    _loadSettings                   (const QDomNodeList nodeList);
     void    _processRanges                  ();
@@ -266,9 +285,9 @@ private:
     bool    _loadRanges                     (QDomNode option, const QString factName, QString paramValue);
     void    _updateActiveList               ();
     void    _updateRanges                   (Fact* pFact);
-    void    _httpRequest                    (const QString& url);
     void    _handleDefinitionFile           (const QString& url);
-    void    _ftpDownloadComplete            (const QString& fileName, const QString& errorMsg);
+    void _fetchDefinition(const QString& url);
+    void _definitionDownloaded(const QString& fileName, const QString& errorMsg);
     /// Asks the camera to stop the streams it transmits that are neither the current one nor an extra one, then to
     /// start those of them it doesn't transmit: one command at a time, the next once the camera answered the last.
     void _syncStreams();
@@ -277,6 +296,12 @@ private:
     QStringList     _loadExclusions         (QDomNode option);
     QStringList     _loadUpdates            (QDomNode option);
     QString         _getParamName           (const char* param_id);
+
+    /// Reads or parses the camera definition on a worker thread. Deleting it drops its result.
+    QPointer<QObject> _definitionJob;
+    QPointer<VehicleFileFetch> _definitionFetch;
+    /// Where the definition is downloaded, made on the first download. A read of a download on a worker shares it
+    std::shared_ptr<QTemporaryDir> _downloadDirectory;
 
 protected:
     int                                 _compID             = 0;
@@ -289,11 +314,14 @@ protected:
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
     int                                 _batteryRemaining   = -1;
-    QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
     QString _cacheFileToken;  ///< sanitised "<vendor>_<model>_<hash>_<NNN>", no extension
+    /// Largest size of the camera definition, as downloaded and decompressed
+    qint64 _maxDefinitionBytes = VehicleFileFetch::kMaxSmallFileBytes;
+    /// Name of the locale whose strings a camera definition is loaded with, as QLocale::name() gives it
+    QString _localeName = QLocale::system().name();
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;

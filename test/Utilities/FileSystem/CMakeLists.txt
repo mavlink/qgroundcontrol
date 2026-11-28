@@ -6,8 +6,6 @@
 target_sources(
     QGCUnitTests
     PRIVATE
-        QGCArchiveWatcherTest.cc
-        QGCArchiveWatcherTest.h
         QGCCachedFileDownloadTest.cc
         QGCCachedFileDownloadTest.h
         QGCFileDownloadTest.cc
@@ -16,12 +14,14 @@ target_sources(
         QGCFileHelperTest.h
         QGCFileWatcherTest.cc
         QGCFileWatcherTest.h
+        QGCWorkDirectoryTest.cc
+        QGCWorkDirectoryTest.h
 )
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
-add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Network Utilities)
-add_qgc_test(QGCFileDownloadTest LABELS Integration Network Utilities)
+add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Utilities)
+add_qgc_test(QGCFileDownloadTest LABELS Integration Utilities)
 add_qgc_test(QGCFileHelperTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
 add_qgc_test(QGCFileWatcherTest LABELS Unit Utilities)
+add_qgc_test(QGCWorkDirectoryTest LABELS Unit Utilities)

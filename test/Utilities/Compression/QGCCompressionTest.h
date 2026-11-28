@@ -1,91 +1,88 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "Compression.h"
+#include "PortableTest.h"
 
-/// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
-class QGCCompressionTest : public UnitTest
+/// Tests for Compression: file kind detection, the decompression of a single stream, and what all entry points
+/// have in common. QGCArchiveExtractionTest covers archive extraction, and QGCCompressionJobTest the job.
+class QGCCompressionTest : public PortableTest
 {
     Q_OBJECT
 
 private slots:
-    // Format detection
-    void _testFormatDetection_data();
-    void _testFormatDetection();
-    void _testDetectFormatFromFile_data();
-    void _testDetectFormatFromFile();
-    void _testDetectFormatFromMagicBytes_data();
-    void _testDetectFormatFromMagicBytes();
-    void _testFormatDetectionFromContent();
-    void _testFormatHelpers();
+    // Kind of a file
+    UT_PARAMETERIZED_TEST(_testKindFromName);
+    UT_PARAMETERIZED_TEST(_testKindFromContent);
+    void _testNameDoesNotChooseTheReader();
 
-    // Archive extraction from Qt resources
-    void _testZipFromResource();
-    void _test7zFromResource();
-    void _testExtractArchiveAtomic();
-    void _testExtractArchiveAtomicReplacesExistingDirectory();
-    void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
-    void _testListArchive();
-    void _testListArchiveDetailed();
-    void _testListArchiveNaturalSort();
-    void _testGetArchiveStats();
-    void _testValidateArchive();
-    void _testFileExists();
-    void _testExtractArchiveFiltered();
-    void _testExtractSingleFile();
-    void _testExtractFileData();
-    void _testExtractMultipleFiles();
-    void _testExtractByPattern();
+    // Single-file decompression
+    UT_PARAMETERIZED_TEST(_testDecompressEveryFormat);
+    UT_PARAMETERIZED_TEST(_testDecompressEmptyStream);
+    UT_PARAMETERIZED_TEST(_testDecompressPlainInput);
+    UT_PARAMETERIZED_TEST(_testDecompressFileToFileDefaultOutput);
 
-    // Single-file decompression from Qt resources
-    void _testDecompressFromResource();
-    void _testDecompressData();
-    void _testDecompressIfNeeded();
-
-    // Progress callbacks
-    void _testProgressCallbackExtract();
+    // Detected compression filter
+    UT_PARAMETERIZED_TEST(_testDetectedFilterAfterFailure);
 
     // Edge cases and error handling
-    void _testCorruptArchive();
-    void _testNonExistentInput();
-
-    // QIODevice-based operations
-    void _testDecompressFromDevice();
-    void _testExtractFromDevice();
-    void _testExtractFileDataFromDevice();
-
-    // QGCCompressionJob (async operations)
-    void _testCompressionJobExtract();
-    void _testCompressionJobReentrantStartFromFinished();
-    void _testCompressionJobCancel();
-    void _testCompressionJobAsyncStatic();
-
-    // Sparse file handling
-    void _testSparseFileExtraction();
-
-    // Thread safety
-    void _testThreadLocalState();
-    void _testConcurrentExtractions();
+    UT_PARAMETERIZED_TEST(_testMissingInput);
+    UT_PARAMETERIZED_TEST(_testInputThatCannotBeRead);
+    UT_PARAMETERIZED_TEST(_testInputThatCannotSeek);
+    void _testErrorNames();
+    void _testMessagesAreTranslated();
+    void _testNoExternalDecompressors();
+    UT_PARAMETERIZED_TEST(_testStreamWithoutItsDecoder);
+    UT_PARAMETERIZED_TEST(_testLegacyLzmaStream);
+    UT_PARAMETERIZED_TEST(_testStreamInsideStream);
+    void _testRefusalRulesAgreeWithLibarchive();
+    UT_PARAMETERIZED_TEST(_testTruncatedStream);
+    UT_PARAMETERIZED_TEST(_testEveryPrefixOfAStream);
+    UT_PARAMETERIZED_TEST(_testDamagedStreamHeader);
+    UT_PARAMETERIZED_TEST(_testGzipChecksums);
+    UT_PARAMETERIZED_TEST(_testGzipInsideStream);
+    void _testDecompressDataToMemoryInPlace();
+    void _testPlainDataIsShared();
+    void _testDecompressFileToSink();
+    UT_PARAMETERIZED_TEST(_testUnwritableOutput);
+    UT_PARAMETERIZED_TEST(_testOutputIsTheInput);
+    UT_PARAMETERIZED_TEST(_testOutputIsReplacedOnlyWhenComplete);
+    UT_PARAMETERIZED_TEST(_testInputWithoutPermission);
 
     // Boundary conditions
-    void _testEmptyArchive();
-    void _testSingleByteFile();
-    void _testLargeFileDecompression();
-    void _testMaxEntriesArchive();
-
-    // Cross-platform path handling
-    void _testWindowsPathSeparators();
-    void _testExtractArchiveToSymlinkedOutputPath();
-    void _testSpecialCharactersInPath();
-    void _testUnicodePaths();
-
-    // Benchmarks (run with --benchmark flag)
-    void _benchmarkExtractZip();
-    void _benchmarkExtract7z();
-    void _benchmarkDecompressGzip();
-    void _benchmarkDecompressXz();
-    void _benchmarkConcurrentExtraction();
-    void _benchmarkListArchive();
+    UT_PARAMETERIZED_TEST(_testSizeLimit);
+    UT_PARAMETERIZED_TEST(_testDecompressionCancelled);
 
 private:
-    bool _compareFiles(const QString& file1, const QString& file2);
+    /// Arguments for an entry point of Compression. Each entry point takes those it has parameters for
+    struct Inputs
+    {
+        /// The archive or the compressed file. decompressDataToMemory() is given its content
+        QString path = {};
+        /// The directory to extract into, or the file to decompress to
+        QString output = {};
+        /// Largest size of what a single stream decompresses to (0 = far more than any test gives)
+        qint64 maxBytes = 0;
+    };
+
+    /// What an entry point of Compression returns besides its outcome
+    struct Results
+    {
+        /// From decompressDataToMemory() and decompressFileToMemory(), or what decompressFileToFile() wrote
+        QByteArray data = {};
+        bool wroteFile = false;  ///< Whether decompressFileToFile() left a file at its output path
+
+        /// Whether nothing was returned or written, which is always so for an entry point that returns nothing else
+        bool isEmpty() const { return data.isEmpty() && !wroteFile; }
+    };
+
+    /// Calls the entry point of Compression that a row of test data names: extractArchive, decompressFileToFile,
+    /// decompressDataToMemory, decompressFileToMemory or decompressFileToSink. decompressFileToFile needs
+    /// Inputs::output
+    /// @param results If not null, receives what the entry point returned. Output parameters are filled before the
+    ///        call, so that a failure must empty them
+    /// @return What the entry point returned
+    static Compression::Outcome _call(const QString& api, const Inputs& inputs, Results* results = nullptr);
+
+    /// Whether @a api decompresses a single stream, and not an archive
+    static bool _isStreamEntryPoint(const QString& api) { return api != QLatin1String("extractArchive"); }
 };

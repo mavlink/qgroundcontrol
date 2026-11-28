@@ -4,12 +4,12 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "APMFirmwarePlugin.h"
 #include "APMVehicleReadiness.h"
 #include "AppSettings.h"
+#include "EventHandler.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
 #include "HealthReportFixtures.h"
@@ -231,12 +231,9 @@ void VehicleReadinessPX4Test::_testCurrentModeIntentionRefreshesReadiness()
     QVERIFY(firmwarePlugin->setFlightMode(vehicle->missionFlightMode(), &baseMode, &missionCustomMode));
     const uint32_t heartbeatCustomMode = vehicle->effectiveCustomMode();
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile =
-        writeMetadata(metadataDir.path(), heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
-    QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    const EventMetadata metadata = loadedMetadata(heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
+    QVERIFY(metadata);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadata);
 
     // Only the takeoff mode group can arm, so the HEARTBEAT mode is not ready
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
@@ -277,12 +274,9 @@ void VehicleReadinessPX4Test::_testUnmappedModeMakesReadinessUnknown()
     QVERIFY(firmwarePlugin->setFlightMode(vehicle->missionFlightMode(), &baseMode, &missionCustomMode));
     const uint32_t heartbeatCustomMode = vehicle->effectiveCustomMode();
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile =
-        writeMetadata(metadataDir.path(), heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
-    QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    const EventMetadata metadata = loadedMetadata(heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
+    QVERIFY(metadata);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadata);
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
     for (const mavlink_message_t& message : eventStream.report(AllModeGroups, AllModeGroups)) {
@@ -316,11 +310,9 @@ void VehicleReadinessPX4Test::_testMissingHealthReportFallsBack()
     VehicleReadiness* const readiness = vehicle->readiness();
     QVERIFY(readiness);
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile = writeMetadata(metadataDir.path(), vehicle->effectiveCustomMode(), 1, 2);
-    QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    const EventMetadata metadata = loadedMetadata(vehicle->effectiveCustomMode(), 1, 2);
+    QVERIFY(metadata);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadata);
 
     // The vehicle supports health reports but none arrives, so readiness waits
     readiness->update();
@@ -477,12 +469,9 @@ void VehicleReadinessPX4Test::_testHealthReportReadiness()
     const uint32_t currentCustomMode = vehicle->effectiveCustomMode();
     QVERIFY((currentCustomMode != takeoffCustomMode) && (currentCustomMode != missionCustomMode));
 
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile =
-        writeMetadata(metadataDir.path(), currentCustomMode, takeoffCustomMode, missionCustomMode);
-    QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    const EventMetadata metadata = loadedMetadata(currentCustomMode, takeoffCustomMode, missionCustomMode);
+    QVERIFY(metadata);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadata);
     QVERIFY(vehicle->healthAndArmingChecksSupported(MAV_COMP_ID_AUTOPILOT1));
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
@@ -587,11 +576,9 @@ void VehicleReadinessAPMTest::_testHealthReportUsesArduPilotActionModes()
     // The fixture's takeoff and mission groups stand in for Guided and Auto
     constexpr int guidedModeGroup = TakeoffModeGroup;
     constexpr int autoModeGroup = MissionModeGroup;
-    QTemporaryDir metadataDir;
-    QVERIFY(metadataDir.isValid());
-    const QString metadataFile = writeMetadata(metadataDir.path(), currentCustomMode, guidedCustomMode, autoCustomMode);
-    QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    const EventMetadata metadata = loadedMetadata(currentCustomMode, guidedCustomMode, autoCustomMode);
+    QVERIFY(metadata);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadata);
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
     const auto sendReport = [this, &eventStream](uint32_t canArmModeGroups, uint32_t canRunModeGroups) {

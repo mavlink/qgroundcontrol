@@ -14,6 +14,13 @@ private slots:
     void _testExistsNonExistent();
     void _testExistsQtResource();
 
+    // isInDirectory() tests
+    UT_PARAMETERIZED_TEST(_testIsInDirectory);
+
+    // fileNameIssue() and localFileName() tests
+    UT_PARAMETERIZED_TEST(_testFileNameIssue);
+    UT_PARAMETERIZED_TEST(_testLocalFileName);
+
     // ensureDirectoryExists() tests
     void _testEnsureDirectoryExistsAlreadyExists();
     void _testEnsureDirectoryExistsCreate();
@@ -36,8 +43,6 @@ private slots:
     void _testAtomicWriteCreatesParent();
     void _testAtomicWriteEmptyPath();
     void _testAtomicWriteEmptyData();
-    void _testReadCompressedFile();
-    void _testReadCompressedFileMaxBytes();
 
     // Disk space utilities tests
     void _testAvailableDiskSpaceBasic();
@@ -50,14 +55,12 @@ private slots:
     void _testToLocalPathPlainPaths();
     void _testToLocalPathFileUrls();
     void _testToLocalPathQrcUrls();
-    void _testToLocalPathCompressionInterop();
     void _testIsLocalPath();
     void _testIsQtResource();
 
     // Checksum utilities tests
     void _testComputeHash();
     void _testComputeFileHash();
-    void _testComputeDecompressedFileHash();
     void _testVerifyFileHash();
     void _testHashAlgorithmName();
 

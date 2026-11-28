@@ -12,5 +12,7 @@ private slots:
     void _requestCanRunMultipleTimes();
     void _compInfoAccessorsReturnValidObjects();
     void _replacementJsonReplacesResolvedMetaData();
+    void _schemaViolationIsWarnedAboutAndMetaDataUsed();
+    UT_PARAMETERIZED_TEST(_actuatorsMetaDataReachesVehicle);
     void _requestCompletesForArduPilot();
 };

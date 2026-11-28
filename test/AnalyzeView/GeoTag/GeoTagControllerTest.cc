@@ -1,6 +1,11 @@
 #include "GeoTagControllerTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
@@ -8,11 +13,10 @@
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
+#include "FileFixtures.h"
 #include "GeoTagController.h"
 #include "GeoTagImageModel.h"
 #include "ULogTestGenerator.h"
-#include <QtCore/QScopedPointer>
-#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -565,6 +569,86 @@ void GeoTagControllerTest::_calibratorClosestMatchTest()
     QCOMPARE(result.imageIndices.count(), 1);
     QCOMPARE(result.triggerIndices.count(), 1);
     QCOMPARE(result.triggerIndices[0], 1);  // Second trigger (99) matches due to offset alignment
+}
+
+void GeoTagControllerTest::_readImageTest_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<qint64>("size");     // Size the file is given, -1 for that of the content
+    QTest::addColumn<QString>("linkTo");  // What the file is a link to, empty for a file of its own
+    QTest::addColumn<QString>("error");
+
+    // An image is read as it is, also one whose content looks compressed
+    QTest::newRow("compressed content") << TestFixtures::gzipMember("image") << qint64{-1} << QString() << QString();
+    QTest::newRow("empty") << QByteArray() << qint64{-1} << QString() << QStringLiteral("The file is empty");
+    // Its size is checked before it is read: the file has no data on disk
+    QTest::newRow("larger than the limit") << QByteArray() << (GeoTagController::kMaxImageBytes + 1) << QString()
+                                           << QStringLiteral("The file is larger than");
+    // More is read than the size the file had: as of a file that is still being copied into the directory. A file of
+    // /proc reports no size and has content, which ends: a read without a limit returns it, and fills no memory
+    QTest::newRow("more to read than its size") << QByteArray() << qint64{-1} << QStringLiteral("/proc/self/status")
+                                                << QStringLiteral("The file changed while it was read");
+}
+
+void GeoTagControllerTest::_readImageTest()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(qint64, size);
+    QFETCH(QString, linkTo);
+    QFETCH(QString, error);
+
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath(QStringLiteral("image.jpg"));
+    if (!linkTo.isEmpty()) {
+#ifdef Q_OS_LINUX
+        QCOMPARE(QFileInfo(linkTo).size(), 0);
+        QVERIFY(QFile::link(linkTo, path));
+#else
+        QSKIP("Needs a file of /proc, which reports no size and has content: Linux only");
+#endif
+    } else {
+        QVERIFY(TestFixtures::writeFile(path, content));
+    }
+    if (size >= 0) {
+        QVERIFY(QFile::resize(path, size));
+    }
+
+    GeoTagController controller(nullptr);
+    QString errorString;
+    const QByteArray data = controller._readImageCached(path, &errorString);
+    if (error.isEmpty()) {
+        QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
+        QCOMPARE(data, content);
+    } else {
+        QVERIFY(data.isEmpty());
+        QVERIFY2(errorString.startsWith(error), qPrintable(errorString));
+    }
+}
+
+// The message about an image that could not be read says why, and names the image as it is
+void GeoTagControllerTest::_unreadableImageReasonTest()
+{
+    QTemporaryDir tempDir;
+    const QString imageDirPath = tempDir.filePath(QStringLiteral("images"));
+    QVERIFY(QDir().mkpath(imageDirPath));
+    QVERIFY(TestFixtures::writeFile(imageDirPath + QStringLiteral("/empty%1.jpg"), QByteArray()));
+    // Never read: the images are read first, and none of them can be
+    const QString logPath = tempDir.filePath(QStringLiteral("flight.ulg"));
+    QVERIFY(TestFixtures::writeFile(logPath, "log"));
+
+    GeoTagController controller(nullptr);
+    controller.setLogFile(logPath);
+    controller.setImageDirectory(imageDirPath);
+
+    expectLogMessage(
+        "AnalyzeView.GeoTagController", QtWarningMsg,
+        QRegularExpression(QStringLiteral(
+            "Skipping image with EXIF error:.*Couldn't open image: empty%1\\.jpg \\(The file is empty\\)")));
+    controller.startTagging();
+    QVERIFY(controller.inProgress());
+    QTRY_VERIFY_WITH_TIMEOUT(!controller.inProgress(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(controller.errorMessage(), QStringLiteral("Could not read EXIF data from any images"));
 }
 
 UT_REGISTER_TEST(GeoTagControllerTest, TestLabel::Unit, TestLabel::AnalyzeView)

@@ -3667,9 +3667,9 @@ HealthAndArmingCheckReport* Vehicle::healthAndArmingCheckReport()
     return _eventManager->healthAndArmingCheckReport();
 }
 
-void Vehicle::setEventsMetadata(uint8_t compid, const QString &metadataJsonFileName)
+void Vehicle::setEventsMetadata(uint8_t compid, const std::shared_ptr<events::parser::Parser>& metadata)
 {
-    _eventManager->setMetadata(compid, metadataJsonFileName);
+    _eventManager->setMetadata(compid, metadata);
 
     sendMavCommand(_defaultComponentId, MAV_CMD_RUN_PREARM_CHECKS, false);
 }

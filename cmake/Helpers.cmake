@@ -728,6 +728,58 @@ function(qgc_require_cpm_added package_name)
     endif()
 endfunction()
 
+# ----------------------------------------------------------------------------
+# qgc_install_license
+# Ships the licence files of a library linked into the application where its packages carry GStreamer's notice:
+# share/licenses/<name> of the install tree (AppImage, .deb, .rpm, Windows installer), the macOS bundle's
+# Contents/Resources/licenses/<name>, the iOS bundle's licenses/<name>, and the APK's assets/licenses/<name>, staged
+# in QGC_ANDROID_EXTRA_ASSETS_DIR now
+# Args: name - the library's directory under licenses/; files... - its licence files
+# ----------------------------------------------------------------------------
+function(qgc_install_license name)
+    if(NOT name MATCHES "^[A-Za-z0-9_.+-]+$" OR ARGC LESS 2)
+        message(FATAL_ERROR "qgc_install_license: a library name and at least one licence file are required")
+    endif()
+    foreach(_file IN LISTS ARGN)
+        if(NOT EXISTS "${_file}")
+            message(FATAL_ERROR "qgc_install_license(${name}): ${_file} does not exist")
+        endif()
+    endforeach()
+
+    if(ANDROID)
+        set(_dir "${QGC_ANDROID_EXTRA_ASSETS_DIR}/licenses/${name}")
+        file(REMOVE_RECURSE "${_dir}")
+        file(COPY ${ARGN} DESTINATION "${_dir}")
+    elseif(IOS)
+        target_sources(
+            ${CMAKE_PROJECT_NAME}
+            PRIVATE
+                ${ARGN}
+        )
+        set_source_files_properties(
+            ${ARGN}
+            TARGET_DIRECTORY
+            ${CMAKE_PROJECT_NAME}
+            PROPERTIES
+                MACOSX_PACKAGE_LOCATION "licenses/${name}"
+                HEADER_FILE_ONLY TRUE
+        )
+    elseif(MACOS)
+        install(
+            FILES ${ARGN}
+            DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/Resources/licenses/${name}"
+            COMPONENT Runtime
+        )
+    else()
+        # Runtime: the component the .deb, .rpm and Windows packages are made of (cmake/install/CPack)
+        install(
+            FILES ${ARGN}
+            DESTINATION "share/licenses/${name}"
+            COMPONENT Runtime
+        )
+    endif()
+endfunction()
+
 # Bundle matching JSON files while keeping paths inside the source directory.
 function(qgc_add_json_resources name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")

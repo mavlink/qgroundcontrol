@@ -16,7 +16,8 @@ public:
     CompInfoActuators(uint8_t compId_, Vehicle* vehicle_, QObject* parent = nullptr);
 
     // Overrides from CompInfo
-    void setJson(const QString& metadataJsonFileName) override;
+    QString jsonSchema() const override;
+    void setJson(const QString& fileName, const ParsedJson& json) override;
 
 private:
 };
