@@ -360,6 +360,10 @@ public:
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
 
+    /// Reboot the autopilot into the processor's ROM bootloader (e.g. STM32 USB DFU). It stays there, off MAVLink,
+    /// until it is power cycled.
+    Q_INVOKABLE void rebootVehicleToRomBootloader();
+
     /// Latches rebootRequired until the vehicle reboots
     void setRebootRequired();
 
@@ -946,6 +950,12 @@ private:
     QString _formatMavCommand           (MAV_CMD command, float param1);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+    static void _rebootToRomBootloaderResultHandler(void* resultHandlerData, int compId,
+                                                    const mavlink_command_ack_t& ack,
+                                                    MavCmdResultFailureCode_t failureCode);
+    static void _rebootToRomBootloaderFinalResultHandler(void* resultHandlerData, int compId,
+                                                         const mavlink_command_ack_t& ack,
+                                                         MavCmdResultFailureCode_t failureCode);
 
     // The following methods should only be called by unit tests
     void _deleteGimbalController();

@@ -30,6 +30,9 @@ struct VehicleTypes
 
     static const int versionNotSetValue = -1;
 
+    /// REBOOT_SHUTDOWN_ACTION_REBOOT_TO_ROM_BOOTLOADER, proposed in mavlink/mavlink#2693 and not yet in QGC's MAVLink
+    static constexpr int kRebootShutdownActionRebootToRomBootloader = 6;
+
     /// Callback for sendMavCommandWithHandler which handles MAV_RESULT_IN_PROGRESS acks.
     typedef void (*MavCmdProgressHandler)(void* progressHandlerData, int compId, const mavlink_command_ack_t& ack);
 
