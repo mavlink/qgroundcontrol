@@ -9,4 +9,5 @@ private slots:
     void _hotplugKeepsPortIdentity();
     void _portWithoutFlowControlGetsNone();
     void _losingItsConfigurationIsQuiet();
+    void _portCanBeTypedOrChosenAsALink();
 };
