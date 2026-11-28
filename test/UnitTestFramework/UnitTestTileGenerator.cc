@@ -1,5 +1,7 @@
 #include "UnitTestTileGenerator.h"
 
+#include <limits>
+
 #include <QtCore/QAtomicInt>
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
@@ -10,16 +12,16 @@
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
-#include <limits>
 
 #include "BaseClasses/TerrainTest.h"
+#include "CacheTasks.h"
+#include "CacheTile.h"
+#include "CacheWorker.h"
+#include "CopernicusTileFormat.h"
 #include "ElevationMapProvider.h"
-#include "QGCCacheTile.h"
+#include "MapProviderRegistry.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
-#include "QGCTileCacheWorker.h"
-#include "TerrainTileCopernicus.h"
+#include "TileCache.h"
 #include "TileMath.h"
 
 QGC_LOGGING_CATEGORY(UnitTestTileGeneratorLog, "Test.UnitTestTileGenerator")
@@ -29,36 +31,38 @@ namespace {
 // Set from the test thread, consumed on the cache worker thread
 QAtomicInt s_forcedMissCount;
 
-/// Resolves the provider type from a tile hash without tripping UrlFactory's
+/// Resolves the provider from a tile hash without tripping MapProviderRegistry's
 /// "not found" warnings on garbage hashes.
-QString _providerTypeFromHash(const QString& hash)
+SharedMapProvider _providerFromHash(const QString& hash)
 {
-    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom)
-    if (hash.size() != 29) {
-        return QString();
+    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom), followed by '-' and 8 hex digits for a
+    // provider with a cache variant
+    const bool hasCacheVariant = (hash.size() == 38) && (hash.at(29) == QLatin1Char('-'));
+    if ((hash.size() != 29) && !hasCacheVariant) {
+        return nullptr;
     }
 
     bool ok = false;
     const int providerId = hash.left(10).toInt(&ok);
     if (!ok) {
-        return QString();
+        return nullptr;
     }
 
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (UrlFactory::getQtMapIdFromProviderType(type) == providerId) {
-            return type;
+    for (const SharedMapProvider& provider : MapProviderRegistry::providers()) {
+        if (provider->mapId() == providerId) {
+            return provider;
         }
     }
 
-    return QString();
+    return nullptr;
 }
 
 /// Builds a serialized terrain tile for the given Copernicus tile x/y using the
 /// production serializer, sampling UnitTestTerrainData heights on the SRTM1 grid.
 QByteArray _syntheticTerrainTileData(int x, int y)
 {
-    constexpr double tileSizeDeg = TerrainTileCopernicus::kTileSizeDegrees;
-    constexpr double spacingDeg = TerrainTileCopernicus::kTileValueSpacingDegrees;
+    constexpr double tileSizeDeg = CopernicusTileFormat::kTileSizeDegrees;
+    constexpr double spacingDeg = CopernicusTileFormat::kValueSpacingDegrees;
 
     // Declared bounds are padded by one arc-second on every side. Coordinate-to-tile
     // hashing (floor) and TerrainTile's cell indexing round independently, so an exact
@@ -103,7 +107,7 @@ QByteArray _syntheticTerrainTileData(int x, int y)
          }},
     };
 
-    return TerrainTileCopernicus::serializeFromData(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    return CopernicusTileFormat::serialize(QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
 /// Builds a terrarium-encoded PNG for the given slippy tile, sampling
@@ -143,19 +147,20 @@ QByteArray _syntheticTerrariumTileData(int x, int y, int zoom)
 
 namespace UnitTestTileGenerator {
 
-QGCCacheTile* generateTile(const QString& hash)
+CacheTile* generateTile(const QString& hash)
 {
     if (s_forcedMissCount.loadAcquire() > 0) {
         s_forcedMissCount.deref();  // simulated cache miss: the fetch task takes its error path
         return nullptr;
     }
 
-    const QString type = _providerTypeFromHash(hash);
-    if (type.isEmpty()) {
+    const SharedMapProvider provider = _providerFromHash(hash);
+    if (!provider) {
         return nullptr;
     }
+    const int mapId = provider->mapId();
 
-    if (UrlFactory::getElevationProviderTypes().contains(type)) {
+    if (provider->isElevationProvider()) {
         // The provider prefix already validated as numeric, so unparsable x/y can only
         // mean corrupt hash construction upstream — warn so strict-mode tests fail.
         bool okX = false;
@@ -168,10 +173,10 @@ QGCCacheTile* generateTile(const QString& hash)
             qCWarning(UnitTestTileGeneratorLog) << "Internal error: unparsable x/y/zoom in tile hash" << hash;
             return nullptr;
         }
-        if (type == QLatin1String(TerrariumElevationProvider::kProviderKey)) {
-            return new QGCCacheTile(hash, _syntheticTerrariumTileData(x, y, zoom), QStringLiteral("png"), type);
+        if (mapId == TerrariumElevationProvider::kMapId) {
+            return new CacheTile(hash, _syntheticTerrariumTileData(x, y, zoom), QStringLiteral("png"), mapId);
         }
-        return new QGCCacheTile(hash, _syntheticTerrainTileData(x, y), QStringLiteral("bin"), type);
+        return new CacheTile(hash, _syntheticTerrainTileData(x, y), QStringLiteral("bin"), mapId);
     }
 
     static const QByteArray placeholderImage = []() {
@@ -182,7 +187,7 @@ QGCCacheTile* generateTile(const QString& hash)
         }
         return file.readAll();
     }();
-    return new QGCCacheTile(hash, placeholderImage, QStringLiteral("png"), type);
+    return new CacheTile(hash, placeholderImage, QStringLiteral("png"), mapId);
 }
 
 void setForcedMissCount(int count)
@@ -195,14 +200,57 @@ QByteArray syntheticTerrariumTileData(int x, int y, int zoom)
     return _syntheticTerrariumTileData(x, y, zoom);
 }
 
-void install()
+QString mapProviderType(int index)
 {
-    QGCCacheWorker::setUnitTestTileGenerator(&generateTile);
+    const QStringList elevationTypes = MapProviderRegistry::elevationProviderTypes();
+    for (const QString& type : MapProviderRegistry::providerTypes()) {
+        if (elevationTypes.contains(type)) {
+            continue;
+        }
+        if (index == 0) {
+            return type;
+        }
+        index--;
+    }
+    return QString();
 }
 
-void initMapEngine()
+bool resetTileCache()
 {
-    // The map engine (tile cache worker) is normally initialized when the first QML
+    std::optional<bool> reset;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    CacheTask* const task = CacheTasks::resetCache();
+    (void) QObject::connect(task, &CacheTask::finished, &context,
+                            [&reset](const QString& error) { reset = error.isEmpty(); });
+    if (!TileCache::instance()->addTask(task)) {
+        return false;
+    }
+    return QTest::qWaitFor([&reset] { return reset.has_value(); }, TestTimeout::mediumMs()) && *reset;
+}
+
+bool waitForCacheTasks()
+{
+    bool done = false;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    // A task that does nothing: the worker ends it once it has run the tasks queued before it
+    CacheTask* const task = new CacheTask(QStringLiteral("Wait"), [](CacheWorker&, CacheTask&) { return QString(); });
+    (void) QObject::connect(task, &CacheTask::finished, &context, [&done] { done = true; });
+    if (!TileCache::instance()->addTask(task)) {
+        return false;
+    }
+    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
+}
+
+void install()
+{
+    CacheWorker::setUnitTestTileGenerator(&generateTile);
+}
+
+void initTileCache()
+{
+    // The tile cache (and its worker) is normally initialized when the first QML
     // map is created. Tests query terrain without a map, so initialize it here with
     // a fresh, per-process temp database: every fetch misses and is served by the
     // generator. QTemporaryDir gives each parallel ctest process its own database
@@ -212,12 +260,12 @@ void initMapEngine()
         qFatal("UnitTestTileGenerator: failed to create temp dir for tile cache db: %s",
                qPrintable(tempDir.errorString()));
     }
-    getQGCMapEngine()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
+    TileCache::instance()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
 }
 
-void shutdownMapEngine()
+void shutdownTileCache()
 {
-    getQGCMapEngine()->shutdown();
+    TileCache::instance()->shutdown();
 }
 
 }  // namespace UnitTestTileGenerator

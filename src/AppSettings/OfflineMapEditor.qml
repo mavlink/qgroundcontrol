@@ -10,17 +10,18 @@ import QGroundControl.FlightMap
 
 FlightMap {
     id: _map
+    objectName: "offlineMapEditor"
     allowGCSLocationCenter: true
     allowVehicleLocationCenter: false
     mapName: "OfflineMap"
+    creditsBottomMargin: mapScale.height + (mapScale.anchors.bottomMargin * 2)
 
     property var tileSet: null
 
     property var _settingsManager: QGroundControl.settingsManager
     property var _settings: _settingsManager.offlineMapsSettings
-    property var _fmSettings: _settingsManager.flightMapSettings
 
-    property string mapType: _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+    property string mapType: QGroundControl.mapCatalog.chosenMap
     property bool isMapInteractive: false
     property bool _showPreview: true
     property bool _defaultSet: tileSet && tileSet.defaultSet
@@ -34,12 +35,13 @@ FlightMap {
     property var _addNewSetViewObject: null
 
     readonly property real minZoomLevel: 1
-    readonly property real maxZoomLevel: 20
+    // The provider of a map has no tiles below its deepest zoom level
+    readonly property real maxZoomLevel: Math.min(20, QGroundControl.mapCatalog.maxZoom(mapType))
     readonly property real sliderTouchArea: ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 5 : (ScreenTools.isMobile ? 6 : 3))
 
     readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
 
-    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property bool isSatelliteMap: QGroundControl.mapCatalog.isDarkMap(activeMapType.name)
 
     QGCPalette { id: qgcPal }
 
@@ -52,6 +54,11 @@ FlightMap {
     Connections {
         target: QGroundControl.mapEngineManager
         function onErrorMessageChanged() { errorDialogFactory.open() }
+    }
+
+    /// A count of tiles with the digit grouping of the locale
+    function _countText(count) {
+        return Number(count).toLocaleString(Qt.locale(), 'f', 0)
     }
 
     function handleChanges() {
@@ -75,9 +82,13 @@ FlightMap {
     }
 
     function addNewSet() {
+        // Before the view is made, whose list of maps selects this one. A map without a server has no tiles to
+        // download: the first of the list stands in for it.
+        const maps = QGroundControl.mapCatalog.downloadableMapList
+        const chosenMap = QGroundControl.mapCatalog.chosenMap
+        mapType = maps.indexOf(chosenMap) >= 0 ? chosenMap : maps[0]
         _addNewSetViewObject = addNewSetViewComponent.createObject(_map)
         isMapInteractive = true
-        mapType = _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
         resetMapToDefaults()
         handleChanges()
     }
@@ -145,6 +156,7 @@ FlightMap {
     onHeightChanged: handleChanges()
 
     MapScale {
+        id: mapScale
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
         anchors.bottomMargin: anchors.leftMargin
         anchors.left: parent.left
@@ -219,14 +231,14 @@ FlightMap {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: !_defaultSet
                     QGCLabel { text: qsTr("Total:"); width: infoView._labelWidth }
-                    QGCLabel { text: (tileSet ? tileSet.totalTileCountStr : "") + " (" + (tileSet ? tileSet.totalTilesSizeStr : "") + ")"; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { text: tileSet ? (_countText(tileSet.totalTileCount) + " (" + QGroundControl.bigSizeToString(tileSet.totalTilesSize) + ")") : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: tileSet && !_defaultSet && tileSet.uniqueTileCount > 0
                     QGCLabel { text: qsTr("Unique:"); width: infoView._labelWidth }
-                    QGCLabel { text: (tileSet ? tileSet.uniqueTileCountStr : "") + " (" + (tileSet ? tileSet.uniqueTileSizeStr : "") + ")"; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { text: tileSet ? (_countText(tileSet.uniqueTileCount) + " (" + QGroundControl.bigSizeToString(tileSet.uniqueTileSize) + ")") : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
 
                 Row {
@@ -234,14 +246,14 @@ FlightMap {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: tileSet && !_defaultSet && !tileSet.complete
                     QGCLabel { text: qsTr("Downloaded:"); width: infoView._labelWidth }
-                    QGCLabel { text: (tileSet ? tileSet.savedTileCountStr : "") + " (" + (tileSet ? tileSet.savedTileSizeStr : "") + ")"; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { text: tileSet ? (_countText(tileSet.savedTileCount) + " (" + QGroundControl.bigSizeToString(tileSet.savedTileSize) + ")") : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: tileSet && !_defaultSet && !tileSet.complete && tileSet.errorCount > 0
                     QGCLabel { text: qsTr("Error Count:"); width: infoView._labelWidth }
-                    QGCLabel { text: tileSet ? tileSet.errorCountStr : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { text: tileSet ? _countText(tileSet.errorCount) : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
                 //-- Default Tile Set
                 Row {
@@ -249,14 +261,14 @@ FlightMap {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: _defaultSet
                     QGCLabel { text: qsTr("Size:"); width: infoView._labelWidth }
-                    QGCLabel { text: tileSet ? tileSet.savedTileSizeStr : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { objectName: "offlineMapEditor_defaultSetSize"; text: tileSet ? QGroundControl.bigSizeToString(tileSet.savedTileSize) : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: _defaultSet
                     QGCLabel { text: qsTr("Tile Count:"); width: infoView._labelWidth }
-                    QGCLabel { text: tileSet ? tileSet.savedTileCountStr : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
+                    QGCLabel { objectName: "offlineMapEditor_defaultSetTileCount"; text: tileSet ? _countText(tileSet.savedTileCount) : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth }
                 }
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
@@ -274,10 +286,18 @@ FlightMap {
                         onClicked: tileSet.cancelDownloadTask()
                     }
                     QGCButton {
-                        text: qsTr("Delete")
+                        objectName: "offlineMapEditor_clearCache"
+                        text: qsTr("Clear Cache")
+                        visible: _defaultSet
+                        width: ScreenTools.defaultFontPixelWidth * 12
+                        onClicked: clearConfirmationDialogFactory.open()
+                        enabled: tileSet && tileSet.savedTileSize > 0 && !tileSet.deleting
+                    }
+                    QGCButton {
+                        text: _defaultSet ? qsTr("Delete All") : qsTr("Delete")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         onClicked: deleteConfirmationDialogFactory.open()
-                        enabled: tileSet && tileSet.savedTileSize > 0
+                        enabled: tileSet && tileSet.savedTileSize > 0 && !tileSet.deleting
                     }
                     QGCButton {
                         text: qsTr("Ok")
@@ -325,16 +345,19 @@ FlightMap {
 
                 Map {
                     id: minZoomPreview
+                    objectName: "offlineMapEditor_minZoomPreview"
                     width: addNewSetView.width / 4
                     height: addNewSetView.height / 4
                     center: _map.center
                     activeMapType: _map.activeMapType
                     zoomLevel: sliderMinZoom.value
                     visible: _showPreview
+                    // The map of the editor, beside this one, shows the credits
+                    copyrightsVisible: false
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                    property bool isSatelliteMap: QGroundControl.mapCatalog.isDarkMap(activeMapType.name)
 
-                    plugin: Plugin { name: "QGroundControl" }
+                    plugin: QGCMapPlugin
 
                     MapScale {
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
@@ -363,16 +386,18 @@ FlightMap {
 
                 Map {
                     id: maxZoomPreview
+                    objectName: "offlineMapEditor_maxZoomPreview"
                     width: minZoomPreview.width
                     height: minZoomPreview.height
                     center: _map.center
                     activeMapType: _map.activeMapType
                     zoomLevel: sliderMaxZoom.value
                     visible: _showPreview
+                    copyrightsVisible: false
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                    property bool isSatelliteMap: QGroundControl.mapCatalog.isDarkMap(activeMapType.name)
 
-                    plugin: Plugin { name: "QGroundControl" }
+                    plugin: QGCMapPlugin
 
                     MapScale {
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
@@ -475,7 +500,8 @@ FlightMap {
                                 id: mapCombo
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                model: QGroundControl.mapEngineManager.mapList
+                                objectName: "offlineMapEditor_mapCombo"
+                                model: QGroundControl.mapCatalog.downloadableMapList
                                 onActivated: (index) => {
                                     mapType = textAt(index)
                                 }
@@ -701,6 +727,24 @@ FlightMap {
             title: qsTr("Error Message")
             text: QGroundControl.mapEngineManager.errorMessage
             buttons: Dialog.Close
+        }
+    }
+
+    QGCPopupDialogFactory {
+        id: clearConfirmationDialogFactory
+
+        dialogComponent: clearConfirmationDialogComponent
+    }
+
+    Component {
+        id: clearConfirmationDialogComponent
+
+        QGCSimpleMessageDialog {
+            title: qsTr("Confirm Clear")
+            text: qsTr("This will delete the map tiles that were cached as you looked at the maps. The tile sets you have created yourself keep their tiles.\n\nIs this really what you want?")
+            buttons: Dialog.Yes | Dialog.No
+
+            onAccepted: QGroundControl.mapEngineManager.clearCachedTiles()
         }
     }
 

@@ -1,9 +1,19 @@
 #include "PlanViewUITest.h"
 
+#include <algorithm>
+#include <memory>
+
 #include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtLocation/private/qdeclarativegeomap_p.h>
+#include <QtLocation/private/qgeotiledmap_p.h>
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+#include <QtLocation/private/qgeotilefetcher_p.h>
+#include <QtLocation/private/qgeotilespec_p.h>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -334,6 +344,169 @@ void PlanViewUITest::_testVTOLTakeoffChoices()
                               QStringLiteral("VTOL takeoff inserted")),
              "The selected VTOL takeoff command was not inserted");
     QCOMPARE(_missionItemCommand(1), expectedCommand);
+}
+
+void PlanViewUITest::_testMapPrefetchesAtRest()
+{
+    _tabbedPanel = false;
+    _geoMapEngine = false;
+    setUseTabbedPlanPanel(_tabbedPanel);
+    setUseGeoMapPlanEngine(_geoMapEngine);
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QQuickItem* const mapItem = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    const auto* const planMap = qobject_cast<QDeclarativeGeoMap*>(mapItem);
+    auto* const map = planMap ? qobject_cast<QGeoTiledMap*>(planMap->map()) : nullptr;
+    QVERIFY2(map, "Plan View shows no QtLocation map");
+    auto* const engine = qobject_cast<QGeoTiledMappingManagerEngine*>(map->parent());
+    QVERIFY(engine);
+
+    // The engine prefetches with a connection to the internet only, which the machine may not have
+    map->setPrefetchStyle(QGeoTiledMap::PrefetchTwoNeighbourLayers);
+    const QSignalSpy tileSpy(engine->tileFetcher(), &QGeoTileFetcher::tileFinished);
+
+    // The view shows the tiles of zoom level 12. Those of the next level are fetched ahead of their use only.
+    mapItem->setProperty("zoomLevel", 12.0);
+    const auto fetchedNextZoom = [&tileSpy] {
+        return std::any_of(tileSpy.cbegin(), tileSpy.cend(), [](const QList<QVariant>& arguments) {
+            return arguments.at(0).value<QGeoTileSpec>().zoom() == 13;
+        });
+    };
+    QVERIFY2(waitForCondition(fetchedNextZoom, 5000, QStringLiteral("tiles of the next zoom level fetched")),
+             "The map at rest fetched no tile of the next zoom level");
+
+    stopUI();
+}
+
+void PlanViewUITest::_testMapCreditsAboveMissionStatus()
+{
+    _tabbedPanel = false;
+    _geoMapEngine = false;
+    setUseTabbedPlanPanel(_tabbedPanel);
+    setUseGeoMapPlanEngine(_geoMapEngine);
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QQuickItem* const missionStatus = findVisibleItem(_rootItem, QStringLiteral("planView_missionStatus"));
+    QVERIFY2(missionStatus, "Plan View shows no mission status");
+
+    // The map credits the provider of its tiles
+    QQuickItem* const credits = findItem(map, QStringLiteral("mapCredits"));
+    QVERIFY2(credits, "The map has no credits");
+    QVERIFY2(waitForCondition([credits] { return credits->isVisible() && (credits->width() > 0); }, 2000,
+                              QStringLiteral("credits shown")),
+             "The map shows no credits");
+
+    // The status of the mission is along the bottom edge of the map, where QtLocation shows the credits of a map
+    const QRectF creditsRect = credits->mapRectToScene(credits->boundingRect());
+    const QRectF statusRect = missionStatus->mapRectToScene(missionStatus->boundingRect());
+    QCOMPARE_GT(statusRect.height(), 0.0);
+    QCOMPARE_LE(creditsRect.bottom(), statusRect.top());
+
+    stopUI();
+}
+
+void PlanViewUITest::_testWheelStopsAtDeepestZoomLevel()
+{
+    _tabbedPanel = false;
+    _geoMapEngine = false;
+    setUseTabbedPlanPanel(_tabbedPanel);
+    setUseGeoMapPlanEngine(_geoMapEngine);
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    const qreal deepestZoom = map->property("maximumZoomLevel").toReal();
+    QCOMPARE_GT(deepestZoom, 15.0);
+
+    // QtLocation itself lets the zoom level of the map go on to 30, where the map has no tiles to show
+    QVERIFY(map->setProperty("zoomLevel", deepestZoom - 0.5));
+    const QPoint center = map->mapToScene(QPointF(map->width() / 2, map->height() / 2)).toPoint();
+    QTest::wheelEvent(_window, center, QPoint(0, 120));
+    QTRY_COMPARE_WITH_TIMEOUT(map->property("zoomLevel").toReal(), deepestZoom, TestTimeout::mediumMs());
+    QTest::wheelEvent(_window, center, QPoint(0, 120));
+    QCoreApplication::processEvents();
+    QCOMPARE(map->property("zoomLevel").toReal(), deepestZoom);
+
+    stopUI();
+}
+
+void PlanViewUITest::_testBearingSetAroundCoordinate()
+{
+    _tabbedPanel = false;
+    _geoMapEngine = false;
+    setUseTabbedPlanPanel(_tabbedPanel);
+    setUseGeoMapPlanEngine(_geoMapEngine);
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QCOMPARE(map->property("bearing").toReal(), 0.0);
+
+    // Map.setBearing(bearing, coordinate) turns the map around a coordinate, where the map says that it can
+    const QGeoCoordinate pivot(47.398, 8.546);
+    QVERIFY(QMetaObject::invokeMethod(map, "setBearing", Q_ARG(qreal, 90.0), Q_ARG(QGeoCoordinate, pivot)));
+    QCOMPARE(map->property("bearing").toReal(), 90.0);
+
+    stopUI();
+}
+
+void PlanViewUITest::_testMapWithoutPluginSaysWhy()
+{
+    // The maps get a plugin that QtLocation does not have, as when the plugin of QGC failed to load
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QFile plugin(dir.filePath(QStringLiteral("QGCMapPlugin.qml")));
+    QVERIFY(plugin.open(QIODevice::WriteOnly | QIODevice::Text));
+    QVERIFY(plugin.write("pragma Singleton\nimport QtLocation\nPlugin { name: \"no such plugin\" }\n") > 0);
+    plugin.close();
+    overrideQmlFile(QUrl(QStringLiteral("qrc:/qml/QGroundControl/FlightMap/QGCMapPlugin.qml")),
+                    QUrl::fromLocalFile(plugin.fileName()));
+
+    // Each map says it: the maps of the Fly View and of the Plan View are there from the start
+    const QRegularExpression warning(QStringLiteral("The map \\w+ cannot show tiles: .+"));
+    expectLogMessage("qml", QtWarningMsg, warning);
+    ignoreLogMessage("qml", QtWarningMsg, warning);
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    verifyExpectedLogMessage();
+
+    stopUI();
 }
 
 void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &context)
@@ -872,4 +1045,58 @@ void PlanViewUITest::_testSaveAsMenu()
     if (QTest::currentTestFailed()) return;
 
     stopUI();
+}
+
+// The visual of an item on a map loads its QML asynchronously, and the item can be removed before that is done. The
+// loader then has no context left to make the visual in: Qt warns when it does so nonetheless.
+void PlanViewUITest::_testMapVisualOfItemRemovedWhileItsQmlLoads()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    QQmlEngine* const engine = qmlEngine(_rootItem);
+    QVERIFY(engine);
+
+    // The visuals of a list of items, as a map shows them, and an item that names the QML of its visual
+    QQmlComponent visuals(engine);
+    visuals.setData(R"(
+        import QtQuick
+        import QGroundControl.PlanView
+
+        Item {
+            property alias items: repeater.model
+            property QtObject item: QtObject {
+                property bool isSimpleItem: false
+                property string mapVisualQML: "StructureScanMapVisual.qml"
+            }
+
+            Repeater {
+                id: repeater
+
+                MissionItemMapVisual { }
+            }
+        }
+    )",
+                    QUrl());
+    QmlObjectListModel items;
+    const std::unique_ptr<QObject> root(visuals.create());
+    QVERIFY2(root, qPrintable(visuals.errorString()));
+    QVERIFY(root->setProperty("items", QVariant::fromValue(&items)));
+
+    // Only QML that nothing has loaded yet is still loading while its item is there. This component asks for it
+    // before the loader of the visual does, so it is told first that the QML is loaded.
+    QQmlComponent visual(engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/PlanView/StructureScanMapVisual.qml")),
+                         QQmlComponent::Asynchronous);
+    QVERIFY2(visual.isLoading(), "The QML of the map visual is loaded already");
+
+    items.append(root->property("item").value<QObject*>());
+    QCOMPARE(items.count(), 1);
+
+    // The item is removed once the QML is loaded and before its loader is told, as a busy application does it that
+    // handles the removal first. What Qt warns of when the loader makes the visual then fails the test.
+    (void) connect(&visual, &QQmlComponent::statusChanged, &items, [&items] { (void) items.removeAt(0); });
+    QTRY_VERIFY_WITH_TIMEOUT(!visual.isLoading(), TestTimeout::mediumMs());
+    QCOMPARE(items.count(), 0);
+    QVERIFY2(visual.isReady(), qPrintable(visual.errorString()));
 }

@@ -18,11 +18,16 @@ namespace QGCSqlHelper {
 // ── Bound-parameter placeholders ───────────────────────────────────────
 /// Returns "?,?,?" with \a n placeholders for use in IN-clauses.
 /// E.g. `"DELETE FROM T WHERE id IN (" + placeholders(n) + ")"`.
-[[nodiscard]] QString placeholders(int n);
+[[nodiscard]] QString placeholders(qsizetype n);
 
 // ── SQLite PRAGMA helpers ──────────────────────────────────────────────
+/// What is left of the write-ahead log of a database once a large transaction is in the file. SQLite keeps the log
+/// at the size of the largest transaction otherwise, until the last connection closes: an import of some gigabytes
+/// would hold as much again on the disk for the rest of the run.
+inline constexpr qint64 kWriteAheadLogSizeLimit = 16 * 1024 * 1024;
+
 /// Applies standard QGC pragmas: WAL journal mode, NORMAL synchronous,
-/// foreign_keys = ON.
+/// foreign_keys = ON, and kWriteAheadLogSizeLimit.
 void applySqlitePragmas(QSqlDatabase& db);
 
 /// PRAGMA user_version — read/write the SQLite schema version integer.

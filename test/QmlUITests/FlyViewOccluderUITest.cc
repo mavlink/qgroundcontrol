@@ -157,3 +157,47 @@ void FlyViewOccluderUITest::_testCollapsedPipOccludesRestoreButtonOnly()
 
     stopUI();
 }
+
+// The PiP window is in the bottom left corner of the map, where the map credits the provider of its tiles
+void FlyViewOccluderUITest::_testMapCreditsAbovePip()
+{
+    // A configured video stream is what makes the Fly View offer PiP
+    Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
+    const QVariant savedVideoSource = videoSource->rawValue();
+    const auto videoGuard =
+        qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoSourceUDPH264));
+
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    const QPointer<QQuickItem> pipView =
+        findVisibleItem(_rootItem, QStringLiteral("flyViewPipView"), kItemAppearTimeoutMs);
+    QVERIFY2(pipView, "PiP view not visible");
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("flyViewMap"), kItemAppearTimeoutMs);
+    QVERIFY2(map, "QtLocation fly view map not visible");
+    QQuickItem* const credits = findItem(map, QStringLiteral("mapCredits"));
+    QVERIFY2(credits, "The map has no credits");
+    QTRY_VERIFY_WITH_TIMEOUT(credits->isVisible() && (credits->width() > 0), kSettleTimeoutMs);
+
+    // The collapsed state is persisted: restore it even if an assertion bails out early
+    const auto expandGuard = qScopeGuard([pipView] {
+        if (pipView) {
+            QMetaObject::invokeMethod(pipView, "_setPipIsExpanded", Q_ARG(QVariant, true));
+        }
+    });
+    const auto creditsBottom = [credits] { return credits->mapRectToScene(credits->boundingRect()).bottom(); };
+    const auto pipTop = [pipView] {
+        return pipView->mapRectToScene(pipView->property("occupiedRect").toRectF()).top();
+    };
+
+    QTRY_VERIFY_WITH_TIMEOUT(creditsBottom() <= pipTop(), kSettleTimeoutMs);
+    const qreal bottomAboveWindow = creditsBottom();
+
+    // A collapsed PiP is its restore button only: the credits come down to it
+    QVERIFY(QMetaObject::invokeMethod(pipView, "_setPipIsExpanded", Q_ARG(QVariant, false)));
+    QTRY_VERIFY_WITH_TIMEOUT((creditsBottom() > bottomAboveWindow) && (creditsBottom() <= pipTop()), kSettleTimeoutMs);
+
+    stopUI();
+}

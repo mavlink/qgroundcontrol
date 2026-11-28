@@ -375,6 +375,7 @@ AnalyzePage {
                                     anchors.fill: parent
                                     mapName: "LogViewerMap"
                                     allowGCSLocationCenter: true
+                                    creditsBottomMargin: mapScale.height + (mapScale.anchors.bottomMargin * 2)
 
                                     readonly property var _path: _mapTab._gpsPath
 
@@ -429,6 +430,7 @@ AnalyzePage {
                                     }
 
                                     MapScale {
+                                        id: mapScale
                                         anchors.margins: ScreenTools.defaultFontPixelWidth
                                         anchors.left: parent.left
                                         anchors.bottom: parent.bottom

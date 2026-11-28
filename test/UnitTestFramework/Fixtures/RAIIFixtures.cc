@@ -1,5 +1,6 @@
 #include "RAIIFixtures.h"
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 
@@ -72,8 +73,12 @@ void SettingsFixture::setFactValue(Fact* fact, const QVariant& value)
         return;
     }
 
-    // Save original value for restoration
-    _savedFacts.append({fact, fact->rawValue()});
+    // The value to restore is the one from before the first change of the Fact
+    const bool alreadySaved = std::any_of(_savedFacts.cbegin(), _savedFacts.cend(),
+                                          [fact](const SavedFact& saved) { return saved.fact == fact; });
+    if (!alreadySaved) {
+        _savedFacts.append({fact, fact->rawValue()});
+    }
 
     // Set new value
     fact->setRawValue(value);

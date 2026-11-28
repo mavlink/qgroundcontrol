@@ -36,6 +36,10 @@ Item {
             mapVisualLoader.setSource(object.mapVisualQML, properties)
         }
 
+        // An item can be removed while the QML of its visual still loads. The loader would then make the visual
+        // in the context that went with the item, which Qt warns about.
+        Component.onDestruction: active = false
+
         onLoaded: {
             if (!item) {
                 return

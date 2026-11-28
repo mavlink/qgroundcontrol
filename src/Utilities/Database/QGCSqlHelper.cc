@@ -15,7 +15,7 @@ QString escapeLikePattern(const QString& text)
     return escaped;
 }
 
-QString placeholders(int n)
+QString placeholders(qsizetype n)
 {
     if (n <= 0) {
         return {};
@@ -23,7 +23,7 @@ QString placeholders(int n)
     QString out;
     out.reserve((n * 2) - 1);
     out += QLatin1Char('?');
-    for (int i = 1; i < n; ++i) {
+    for (qsizetype i = 1; i < n; ++i) {
         out += QLatin1Char(',');
         out += QLatin1Char('?');
     }
@@ -36,6 +36,8 @@ void applySqlitePragmas(QSqlDatabase& db)
     q.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
     q.exec(QStringLiteral("PRAGMA synchronous=NORMAL"));
     q.exec(QStringLiteral("PRAGMA foreign_keys=ON"));
+    // The log is cut down to the limit when it is next written from its start, after a checkpoint
+    q.exec(QStringLiteral("PRAGMA journal_size_limit=%1").arg(kWriteAheadLogSizeLimit));
 }
 
 std::optional<int> userVersion(QSqlDatabase& db)

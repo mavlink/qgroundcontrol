@@ -4,10 +4,13 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtLocation/private/qdeclarativegeomap_p.h>
+#include <QtLocation/private/qgeomap_p.h>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
 #include "Fact.h"
+#include "QGCGeoTiledMappingManagerEngine.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "ScreenToolsController.h"
 #include "SettingsManager.h"
@@ -752,6 +755,29 @@ void TopLevelViewsTest::_testVideoDrawerKeepsStreamControlsBesideMainCamera()
     // The stream plays on in a tile: its decoding settings and a restart still apply to it.
     QVERIFY(findVisibleItem(_rootItem, restartName, 0));
     QCOMPARE(findVisibleItem(_rootItem, cpuPathName, 0) != nullptr, decodingShown);
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testMapsShareMappingEngine()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // Plan View creates its map when it is first shown
+    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
+    const auto* const planMap =
+        qobject_cast<QDeclarativeGeoMap*>(findVisibleItem(_rootItem, QStringLiteral("planView_map"), 2000));
+    QVERIFY2(planMap && planMap->map(), "Plan View shows no QtLocation map");
+    const auto* const flyMap = qobject_cast<QDeclarativeGeoMap*>(findItem(_rootItem, QStringLiteral("flyViewMap")));
+    QVERIFY2(flyMap && flyMap->map(), "Fly View has no QtLocation map");
+
+    // QtLocation gives every Plugin object a mapping engine of its own, with tile and texture caches of its own.
+    // The engine is the parent of the maps it creates.
+    QVERIFY(qobject_cast<QGCGeoTiledMappingManagerEngine*>(flyMap->map()->parent()));
+    QCOMPARE(planMap->map()->parent(), flyMap->map()->parent());
 
     stopUI();
 }

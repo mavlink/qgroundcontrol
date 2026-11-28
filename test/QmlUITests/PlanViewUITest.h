@@ -29,6 +29,12 @@ private slots:
     void _testTakeoffNotRequiredWaypointOnEmptyPlan();
     void _testVTOLTakeoffChoices_data();
     void _testVTOLTakeoffChoices();
+    void _testMapPrefetchesAtRest();
+    void _testMapCreditsAboveMissionStatus();
+    void _testWheelStopsAtDeepestZoomLevel();
+    void _testBearingSetAroundCoordinate();
+    void _testMapWithoutPluginSaysWhy();
+    void _testMapVisualOfItemRemovedWhileItsQmlLoads();
 
 private:
     /// Adds the "tabbedPanel" and "geoMapEngine" columns with one row per Plan panel and map engine combination;

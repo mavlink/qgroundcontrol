@@ -9,4 +9,5 @@ class ScaleBarUnitsTest : public UnitTest
 private slots:
     void _scaleTextFollowsUnitsChange_data();
     void _scaleTextFollowsUnitsChange();
+    void _scaleCalculatedOnceMapIsReady();
 };

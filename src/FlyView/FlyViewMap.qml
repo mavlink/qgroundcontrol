@@ -18,6 +18,8 @@ FlightMap {
     planView:                   false
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
+    // The PiP window is in the bottom left corner of the map
+    creditsBottomMargin:        (!pipMode && pipView && pipView.visible) ? (pipView.height - pipView.occupiedRect.y) + (pipView.anchors.bottomMargin * 2) : 0
 
     property Item   pipView
     property Item   pipState:                   _pipState

@@ -11,11 +11,16 @@ import QGroundControl.FlightMap
 Map {
     id: _map
 
-    plugin:     Plugin { name: "QGroundControl" }
+    plugin:     QGCMapPlugin
     opacity:    0.99 // https://bugreports.qt.io/browse/QTBUG-82185
 
+    // QtLocation's own notice is in the bottom left corner of the map, which the views cover: mapCredits is moved
+    // clear of what covers it
+    copyrightsVisible: false
+
     property string mapName:                        'defaultMap'
-    property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    // Also true for a map in dark colors: what is drawn on the map is light
+    property bool   isSatelliteMap:                 QGroundControl.mapCatalog.isDarkMap(activeMapType.name)
     property var    gcsPosition:                    QGroundControl.positionManager.gcsPosition
     property real   gcsHeading:                     QGroundControl.positionManager.gcsHeading
     property alias  allowGCSLocationCenter:         _positionTracker.allowGCSLocationCenter     ///< true: map will center to gcs location one time
@@ -24,6 +29,7 @@ Map {
     property alias  positionTracker:                _positionTracker                            ///< Auto-centering policy, for derived maps to layer follow behavior on
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
     property bool   pinchZoomDisabledByVirtualJoysticks: false ///< true: disable pinch-to-zoom while virtual joystick thumbs are down
+    property real   creditsBottomMargin:            0       ///< Height of what covers the bottom left corner of the map, which the credits of the map are shown above
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
@@ -40,8 +46,31 @@ Map {
         }
     }
 
+    /// Zooms in or out by \a delta zoom levels, no further in than the deepest zoom level of the map: QtLocation
+    /// lets the zoom level go on to 30, where a map has nothing to show
+    function zoomBy(delta) {
+        _map.zoomLevel = Math.min(Math.max(_map.zoomLevel + delta, 0), _map.maximumZoomLevel)
+    }
+
+    // A map without its plugin shows nothing, and says nothing else of it
+    onErrorChanged: {
+        if (error !== Map.NoError) {
+            console.warn("The map", mapName, "cannot show tiles:", errorString)
+        }
+    }
+
     function centerToSpecifiedLocation() {
         specifyMapPositionDialogFactory.open()
+    }
+
+    MapCopyrightNotice {
+        id:                     mapCredits
+        objectName:             "mapCredits"
+        mapSource:              _map
+        anchors.left:           parent.left
+        anchors.bottom:         parent.bottom
+        anchors.bottomMargin:   _map.creditsBottomMargin
+        z:                      QGroundControl.zOrderMapItems
     }
 
     MapPositionTracker {
@@ -76,11 +105,10 @@ Map {
     }
 
     function updateActiveMapType() {
-        var settings =  QGroundControl.settingsManager.flightMapSettings
-        var fullMapName = settings.mapProvider.value + " " + settings.mapType.value
+        var chosenMap = QGroundControl.mapCatalog.chosenMap
 
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (fullMapName === _map.supportedMapTypes[i].name) {
+            if (chosenMap === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
                 return
             }
@@ -93,14 +121,24 @@ Map {
         }
     }
 
-    Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapType
-        function onRawValueChanged() { updateActiveMapType() }
-    }
+    onVisibleRegionChanged: prefetchTimer.restart()
 
     Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapProvider
-        function onRawValueChanged() { updateActiveMapType() }
+        target: QGroundControl.mapCatalog
+        function onChosenMapChanged() { updateActiveMapType() }
+    }
+
+    // QtLocation fetches the tiles around the view, which the next pan or zoom shows, only when it is asked to.
+    // It is asked once the view has come to rest: a request for a tile ends when the view moves on.
+    Timer {
+        id:         prefetchTimer
+        interval:   500
+
+        onTriggered: {
+            if (_map.visible) {
+                _map.prefetchData()
+            }
+        }
     }
 
     signal mapPanStart
@@ -132,7 +170,7 @@ Map {
             }
         }
         onScaleChanged: (delta) => {
-            _map.zoomLevel = Math.max(_map.zoomLevel + Math.log2(delta), 0)
+            _map.zoomBy(Math.log2(delta))
             _map.alignCoordinateToPoint(pinchStartGeoCoord, pinchStartScreenPoint)
         }
     }
@@ -154,7 +192,7 @@ Map {
         onWheel: (event) => {
             const zoomDelta = event.angleDelta.y * rotationScale
             const mouseGeoPos = _map.toCoordinate(Qt.point(event.x, event.y), false)
-            _map.zoomLevel = Math.max(_map.zoomLevel + zoomDelta, 0)
+            _map.zoomBy(zoomDelta)
             _map.alignCoordinateToPoint(mouseGeoPos, Qt.point(event.x, event.y))
         }
     }

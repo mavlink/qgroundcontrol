@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QtCore/QList>
+
+#include "CopernicusTileFormat.h"
+
 class QGeoCoordinate;
 class TerrainTileTest;
 
@@ -36,12 +39,7 @@ public:
     double avgElevation() const { return (_isValid ? _tileInfo.avgElevation : qQNaN()); }
 
 protected:
-    struct TileInfo_t {
-        double  swLat, swLon, neLat, neLon;
-        int16_t minElevation, maxElevation;
-        double  avgElevation;
-        int16_t gridSizeLat, gridSizeLon;
-    } Q_PACKED;
+    using TileInfo_t = CopernicusTileFormat::Header;
 
 private:
     TileInfo_t _tileInfo{};

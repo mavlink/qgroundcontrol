@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.QGCMapEngineManager
+import QGroundControl.MapEngineManager
 
 /// Offline map tile set management: list, add, import, export, and progress display.
 /// Self-contained component including all dialogs needed for offline map operations.
@@ -14,8 +14,8 @@ Item {
 
     property var _mapEngineManager: QGroundControl.mapEngineManager
     property var _appSettings:      QGroundControl.settingsManager.appSettings
-    property bool _currentlyImportOrExporting: _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting ||
-                                               _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionImporting
+    property bool _currentlyImportOrExporting: _mapEngineManager.importAction === MapEngineManager.ImportAction.ActionExporting ||
+                                               _mapEngineManager.importAction === MapEngineManager.ImportAction.ActionImporting
 
     Component.onCompleted: _mapEngineManager.loadTileSets()
 
@@ -37,6 +37,7 @@ Item {
                 model: _mapEngineManager.tileSets
 
                 OfflineMapInfo {
+                    objectName: "offlineMaps_tileSet"
                     tileSet:    object
                     enabled:    !object.deleting
                     onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem, { tileSet: object }).showInfo()
@@ -44,6 +45,7 @@ Item {
             }
 
             LabelledButton {
+                objectName: "offlineMaps_addNewSet"
                 label:      qsTr("Add New Set")
                 buttonText: qsTr("Add")
                 enabled:    !_currentlyImportOrExporting
@@ -56,7 +58,7 @@ Item {
                 visible:    QGroundControl.corePlugin.options.showOfflineMapImport
                 enabled:    !_currentlyImportOrExporting
                 onClicked: {
-                    _mapEngineManager.importAction = QGCMapEngineManager.ImportAction.ActionNone
+                    _mapEngineManager.importAction = MapEngineManager.ImportAction.ActionNone
                     importDialogFactory.open()
                 }
             }
@@ -75,7 +77,7 @@ Item {
 
                 QGCLabel {
                     Layout.fillWidth:   true
-                    text:               _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
+                    text:               _mapEngineManager.importAction === MapEngineManager.ImportAction.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
                     font.bold:          true
                 }
                 ProgressBar {
@@ -91,8 +93,11 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.missionSavePath
-        nameFilters:    [ qsTr("Tile Sets (*.%1)").arg(defaultSuffix) ]
+        nameFilters:    forImport ? [ qsTr("Tile Sets and MBTiles (*.%1 *.mbtiles)").arg(defaultSuffix) ]
+                                  : [ qsTr("Tile Sets (*.%1)").arg(defaultSuffix) ]
         defaultSuffix:  _appSettings.tilesetFileExtension
+
+        property bool forImport: false
 
         onAcceptedForSave: (file) => {
             close()
@@ -120,6 +125,7 @@ Item {
             onAccepted: {
                 close()
                 fileDialog.title = qsTr("Export Tiles")
+                fileDialog.forImport = false
                 fileDialog.openForSave()
             }
 
@@ -154,6 +160,7 @@ Item {
             onAccepted: {
                 close()
                 fileDialog.title = qsTr("Import Tiles")
+                fileDialog.forImport = true
                 fileDialog.openForLoad()
             }
 

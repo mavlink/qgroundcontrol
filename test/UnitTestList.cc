@@ -43,9 +43,9 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
     }
 
     // Started only after the early returns above: the worker thread must be shut down
-    // before returning (see shutdownMapEngine below), so don't start it until the run
+    // before returning (see shutdownTileCache below), so don't start it until the run
     // is definitely happening.
-    UnitTestTileGenerator::initMapEngine();
+    UnitTestTileGenerator::initTileCache();
 
     iterations = qMax(1, iterations);
     int result = 0;
@@ -73,7 +73,7 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
 
     // Stop the tile cache worker while the app still exists: its database teardown
     // cannot run after QApplication destruction.
-    UnitTestTileGenerator::shutdownMapEngine();
+    UnitTestTileGenerator::shutdownTileCache();
 
     return result;
 }

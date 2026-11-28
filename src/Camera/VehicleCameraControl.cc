@@ -299,8 +299,11 @@ void VehicleCameraControl::_initWhenReady()
 
     emit infoChanged();
 
-    delete _netManager;
-    _netManager = nullptr;
+    // Later: after a download this runs within finished() of a reply of the manager, which must outlive its signal
+    if (_netManager) {
+        _netManager->deleteLater();
+        _netManager = nullptr;
+    }
 }
 
 bool VehicleCameraControl::capturesVideo() const
@@ -2384,6 +2387,7 @@ void VehicleCameraControl::_downloadFinished()
     if(!reply) {
         return;
     }
+    reply->deleteLater();
     int err = reply->error();
     int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     QByteArray data = reply->readAll();
@@ -2398,7 +2402,6 @@ void VehicleCameraControl::_downloadFinished()
         );
     }
     emit dataReady(data);
-    //reply->deleteLater();
 }
 
 void VehicleCameraControl::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)

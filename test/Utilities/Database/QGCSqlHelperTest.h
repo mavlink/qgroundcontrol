@@ -14,4 +14,5 @@ private slots:
     void _scopedConnectionUniqueNames();
     void _scopedConnectionCleanup();
     void _applySqlitePragmas();
+    void _writeAheadLogShrinksAfterLargeTransaction();
 };

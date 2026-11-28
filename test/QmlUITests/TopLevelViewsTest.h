@@ -29,6 +29,7 @@ private slots:
     void _testVideoDisplaySettingsShown();
     void _testVideoIndicatorShownWithoutStream();
     void _testVideoDrawerKeepsStreamControlsBesideMainCamera();
+    void _testMapsShareMappingEngine();
 
 private:
     QQuickItem* _clickSettingsButton(const QString& pageName);

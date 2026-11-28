@@ -27,9 +27,7 @@ GeoMap {
     property real controlsLeftMargin: ScreenTools.defaultFontPixelWidth * 0.75
     property real controlsTopMargin: ScreenTools.defaultFontPixelWidth * 0.75
 
-    readonly property bool isSatelliteMap: _mapTypeSetting.indexOf("Satellite") > -1 || _mapTypeSetting.indexOf("Hybrid") > -1
-
-    readonly property string _mapTypeSetting: QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+    readonly property bool isSatelliteMap: QGroundControl.mapCatalog.isDarkMap(QGroundControl.mapCatalog.chosenMap)
 
     // Breaks the center/zoomLevel <-> camera cycle: camera moves echo into them and must not be written back
     property bool _echoingCamera: false

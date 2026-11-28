@@ -17,6 +17,8 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/APMVehicleConfigUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarIndicatorUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarIndicatorUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/OfflineMapEditorUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/OfflineMapEditorUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewLayerUITest.cc
@@ -111,6 +113,7 @@ add_qgc_test(FlyViewProximityRadarUITest LABELS Integration NoSanitizer TIMEOUT 
 add_qgc_test(FlyViewROIUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewROIAPMUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(NTRIPSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
+add_qgc_test(OfflineMapEditorUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(OnboardLogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(ParameterDiffDialogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)

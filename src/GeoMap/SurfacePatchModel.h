@@ -26,7 +26,6 @@ class GeoScene;
 class GeoMapCamera;
 class HeightField;
 class HeightSource;
-class QNetworkAccessManager;
 class QTimer;
 class SurfaceModel;
 class TileImageSource;
@@ -144,13 +143,6 @@ public:
     /// Tile image requests awaiting delivery or failure
     int pendingImageCount() const { return _imageRequestKey.count(); }
 
-    /// Network manager for tile imagery fetches, applied at the next
-    /// setMapType (test injection seam)
-    void setTileImageNetworkManager(QNetworkAccessManager* networkManager)
-    {
-        _tileImageNetworkManager = networkManager;
-    }
-
     bool statsEnabled() const { return _statsEnabled; }  // GCOVR_EXCL_LINE
 
     /// Enables the once-per-second perf counter sampling behind statsText:
@@ -210,6 +202,7 @@ private:
     void _rebuildSurfaceModel();
     double _surfaceHeightAt(const QPointF& world) const;
     void _resetImagery();
+    void _reloadImagery();
     void _requestTileImage(const TileMath::TileKey& key);
     void _retryFailedImages();
     void _notifyTileImageChanged(const TileMath::TileKey& key);
@@ -237,7 +230,6 @@ private:
     bool _debugHills = false;
     QString _mapType;
     TileImageSource* _tileSource = nullptr;
-    QNetworkAccessManager* _tileImageNetworkManager = nullptr;  ///< test injection seam
     QHash<TileMath::TileKey, QImage> _tileImages;               ///< delivered images: live patches + retired fallbacks
     /// Built fallbacks (incl. null misses) keyed by patch; rebuilding on every
     /// data() call cost ~1ms per new patch during zoom churn. Invalidated when
