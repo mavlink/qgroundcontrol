@@ -493,7 +493,6 @@ SetupPage {
 
             RowLayout {
                 spacing: ScreenTools.defaultFontPixelWidth
-                visible: !flashBootloaderButton.visible
 
                 QGCComboBox {
                     id:                 portCombo
@@ -573,14 +572,32 @@ SetupPage {
             ProgressBar {
                 id:                     progressBar
                 Layout.preferredWidth:  parent.width
-                visible:                !flashBootloaderButton.visible
             }
 
-            QGCButton {
-                id:         flashBootloaderButton
-                text:       qsTr("Flash ChibiOS Bootloader")
-                visible:    firmwarePage.advanced
-                onClicked:  globals.activeVehicle.flashBootloader()
+            // These act on the connected vehicle over MAVLink, not on the port selected above
+            ColumnLayout {
+                id:                 vehicleActions
+                Layout.fillWidth:   true
+                spacing:            ScreenTools.defaultFontPixelHeight / 2
+                visible:            firmwarePage.advanced
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    wrapMode:           Text.WordWrap
+                    text: globals.activeVehicle ?
+                              qsTr("Connected vehicle %1 (%2, link %3). These act on it, not on the port selected above:")
+                                  .arg(globals.activeVehicle.id)
+                                  .arg(globals.activeVehicle.firmwareTypeString)
+                                  .arg(globals.activeVehicle.vehicleLinkManager.primaryLinkName) :
+                              qsTr("No vehicle is connected.")
+                }
+
+                QGCButton {
+                    id:         flashBootloaderButton
+                    text:       qsTr("Flash ChibiOS Bootloader")
+                    enabled:    !!globals.activeVehicle
+                    onClicked:  globals.activeVehicle.flashBootloader()
+                }
             }
 
             TextArea {
