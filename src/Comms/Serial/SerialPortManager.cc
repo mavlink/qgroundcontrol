@@ -1,12 +1,13 @@
 #include "SerialPortManager.h"
 
-#include <QtCore/QApplicationStatic>
-#include <QtCore/QFileInfo>
-#include <QtCore/QSet>
-
 #include <algorithm>
 #include <iterator>
 #include <utility>
+
+#include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
+#include <QtCore/QSet>
 
 #include "QGCLoggingCategory.h"
 
@@ -176,6 +177,24 @@ QString SerialPortManager::linkTarget([[maybe_unused]] const QString& name)
 #else
     return {};
 #endif
+}
+
+QStringList SerialPortManager::portLinks([[maybe_unused]] const QString& directory) const
+{
+    QStringList links;
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    const QFileInfoList entries =
+        QDir(directory).entryInfoList(QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo& entry : entries) {
+        const QString link = entry.absoluteFilePath();
+        const QString target = linkTarget(link);
+        const auto leadsHere = [&target](const Port& port) { return port.systemLocation == target; };
+        if (!target.isEmpty() && std::any_of(_ports.cbegin(), _ports.cend(), leadsHere)) {
+            links.append(link);
+        }
+    }
+#endif
+    return links;
 }
 
 QString SerialPortManager::_systemLocation(const QString& name) const

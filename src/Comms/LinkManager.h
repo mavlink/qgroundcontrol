@@ -162,11 +162,19 @@ private:
     Q_PROPERTY(QStringList serialBaudRates   READ serialBaudRates   CONSTANT)
     Q_PROPERTY(QStringList serialPortStrings READ serialPortStrings NOTIFY commPortStringsChanged)
     Q_PROPERTY(QStringList serialPorts       READ serialPorts       NOTIFY commPortsChanged)
+    Q_PROPERTY(QStringList serialPortLinks READ serialPortLinks NOTIFY commPortsChanged)
 
 public:
     static QStringList serialBaudRates();
     QStringList serialPortStrings();
     QStringList serialPorts();
+
+    /// Paths that name a listed serial port for good, such as the links in /dev/serial/by-id on Linux. A port's
+    /// ttyACMn name can change each time it is plugged in.
+    QStringList serialPortLinks() const { return _commPortLinkList; }
+
+    /// The first of serialPortLinks() that leads to the serial port of this name; empty when none does.
+    Q_INVOKABLE QString serialPortLinkTo(const QString& portName) const;
     /// Whether the serial port of this name can be set to hardware flow control. A port that is not listed is
     /// taken for one that can.
     Q_INVOKABLE bool serialPortHasFlowControl(const QString& portName) const;
@@ -193,5 +201,6 @@ private:
     std::unique_ptr<SerialAutoConnect> _serialAutoConnect;
     QStringList _commPortList;
     QStringList _commPortDisplayList;
+    QStringList _commPortLinkList;
 #endif // QGC_NO_SERIAL_LINK
 };

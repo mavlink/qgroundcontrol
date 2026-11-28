@@ -93,6 +93,9 @@ public:
     /// found by such a path as by its own names. Empty when @a name is not such a path, or leads nowhere. Only on
     /// desktop Unix, whose ports are device files.
     static QString linkTarget(const QString& name);
+    /// The links in @a directory that lead to listed ports, such as the ones udev makes in /dev/serial/by-id, which
+    /// are named after each USB device's maker, product and serial number. Only on desktop Unix.
+    QStringList portLinks(const QString& directory = QStringLiteral("/dev/serial/by-id")) const;
     ReservationPtr reservePort(const QString& systemLocation, const QString& owner = {});
     bool canReservePort(const QString& systemLocation) const;
     bool isPortReserved(const QString& systemLocation) const;

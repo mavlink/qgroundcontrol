@@ -212,6 +212,44 @@ void SerialPortManagerTest::_linksToPortsFindThem()
 #endif
 }
 
+void SerialPortManagerTest::_portLinksLeadToListedPorts()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // Device files, links to them as udev makes in /dev/serial/by-id, and other entries there
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto makeFile = [&dir](const QString& name) {
+        QFile file(dir.filePath(name));
+        return file.open(QIODevice::WriteOnly) ? QFileInfo(file.fileName()).canonicalFilePath() : QString();
+    };
+    const QString location = makeFile(QStringLiteral("ttyACM4"));
+    const QString unlisted = makeFile(QStringLiteral("ttyUSB0"));
+    QVERIFY(!location.isEmpty());
+    QVERIFY(!unlisted.isEmpty());
+    QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("by-id")));
+    const QString byId = dir.filePath(QStringLiteral("by-id"));
+    const QString link = dir.filePath(QStringLiteral("by-id/usb-ArduPilot_Pixhawk6X_0123-if00"));
+    QVERIFY(QFile::link(location, link));
+    QVERIFY(QFile::link(unlisted, dir.filePath(QStringLiteral("by-id/usb-FTDI_FT232R_0456-if00-port0"))));
+    QVERIFY(QFile::link(dir.filePath(QStringLiteral("absent")), dir.filePath(QStringLiteral("by-id/dangling"))));
+    QVERIFY(!makeFile(QStringLiteral("by-id/not-a-link")).isEmpty());
+
+    QList<SerialPortManager::Port> inventory{
+        {location, QStringLiteral("ttyACM4"), QGCSerialPortInfo::BoardTypePixhawk, QStringLiteral("Pixhawk6X")}};
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    (void) ports.availablePorts();
+
+    QCOMPARE(ports.portLinks(byId), QStringList{link});
+    QVERIFY(ports.portLinks(dir.filePath(QStringLiteral("no-such-directory"))).isEmpty());
+
+    // Unplugged: the link leads nowhere
+    QVERIFY(QFile::remove(location));
+    QVERIFY(ports.portLinks(byId).isEmpty());
+#else
+    QSKIP("Ports are device files only on desktop Unix");
+#endif
+}
+
 UT_REGISTER_TEST(SerialPortManagerTest, TestLabel::Unit)
 
 void SerialPortManagerTest::_inventoryNotificationsAndBaudRates()

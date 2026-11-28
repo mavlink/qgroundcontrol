@@ -12,6 +12,7 @@ private slots:
     void _stableNamesFindPortsAgain();
     void _claimByAStableNameHoldsOnceTheNameIsShared();
     void _linksToPortsFindThem();
+    void _portLinksLeadToListedPorts();
     void _displayMetadataUsesCachedInventory();
     void _inventoryNotificationsAndBaudRates();
 };
