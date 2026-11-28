@@ -11,6 +11,7 @@ private slots:
     void _exclusiveReservations();
     void _stableNamesFindPortsAgain();
     void _claimByAStableNameHoldsOnceTheNameIsShared();
+    void _linksToPortsFindThem();
     void _displayMetadataUsesCachedInventory();
     void _inventoryNotificationsAndBaudRates();
 };

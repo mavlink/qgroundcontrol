@@ -117,8 +117,10 @@ QStringList SerialConfiguration::supportedBaudRates()
 SerialConnectionSettings SerialConfiguration::connectionSettings() const
 {
     const auto ports = SerialPortManager::instance()->availablePorts();
-    const bool bootloader =
-        std::ranges::any_of(ports, [this](const auto& port) { return port.hasName(_portName) && port.bootloader; });
+    const QString target = SerialPortManager::linkTarget(_portName);
+    const bool bootloader = std::ranges::any_of(ports, [this, &target](const auto& port) {
+        return (port.hasName(_portName) || (!target.isEmpty() && (port.systemLocation == target))) && port.bootloader;
+    });
     return {_portName, _baud, _dataBits, _flowControl, _stopBits, _parity, _dtrForceLow, isAutoConnect(), bootloader};
 }
 
@@ -327,7 +329,12 @@ void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
 
 void SerialWorker::checkPortAvailability(const QStringList& availablePorts)
 {
-    if (isConnected() && !availablePorts.contains(_settings.portName)) {
+    if (!isConnected() || availablePorts.contains(_settings.portName)) {
+        return;
+    }
+    // A link to a listed port, such as /dev/serial/by-id/..., is gone with the port
+    const QString target = SerialPortManager::linkTarget(_settings.portName);
+    if (target.isEmpty() || !availablePorts.contains(target)) {
         _port->close();
     }
 }
