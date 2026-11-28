@@ -31,11 +31,8 @@ Item {
     property int    _editingLayer: _layerMission
     property var    _appSettings: QGroundControl.settingsManager.appSettings
     property var    _planViewSettings: QGroundControl.settingsManager.planViewSettings
-    readonly property bool _useNewPlanPanelSetting: _planViewSettings.useNewPlanPanel.rawValue
-    // The Plan map engine in use, decided once at startup (the setting is qgcRebootRequired). The GeoMap engine
-    // supports the tabbed panel only, so the panel follows it instead of the setting while it is loaded
+    // The Plan map engine in use, decided once at startup (the setting is qgcRebootRequired)
     property bool   _useGeoMapEngine: false
-    readonly property bool _useNewPlanPanel: _useNewPlanPanelSetting || _useGeoMapEngine
     property bool   _promptForPlanUsageShowing: false
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
@@ -80,10 +77,6 @@ Item {
         // Take focus to close any previous editing
         editorMap.focus = true
 
-        // Collapse layer switcher on any map click
-        layerSwitcher.expanded = false
-        collapseTimer.stop()
-
         if (!mainWindow.allowViewSwitch()) {
             return
         }
@@ -100,9 +93,7 @@ Item {
             _missionController.setHomePosition(coordinate)
             break
         case _layerMission:
-            if (!_useNewPlanPanel && _planMasterController.showCreateFromTemplate) {
-                _missionController.setHomePosition(coordinate)
-            } else if (_addROIOnClick) {
+            if (_addROIOnClick) {
                 _addROIOnClick = false
                 if (_missionController.isROIActive) {
                     var pos = Qt.point(mouse.x, mouse.y)
@@ -338,7 +329,7 @@ Item {
 
             // Engine choice is snapshotted at startup (the setting is qgcRebootRequired)
             Component.onCompleted: {
-                _root._useGeoMapEngine = _root._planViewSettings.useGeoMapEngine.rawValue && _root._useNewPlanPanelSetting
+                _root._useGeoMapEngine = _root._planViewSettings.useGeoMapEngine.rawValue
                 sourceComponent = _root._useGeoMapEngine ? geoMapEngineComponent : qtLocationEngineComponent
             }
         }
@@ -690,120 +681,7 @@ Item {
             width: _rightPanelWidth
             planMasterController: _planMasterController
             editorMap: _root.editorMap
-            useNewPlanPanel: _root._useNewPlanPanel
             onEditingLayerChangeRequested: (layer) => _editingLayer = layer
-        }
-
-        // Layer switching icons — only active icon visible; click to expand choices leftward
-        Item {
-            id:                     layerSwitcher
-            objectName:             "planView_layerSwitcher"
-            anchors.right:          rightPanel.left
-            anchors.rightMargin:    _toolsMargin
-            anchors.top:            parent.top
-            anchors.topMargin:      _toolsMargin
-            width:                  layerRow.width
-            height:                 _layerButtonSize
-            z:                      QGroundControl.zOrderWidgets
-            visible:                !_planMasterController.showCreateFromTemplate && !_useNewPlanPanel
-
-            property bool   expanded: false
-            property real   _layerButtonSize: ScreenTools.defaultFontPixelHeight * 2.0
-            property real   _spacing: ScreenTools.defaultFontPixelHeight * 0.25
-
-            Timer {
-                id: collapseTimer
-                interval: 5000
-                onTriggered: layerSwitcher.expanded = false
-            }
-
-            function toggle() {
-                expanded = !expanded
-                if (expanded) {
-                    collapseTimer.restart()
-                } else {
-                    collapseTimer.stop()
-                }
-            }
-
-            function choose(nodeType) {
-                expanded = false
-                collapseTimer.stop()
-                rightPanel.selectLayer(nodeType)
-            }
-
-            // Row laid out right-to-left: active icon on the right, choices expand left
-            Row {
-                id:             layerRow
-                anchors.right:  parent.right
-                spacing:        layerSwitcher._spacing
-                layoutDirection: Qt.RightToLeft
-
-                // Active layer button (always visible)
-                Rectangle {
-                    objectName: "layerSwitcher_activeButton"
-                    width:  layerSwitcher._layerButtonSize
-                    height: width
-                    radius: ScreenTools.defaultBorderRadius
-                    color:  QGroundControl.globalPalette.accent
-
-                    QGCColoredImage {
-                        anchors.centerIn:   parent
-                        width:              parent.width * 0.6
-                        height:             width
-                        source:             PlanEditLayers.layerInfos.find(l => l.layer === _editingLayer)?.icon ?? "/res/waypoint.svg"
-                        color:              QGroundControl.globalPalette.accentText
-                    }
-
-                    QGCMouseArea {
-                        anchors.fill: parent
-                        onClicked:    layerSwitcher.toggle()
-                    }
-                }
-
-                // Choice buttons (only layers that are NOT the current one)
-                Repeater {
-                    model: PlanEditLayers.layerInfos.filter(l => l.layer !== _editingLayer)
-
-                    Rectangle {
-                        required property var modelData
-                        objectName: "layerSwitcher_choice_" + modelData.nodeType
-                        width:   choiceRow.implicitWidth + layerSwitcher._spacing * 2
-                        height:  layerSwitcher._layerButtonSize
-                        radius:  ScreenTools.defaultBorderRadius
-                        color:   QGroundControl.globalPalette.windowCard
-                        visible: opacity > 0
-                        opacity: layerSwitcher.expanded ? 1 : 0
-
-                        Behavior on opacity { NumberAnimation { duration: 150 } }
-
-                        Row {
-                            id:                     choiceRow
-                            anchors.centerIn:       parent
-                            spacing:                layerSwitcher._spacing
-
-                            QGCColoredImage {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width:                  layerSwitcher._layerButtonSize * 0.6
-                                height:                 width
-                                source:                 modelData.icon
-                                color:                  QGroundControl.globalPalette.textPrimary
-                            }
-
-                            QGCLabel {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text:                   modelData.name
-                                color:                  QGroundControl.globalPalette.textPrimary
-                            }
-                        }
-
-                        QGCMouseArea {
-                            anchors.fill: parent
-                            onClicked:    layerSwitcher.choose(modelData.nodeType)
-                        }
-                    }
-                }
-            }
         }
 
         RowLayout {
@@ -811,6 +689,8 @@ Item {
             anchors.margins: _toolsMargin
             anchors.left: _calcLeftAnchor()
             anchors.right: rightPanel.left
+            // Keeps clear of the panel's open/close button, which shares the bottom edge of the map
+            anchors.rightMargin: _toolsMargin + rightPanel.toggleWidth
             anchors.bottom: parent.bottom
             spacing: 0
             visible: !hidden && _editingLayer == _layerMission && QGroundControl.corePlugin.options.showMissionStatus

@@ -65,23 +65,6 @@ void QmlUITestBase::overrideQmlFile(const QUrl& original, const QUrl& replacemen
     _qmlUrlOverrides.insert(original, replacement);
 }
 
-void QmlUITestBase::setUseTabbedPlanPanel(bool use)
-{
-    Fact* const flag = SettingsManager::instance()->planViewSettings()->useNewPlanPanel();
-    if (!_savedUseTabbedPlanPanel) {
-        _savedUseTabbedPlanPanel = flag->rawValue().toBool();
-    }
-    flag->setRawValue(use);
-}
-
-void QmlUITestBase::_restoreUseTabbedPlanPanel()
-{
-    if (_savedUseTabbedPlanPanel) {
-        SettingsManager::instance()->planViewSettings()->useNewPlanPanel()->setRawValue(*_savedUseTabbedPlanPanel);
-        _savedUseTabbedPlanPanel.reset();
-    }
-}
-
 void QmlUITestBase::setUseGeoMapPlanEngine(bool use)
 {
     Fact* const flag = SettingsManager::instance()->planViewSettings()->useGeoMapEngine();

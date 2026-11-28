@@ -51,7 +51,6 @@ protected slots:
         _verifyFileDialogTestHookConsumed();
         stopUI();
         _qmlUrlOverrides.clear();
-        _restoreUseTabbedPlanPanel();
         _restoreUseGeoMapPlanEngine();
         _resetFlyViewGeoMapCameraView();
         UnitTest::cleanup();
@@ -68,12 +67,8 @@ protected:
     /// for a QML file which custom builds override. Overrides are cleared after each test.
     void overrideQmlFile(const QUrl& original, const QUrl& replacement);
 
-    /// Selects the tabbed Plan panel (true) or the tree view (false) for the next startUI(). The setting is
-    /// restored after each test because settings Facts are not reset between test functions.
-    void setUseTabbedPlanPanel(bool use);
-
     /// Selects the GeoMap engine (true) or the QtLocation map (false) for the Plan View map on the next startUI().
-    /// Restored after each test like setUseTabbedPlanPanel().
+    /// The setting is restored after each test because settings Facts are not reset between test functions.
     void setUseGeoMapPlanEngine(bool use);
 
     /// Close the QML window and wait for it to settle.
@@ -235,10 +230,8 @@ protected:
 private:
     QHash<QUrl, QUrl> _qmlUrlOverrides;
     std::unique_ptr<QQmlAbstractUrlInterceptor> _qmlUrlInterceptor;
-    std::optional<bool> _savedUseTabbedPlanPanel;
     std::optional<bool> _savedUseGeoMapPlanEngine;
 
-    void _restoreUseTabbedPlanPanel();
     void _restoreUseGeoMapPlanEngine();
     void _resetFlyViewGeoMapCameraView();
     void _setUseGeoMapPlanEngineFact(bool use);

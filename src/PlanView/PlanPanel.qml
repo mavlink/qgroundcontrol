@@ -33,21 +33,6 @@ Item {
     property int _incompleteCount:  0
     property int _lastItemCount:    0
 
-    /// Same node type names the tree view groups use
-    function selectLayer(nodeType) {
-        switch (nodeType) {
-        case "missionGroup":
-            selectTab(Logic.TabMission)
-            break
-        case "fenceGroup":
-            selectTab(Logic.TabFence)
-            break
-        case "rallyGroup":
-            selectTab(Logic.TabRally)
-            break
-        }
-    }
-
     function selectTab(tab) {
         if (tab === currentTab) {
             return
@@ -187,6 +172,12 @@ Item {
         RallyTabPage {
             planMasterController: root.planMasterController
         }
+    }
+
+    // Disabled tab pills do not take mouse events, which would otherwise reach the map under the tabs
+    DeadMouseArea {
+        anchors.fill:   tabBar
+        z:              tabBar.z - 1
     }
 
     PlanPanelTabBar {

@@ -58,16 +58,8 @@
             "keywords": "vtol transition"
         },
         {
-            "name": "useNewPlanPanel",
-            "shortDesc": "Use the tabbed Plan View panel instead of the tree view.",
-            "type": "bool",
-            "default": true,
-            "label": "Use tabbed Plan panel (experimental)",
-            "keywords": "plan panel tree tabs experimental"
-        },
-        {
             "name": "useGeoMapEngine",
-            "shortDesc": "Use the experimental GeoMap 2D/3D engine for the Plan View map (preview feature). Requires the tabbed Plan panel. Waypoints can be dragged on the map, but fence, rally point and pattern editing on the map is not supported yet.",
+            "shortDesc": "Use the experimental GeoMap 2D/3D engine for the Plan View map (preview feature). Waypoints can be dragged on the map, but fence, rally point and pattern editing on the map is not supported yet.",
             "type": "bool",
             "default": false,
             "label": "Use GeoMap engine (preview)",

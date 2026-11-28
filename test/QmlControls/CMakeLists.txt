@@ -19,8 +19,6 @@ target_sources(
         QGCCheckBoxSliderTest.h
         QmlObjectListModelTest.cc
         QmlObjectListModelTest.h
-        QmlObjectTreeModelTest.cc
-        QmlObjectTreeModelTest.h
         QmlUnitsConversionTest.cc
         QmlUnitsConversionTest.h
         RCToParamDialogControllerTest.cc
@@ -39,7 +37,6 @@ add_qgc_test(ObjectListModelBaseTest LABELS Unit)
 add_qgc_test(PreFlightCheckModelTest LABELS Unit)
 add_qgc_test(QGCCheckBoxSliderTest LABELS Unit)
 add_qgc_test(QmlObjectListModelTest LABELS Unit)
-add_qgc_test(QmlObjectTreeModelTest LABELS Unit)
 add_qgc_test(QmlUnitsConversionTest LABELS Unit)
 add_qgc_test(RCToParamDialogControllerTest LABELS Unit)
 add_qgc_test(RCToParamDialogControllerVehicleTest LABELS Integration Vehicle)

@@ -4,7 +4,7 @@ Rally Points are alternative landing or loiter locations.
 They are typically used to provide a safer or more convenient (e.g. closer) destination than the home position in Return/RTL mode.
 
 ::: info
-_QGroundControl_ will not display the Rally Point options if they are not supported by the connected vehicle firmware.
+If Rally Points are not supported by the connected vehicle firmware, the **Rally** tab shows a message saying so instead of the Rally Point options.
 :::
 
 ## Rally Point Usage
@@ -12,13 +12,15 @@ _QGroundControl_ will not display the Rally Point options if they are not suppor
 To create Rally Points:
 
 1. Navigate to the Plan View
-1. Select the **Rally Points** layer using the [Layer Switcher](plan_view.md#layer_switcher) in the top-right area of the map (or expand the **Rally Points** section in the [Plan Editor Panel](plan_view.md#plan_editor_panel))
+1. Select the **Rally** tab in the [Plan Editor Panel](plan_view.md#plan_editor_panel).
+   The tab is enabled once the [planned home position](plan_view.md#planned_home) is set.
 1. Click the map wherever you want rally points.
    - An **R** marker is added for each
-   - The currently active marker has a different color (green) and its editor is expanded in the _Rally Points_ section.
-1. Make any rally point active by selecting it on the map or in the _Rally Points_ section:
-   - Move the active rally point by either dragging it on the map or editing the position fields in its editor.
-   - Delete a rally point by pressing the **X** delete button on its editor.
+   - The currently active marker has a different color (green) and its editor is shown in the inspector below the list of rally points.
+1. Make any rally point active by selecting it on the map or in the list on the **Rally** tab:
+   - Move the active rally point by either dragging it on the map or editing the position fields in the inspector.
+   - Set its altitude and altitude frame in the inspector.
+   - Delete a rally point by pressing the delete button (trash icon) in the inspector.
 
 ## Upload Rally Points
 

@@ -25,18 +25,15 @@
 UT_REGISTER_TEST(PlanViewUITest, TestLabel::Integration, TestLabel::MissionManager)
 
 namespace {
-// The GeoMap Plan map only supports the tabbed panel, so there is no tree panel with GeoMap row
-struct PanelConfig
+struct MapEngineConfig
 {
     const char* name;
-    bool tabbedPanel;
     bool geoMapEngine;
 };
 
-constexpr PanelConfig kPanelConfigs[] = {
-    {"tree panel", false, false},
-    {"tabbed panel", true, false},
-    {"tabbed panel, GeoMap engine", true, true},
+constexpr MapEngineConfig kMapEngineConfigs[] = {
+    {"QtLocation map", false},
+    {"GeoMap engine", true},
 };
 }  // namespace
 
@@ -123,30 +120,23 @@ void PlanViewUITest::_navigateToPlanAndCenterMap()
              "Map did not settle on the requested center/zoom");
 }
 
-void PlanViewUITest::_addPanelData()
+void PlanViewUITest::_addMapEngineData()
 {
-    QTest::addColumn<bool>("tabbedPanel");
     QTest::addColumn<bool>("geoMapEngine");
-    for (const PanelConfig& config : kPanelConfigs) {
-        QTest::newRow(config.name) << config.tabbedPanel << config.geoMapEngine;
+    for (const MapEngineConfig& config : kMapEngineConfigs) {
+        QTest::newRow(config.name) << config.geoMapEngine;
     }
 }
 
-void PlanViewUITest::_selectPanelFromTestData()
+void PlanViewUITest::_selectMapEngineFromTestData()
 {
-    QFETCH(bool, tabbedPanel);
     QFETCH(bool, geoMapEngine);
-    _tabbedPanel = tabbedPanel;
     _geoMapEngine = geoMapEngine;
-    setUseTabbedPlanPanel(_tabbedPanel);
     setUseGeoMapPlanEngine(_geoMapEngine);
 }
 
 void PlanViewUITest::_showPanelTab(PanelTab panelTab)
 {
-    if (!_tabbedPanel) {
-        return;
-    }
     const QString tab = (panelTab == PanelTab::Plan) ? QStringLiteral("plan") : QStringLiteral("mission");
     QQuickItem* const panel = findVisibleItem(_rootItem, QStringLiteral("planPanel"), 2000);
     QVERIFY2(panel, "Tabbed plan panel not found");
@@ -162,7 +152,7 @@ void PlanViewUITest::_showPanelTab(PanelTab panelTab)
 
 void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeoffButtonVisible)
 {
-    _selectPanelFromTestData();
+    _selectMapEngineFromTestData();
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -173,13 +163,8 @@ void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeo
     const QString waypointBtn = QStringLiteral("planToolStrip_waypointButton");
     const QString context     = QStringLiteral("waypoint on empty plan");
 
-    // Home-position gate: the tabbed panel locks the Mission tab, the tree panel the Waypoint tool, until home is set
-    if (_tabbedPanel) {
-        verifyEnabled(QStringLiteral("planPanel_tab_mission"), false, context);
-    } else {
-        verifyVisibility(takeoffBtn, expectTakeoffButtonVisible, context);
-        verifyEnabled(waypointBtn, false, context);
-    }
+    // Home-position gate: the Mission tab is locked until home is set
+    verifyEnabled(QStringLiteral("planPanel_tab_mission"), false, context);
     if (QTest::currentTestFailed()) return;
 
     // Click map to set home position: plan stays empty
@@ -227,7 +212,7 @@ void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeo
 
 void PlanViewUITest::_testRoverWaypointOnEmptyPlan_data()
 {
-    _addPanelData();
+    _addMapEngineData();
 }
 
 void PlanViewUITest::_testRoverWaypointOnEmptyPlan()
@@ -245,7 +230,7 @@ void PlanViewUITest::_testRoverWaypointOnEmptyPlan()
 
 void PlanViewUITest::_testTakeoffNotRequiredWaypointOnEmptyPlan_data()
 {
-    _addPanelData();
+    _addMapEngineData();
 }
 
 void PlanViewUITest::_testTakeoffNotRequiredWaypointOnEmptyPlan()
@@ -264,16 +249,13 @@ void PlanViewUITest::_testVTOLTakeoffChoices_data()
 {
     QTest::addColumn<QString>("choiceButton");
     QTest::addColumn<int>("expectedCommand");
-    QTest::addColumn<bool>("tabbedPanel");
     QTest::addColumn<bool>("geoMapEngine");
 
-    for (const PanelConfig& config : kPanelConfigs) {
+    for (const MapEngineConfig& config : kMapEngineConfigs) {
         QTest::addRow("VTOL takeoff, %s", config.name)
-            << QStringLiteral("planTakeoff_vtolButton") << int(MAV_CMD_NAV_VTOL_TAKEOFF) << config.tabbedPanel
-            << config.geoMapEngine;
+            << QStringLiteral("planTakeoff_vtolButton") << int(MAV_CMD_NAV_VTOL_TAKEOFF) << config.geoMapEngine;
         QTest::addRow("multicopter takeoff, %s", config.name)
-            << QStringLiteral("planTakeoff_mcButton") << int(MAV_CMD_NAV_TAKEOFF) << config.tabbedPanel
-            << config.geoMapEngine;
+            << QStringLiteral("planTakeoff_mcButton") << int(MAV_CMD_NAV_TAKEOFF) << config.geoMapEngine;
     }
 }
 
@@ -286,7 +268,7 @@ void PlanViewUITest::_testVTOLTakeoffChoices()
     appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassPX4);
     appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassMultiRotor);
 
-    _selectPanelFromTestData();
+    _selectMapEngineFromTestData();
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -347,10 +329,9 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
     const QString uploadBtn    = QStringLiteral("planToolbar_uploadButton");
     const QString openBtn      = QStringLiteral("planToolbar_openButton");
     const QString clearBtn     = QStringLiteral("planToolbar_clearButton");
-    const QString templatesCol =
-        _tabbedPanel ? QStringLiteral("planPanel_templatesColumn") : QStringLiteral("planInfo_templatesColumn");
+    const QString templatesCol = QStringLiteral("planPanel_templatesColumn");
 
-    // Templates section (on the tabbed panel it is only shown on the Plan tab)
+    // Templates section (only shown on the Plan tab)
     _showPanelTab(PanelTab::Plan);
     if (QTest::currentTestFailed())
         return;
@@ -383,13 +364,13 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
              qPrintable(QStringLiteral("%1: expected %2 visual items but found %3")
                             .arg(context).arg(state.itemCount).arg(_missionItemCount())));
 
-    // The tabbed panel locks the Mission tab, and with it the tool strip, until home is set
-    if (_tabbedPanel && !_plannedHomePosition().isValid()) {
+    // The Mission tab, and with it the tool strip, is locked until home is set
+    if (!_plannedHomePosition().isValid()) {
         verifyEnabled(QStringLiteral("planPanel_tab_mission"), false, context);
         return;
     }
 
-    // Toolstrip (on the tabbed panel it is only shown on the Mission tab)
+    // Toolstrip (only shown on the Mission tab)
     _showPanelTab(PanelTab::Mission);
     if (QTest::currentTestFailed())
         return;
@@ -408,12 +389,12 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
 
 void PlanViewUITest::_testPlanViewStates_data()
 {
-    _addPanelData();
+    _addMapEngineData();
 }
 
 void PlanViewUITest::_testPlanViewStates()
 {
-    _selectPanelFromTestData();
+    _selectMapEngineFromTestData();
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -781,13 +762,13 @@ void PlanViewUITest::_testPlanViewStates()
 
 void PlanViewUITest::_testSaveAsMenu_data()
 {
-    _addPanelData();
+    _addMapEngineData();
 }
 
 // Save as... lives in the hamburger drop panel.
 void PlanViewUITest::_testSaveAsMenu()
 {
-    _selectPanelFromTestData();
+    _selectMapEngineFromTestData();
     startUI();
     if (QTest::currentTestFailed()) return;
 

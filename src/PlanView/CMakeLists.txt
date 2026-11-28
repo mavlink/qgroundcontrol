@@ -27,10 +27,8 @@ qt_add_qml_module(
         FenceItemList.qml
         FWLandingPatternEditor.qml
         FWLandingPatternMapVisual.qml
-        GeoFenceEditor.qml
         GeoFenceMapVisuals.qml
         MissionDefaultsEditor.qml
-        MissionItemEditor.qml
         MissionItemEditorLoader.qml
         MissionItemIndexLabel.qml
         MissionItemInspector.qml
@@ -46,7 +44,6 @@ qt_add_qml_module(
         MissionTabPage.qml
         PlanEditLayers.qml
         PlanEditToolbar.qml
-        PlanInfoEditor.qml
         PlanInspectorHeader.qml
         PlanListInspector.qml
         PlanPanel.qml
@@ -57,13 +54,10 @@ qt_add_qml_module(
         PlanPanelTabBar.qml
         PlanTabPage.qml
         PlanToolBarIndicators.qml
-        PlanTreeView.qml
         PlanView.qml
         PlanViewRightPanel.qml
         PlanViewGeoMap.qml
         RallyPointAltitudeEditor.qml
-        RallyPointEditorHeader.qml
-        RallyPointItemEditor.qml
         RallyPointList.qml
         RallyPointInspector.qml
         RallyPointMapVisuals.qml
