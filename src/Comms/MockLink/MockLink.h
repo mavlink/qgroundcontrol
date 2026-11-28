@@ -130,6 +130,13 @@ public:
     /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) onto the simulated vehicle.
     void loadSimpleMultirotorMission() const { _missionItemHandler->loadSimpleMultirotorMission(); }
 
+    /// Test-only: change a plan on the vehicle as another GCS would
+    void appendPlanItemOnVehicle(MAV_MISSION_TYPE type) const { _missionItemHandler->appendPlanItem(type); }
+
+    void clearPlanOnVehicle(MAV_MISSION_TYPE type) const { _missionItemHandler->clearPlan(type); }
+
+    bool planOpaqueIds() const { return _planOpaqueIds; }
+
     /// Returns the filename for the simulated log file. Only available after a download is requested.
     QString logDownloadFile() const { return _logDownloadFilename; }
 
@@ -442,6 +449,7 @@ private:
     const bool _ftpCapability = false;  ///< Test-only: advertise MAV_PROTOCOL_CAPABILITY_FTP
     const bool _sendRadioStatusEnabled = true; ///< Stream RADIO_STATUS at 1Hz (marks the link as a radio link)
     const bool _companionParams = _mockConfig->companionParams();  ///< Test-only: companion param component
+    const bool _planOpaqueIds = _mockConfig->planOpaqueIds();      ///< Test-only: report opaque plan ids
     const quint32 _vehicleSystemId = 0;
     const QGeoCoordinate _homeCoordinate = MockConfiguration::homeCoordinate(_mockConfig->homeLocationEnum());
     const double _defaultVehicleLatitude = _homeCoordinate.latitude();

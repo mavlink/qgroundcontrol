@@ -36,6 +36,8 @@ target_sources(
         MissionManagerTest.h
         MissionSettingsTest.cc
         MissionSettingsTest.h
+        PlanManagerOpaqueIdTest.cc
+        PlanManagerOpaqueIdTest.h
         PlanMasterControllerTest.cc
         PlanMasterControllerTest.h
         QGCMapPolygonTest.cc
@@ -145,6 +147,7 @@ add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager)
 add_qgc_test(MissionItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionManagerTest LABELS Integration MissionManager)
 add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
+add_qgc_test(PlanManagerOpaqueIdTest LABELS Integration MissionManager)
 add_qgc_test(PlanMasterControllerTest LABELS Integration MissionManager)
 add_qgc_test(QGCMapPolygonTest LABELS Unit MissionManager)
 add_qgc_test(QGCMapPolylineTest LABELS Unit MissionManager)

@@ -64,7 +64,12 @@ public:
     void sendUnexpectedMissionRequest();
 
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
-    void reset() { _missionItems.clear(); _requestListCounts.clear(); }
+    void reset()
+    {
+        _missionItems.clear();
+        _requestListCounts.clear();
+        _planChanged(MAV_MISSION_TYPE_MISSION);
+    }
 
     /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) so that a
     /// connecting GCS will download a non-empty mission.
@@ -75,10 +80,19 @@ public:
     int requestListCount(MAV_MISSION_TYPE type) const { return _requestListCounts.value(type, 0); }
     void clearRequestListCounts() { _requestListCounts.clear(); }
 
+    /// Test-only: change the plan on the vehicle as another GCS would
+    void appendPlanItem(MAV_MISSION_TYPE type);
+    void clearPlan(MAV_MISSION_TYPE type);
+
+    /// Sends MISSION_CURRENT with the plan ids, from this handler's thread so it stays in order with MISSION_ACK
+    void sendMissionCurrent() const;
+
 private slots:
     void _missionItemResponseTimeout();
 
 private:
+    typedef QMap<uint16_t, mavlink_mission_item_int_t> MissionItemList_t;
+
     void _handleMissionRequestList(const mavlink_message_t &msg);
     void _handleMissionRequest(const mavlink_message_t &msg);
     void _handleMissionItem(const mavlink_message_t &msg);
@@ -87,13 +101,14 @@ private:
     void _requestNextMissionItem(int sequenceNumber);
     void _sendAck(MAV_MISSION_RESULT ackType) const;
     void _startMissionItemResponseTimer();
+    MissionItemList_t& _planItems(MAV_MISSION_TYPE type);
+    void _planChanged(MAV_MISSION_TYPE type);
+    uint32_t _planId(MAV_MISSION_TYPE type) const;
 
     MockLink *_mockLink = nullptr;
 
     int _writeSequenceCount = 0;    ///< Numbers of items about to be written
     int _writeSequenceIndex = 0;    ///< Current index being reqested
-
-    typedef QMap<uint16_t, mavlink_mission_item_int_t> MissionItemList_t;
 
     MAV_MISSION_TYPE _requestType = MAV_MISSION_TYPE_MISSION;
     MissionItemList_t _missionItems;
@@ -109,4 +124,8 @@ private:
     bool _failWriteMissionCountFirstResponse = true;
     bool _failWriteFinalAckFirstResponse = true;
     QMap<MAV_MISSION_TYPE, int> _requestListCounts;
+
+    // Opaque plan ids, 0 for an empty plan
+    QMap<MAV_MISSION_TYPE, uint32_t> _planIds;
+    uint32_t _lastPlanId = 0;
 };

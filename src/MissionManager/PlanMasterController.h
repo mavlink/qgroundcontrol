@@ -1,12 +1,13 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MissionController.h"
 #include "GeoFenceController.h"
-#include "RallyPointController.h"
+#include "MissionController.h"
 #include "QGCMAVLinkTypes.h"
+#include "RallyPointController.h"
 
 class QmlObjectListModel;
 class MultiVehicleManager;
@@ -57,6 +58,8 @@ public:
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                               ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            READ planCreators                           NOTIFY planCreatorsChanged)
     Q_PROPERTY(bool                     userSelectedManualCreation READ userSelectedManualCreation WRITE setUserSelectedManualCreation NOTIFY userSelectedManualCreationChanged) ///< true: User is not using a template to create the plan
+    /// Parts of the plan changed on the vehicle while the editor kept its own plan
+    Q_PROPERTY(QStringList vehiclePlanChanges READ vehiclePlanChanges NOTIFY vehiclePlanChangesChanged)
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(void);
@@ -87,6 +90,8 @@ public:
 
     Q_INVOKABLE void removeAll(void); ///< Removes all from controller only, sync required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void); ///< Removes all from vehicle and controller
+    /// Keeps the editor's plan, forgetting the changes on the vehicle
+    Q_INVOKABLE void ignoreVehiclePlanChanges(void);
 
     MissionController* missionController(void) { return &_missionController; }
     GeoFenceController* geoFenceController(void) { return &_geoFenceController; }
@@ -107,6 +112,8 @@ public:
     bool isEmpty(void) const;
     bool userSelectedManualCreation(void) const { return _userSelectedManualCreation; }
     QmlObjectListModel* planCreators(void) const { return _planCreators; }
+
+    QStringList vehiclePlanChanges(void) const;
 
     void setFlyView(bool flyView) { _flyView = flyView; }
     void setUserSelectedManualCreation(bool userSelectedManualCreation);
@@ -134,6 +141,7 @@ signals:
     void managerVehicleChanged(Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange(void);
     void userSelectedManualCreationChanged();
+    void vehiclePlanChangesChanged();
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
@@ -170,6 +178,8 @@ private:
     void _clearElementDirtyStates();
     void _clearCurrentPlanFile();
     bool _loadPlanJson(const QByteArray& bytes, QString& errorString);
+    void _vehiclePlanChanged(MAV_MISSION_TYPE planType);
+    void _clearVehiclePlanChanges();
 
 #ifdef QGC_UNITTEST_BUILD
     // Used by unit tests to set dirty flags for initial state
@@ -196,4 +206,5 @@ private:
     QmlObjectListModel* _planCreators = nullptr;
     QGCMAVLinkTypes::VehicleClass_t _planCreatorsVehicleClass = -1;
     bool _userSelectedManualCreation = false;
+    QSet<MAV_MISSION_TYPE> _vehiclePlanChanges;
 };

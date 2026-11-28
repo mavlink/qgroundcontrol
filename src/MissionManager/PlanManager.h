@@ -1,7 +1,10 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
+
 #include "MissionItem.h"
 #include "QGCMAVLink.h"
 
@@ -75,10 +78,13 @@ signals:
     void sendComplete               (bool error);
     void resumeMissionReady         (void);
     void resumeMissionUploadFail    (void);
+    /// A plan changed on the vehicle has been downloaded. Signalled just before newMissionItemsAvailable.
+    void vehiclePlanChanged(void);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _ackTimeout(void);
+    void _vehiclePlanIdMessageReceived(const mavlink_message_t& message);
 
 protected:
     typedef enum {
@@ -144,4 +150,14 @@ protected:
 
 private:
     void _setTransactionInProgress(TransactionType_t type);
+    void _setPlanId(uint32_t planId);
+    void _checkVehiclePlanId(uint32_t vehiclePlanId);
+
+    // MAVLink opaque plan ids: the vehicle returns an id for the plan in MISSION_COUNT (download) and
+    // MISSION_ACK (upload) and streams the id of its current plan in MISSION_CURRENT.
+    std::optional<uint32_t> _planId;        ///< Id of the plan in _missionItems, once a transaction completes
+    uint32_t _readPlanId = 0;               ///< Id from MISSION_COUNT of the read in progress
+    std::optional<uint32_t> _reloadPlanId;  ///< Vehicle plan id that triggered the last automatic reload
+    bool _vehiclePlanChangeRead = false;    ///< The read in progress is an automatic reload
+    bool _vehicleSupportsPlanIds = false;
 };

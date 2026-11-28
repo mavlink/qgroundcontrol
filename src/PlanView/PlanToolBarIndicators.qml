@@ -25,6 +25,7 @@ RowLayout {
     property var _syncInProgress: _planMasterController.syncInProgress
     property var _visualItems: _missionController.visualItems
     property bool _hasPlanItems: _planMasterController.containsItems
+    property var _vehiclePlanChanges: _planMasterController.vehiclePlanChanges
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
@@ -139,6 +140,22 @@ RowLayout {
     }
 
     QGCButton {
+        objectName: "planToolbar_vehiclePlanChangedButton"
+        text: qsTr("Vehicle Changed")
+        iconSource: "/res/Download.svg"
+        primary: true
+        visible: _vehiclePlanChanges.length > 0 && !_syncInProgress && !_controllerOffline
+
+        onClicked: {
+            toolbarButtonClicked()
+            let position = Qt.point(width, height / 2)
+            position = mapToItem(globals.parent, position)
+            var dropPanel = vehiclePlanChangedDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+            dropPanel.open()
+        }
+    }
+
+    QGCButton {
         objectName: "planToolbar_clearButton"
         text: qsTr("Clear")
         iconSource: "/res/TrashCan.svg"
@@ -165,6 +182,48 @@ RowLayout {
         color: qgcPal.colorBlue
         fontPointSize: ScreenTools.defaultFontPointSize
         Layout.alignment: Qt.AlignVCenter
+    }
+
+    Component {
+        id: vehiclePlanChangedDropPanelComponent
+
+        DropPanel {
+            id: vehiclePlanChangedDropPanel
+
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                    QGCLabel {
+                        Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 40
+                        wrapMode: Text.WordWrap
+                        text: qsTr("The plan on the vehicle has changed (%1), for example by another ground station. Download it to replace the plan you are editing, or ignore the change and keep your plan.").arg(_vehiclePlanChanges.join(", "))
+                    }
+
+                    QGCButton {
+                        objectName: "planToolbar_vehiclePlanDownloadButton"
+                        Layout.fillWidth: true
+                        text: qsTr("Download")
+
+                        onClicked: {
+                            vehiclePlanChangedDropPanel.close()
+                            _downloadClicked()
+                        }
+                    }
+
+                    QGCButton {
+                        objectName: "planToolbar_vehiclePlanIgnoreButton"
+                        Layout.fillWidth: true
+                        text: qsTr("Ignore")
+
+                        onClicked: {
+                            vehiclePlanChangedDropPanel.close()
+                            _planMasterController.ignoreVehiclePlanChanges()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Component {
