@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import QGroundControl
 import QGroundControl.Controls
@@ -12,6 +13,10 @@ ColumnLayout {
     // refuses to open with it, so a link to such a port is not left with it.
     property bool _flowControlAvailable: true
 
+    // Where ports are device files, a port can also be typed as a path that names it for good, such as
+    // /dev/serial/by-id/..., which outlasts the ttyACMn name the port gets this time it is plugged in
+    readonly property bool _devicePathsSupported: Qt.platform.os === "linux" || Qt.platform.os === "osx"
+
     spacing: _rowSpacing
 
     function saveSettings() {
@@ -21,6 +26,7 @@ ColumnLayout {
                 subEditConfig.baud = baud
             }
         }
+        commPortCombo.applyEditText()
     }
 
     function _refreshFlowControl() {
@@ -44,22 +50,54 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             objectName:             "serialPortCombo"
             enabled:                linkManager.serialPorts.length > 0
+            editable:               _devicePathsSupported
+            sizeToContents:         true    // so that the popup shows the whole of a long by-id path
             textRole:               "label"
             valueRole:              "path"
+
+            // The field that an editable combo box is typed into
+            contentItem: T.TextField {
+                implicitWidth:      contentWidth
+                implicitHeight:     contentHeight
+                text:               commPortCombo.editable ? commPortCombo.editText : commPortCombo.displayText
+                enabled:            commPortCombo.editable
+                autoScroll:         commPortCombo.editable
+                readOnly:           commPortCombo.down
+                selectByMouse:      true
+                inputMethodHints:   Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+                font:               commPortCombo.font
+                color:              portPal.textPrimary
+                selectionColor:     portPal.accent
+                selectedTextColor:  portPal.textPrimary
+                verticalAlignment:  Text.AlignVCenter
+                onEditingFinished:  commPortCombo.applyEditText()
+
+                QGCPalette { id: portPal; colorGroupEnabled: commPortCombo.enabled }
+            }
 
             function refreshPorts() {
                 const paths = linkManager.serialPorts
                 const labels = linkManager.serialPortStrings
+                const links = editable ? linkManager.serialPortLinks : []
                 const entries = []
                 let selectedPath = subEditConfig.portName
                 if (!selectedPath && paths.length > 0) {
-                    selectedPath = paths[0]
+                    // A new link takes the first port by a link to it where there is one, for a name that lasts
+                    const link = editable ? linkManager.serialPortLinkTo(paths[0]) : ""
+                    selectedPath = link || paths[0]
                     subEditConfig.portName = selectedPath
+                }
+                // First, as the names to prefer, which outlast a replug; shown as the path, which is what the link
+                // keeps when one is chosen
+                for (const link of links) {
+                    if (paths.indexOf(link) < 0) {
+                        entries.push({ label: link, path: link })
+                    }
                 }
                 for (let i = 0; i < paths.length; ++i) {
                     entries.push({ label: labels[i] || paths[i], path: paths[i] })
                 }
-                let selectedIndex = paths.indexOf(selectedPath)
+                let selectedIndex = entries.findIndex(entry => entry.path === selectedPath)
                 if (selectedIndex < 0 && selectedPath) {
                     entries.push({ label: selectedPath, path: selectedPath })
                     selectedIndex = entries.length - 1
@@ -68,8 +106,29 @@ ColumnLayout {
                     entries.push({ label: qsTr("None Available"), path: "" })
                     selectedIndex = 0
                 }
+                // A port appearing or going while a path is typed does not throw the typing away
+                const typed = (editable && contentItem.activeFocus) ? editText : null
                 model = entries
                 currentIndex = selectedIndex
+                if (typed !== null) {
+                    editText = typed
+                }
+            }
+
+            /// Has the link use the port typed in: the listed port of that name, or else the text as a path.
+            function applyEditText() {
+                if (!editable || !enabled || !subEditConfig) {
+                    return
+                }
+                const text = editText.trim()
+                if (text === "") {
+                    return
+                }
+                const index = find(text)
+                const path = (index >= 0) ? model[index].path : text
+                if (path && path !== subEditConfig.portName) {
+                    subEditConfig.portName = path
+                }
             }
 
             onActivated: (index) => {
@@ -77,6 +136,8 @@ ColumnLayout {
                     subEditConfig.portName = model[index].path
                 }
             }
+
+            onAccepted: applyEditText()
 
             Component.onCompleted: refreshPorts()
 

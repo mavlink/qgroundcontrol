@@ -2,6 +2,10 @@
 
 #include <optional>
 
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "SerialLink.h"
@@ -149,6 +153,101 @@ void SerialPortManagerTest::_claimByAStableNameHoldsOnceTheNameIsShared()
 
     claim.reset();
     QVERIFY(ports.canReservePort(replugged));
+}
+
+void SerialPortManagerTest::_linksToPortsFindThem()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // A device file, and a link to it as udev makes in /dev/serial/by-id
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QFile device(dir.filePath(QStringLiteral("ttyACM4")));
+    QVERIFY(device.open(QIODevice::WriteOnly));
+    device.close();
+    const QString location = QFileInfo(device.fileName()).canonicalFilePath();
+    QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("by-id")));
+    const QString link = dir.filePath(QStringLiteral("by-id/usb-ArduPilot_Pixhawk6X_0123-if00"));
+    QVERIFY(QFile::link(location, link));
+
+    SerialPortManager::Port autopilot{location, QStringLiteral("ttyACM4"), QGCSerialPortInfo::BoardTypePixhawk,
+                                      QStringLiteral("Pixhawk6X")};
+    SerialPortManager::Port other{QStringLiteral("/test/ttyACM5"), QStringLiteral("ttyACM5"),
+                                  QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    QList<SerialPortManager::Port> inventory{autopilot, other};
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    (void) ports.availablePorts();
+
+    QCOMPARE(SerialPortManager::linkTarget(link), location);
+    QCOMPARE(SerialPortManager::linkTarget(QStringLiteral(" %1 ").arg(link)), location);
+    QVERIFY(SerialPortManager::linkTarget(location).isEmpty());
+    QVERIFY(SerialPortManager::linkTarget(QStringLiteral("ttyACM4")).isEmpty());
+    QVERIFY(SerialPortManager::linkTarget(dir.filePath(QStringLiteral("by-id/absent"))).isEmpty());
+
+    const std::optional<SerialPortManager::Port> found = ports.port(link);
+    QVERIFY(found);
+    QCOMPARE(found->systemLocation, location);
+    QVERIFY(ports.isSamePort(link, location));
+    QVERIFY(!ports.isSamePort(link, other.systemLocation));
+    QCOMPARE(ports.displayName(link), autopilot.portName);
+    // A saved link keeps the path it was given
+    QCOMPARE(ports.persistentName(link), link);
+
+    // A claim by either name holds the port against the other
+    auto claim = ports.reservePort(link, QStringLiteral("the link"));
+    QVERIFY(claim);
+    QVERIFY(!ports.canReservePort(location));
+    QCOMPARE(ports.reservationOwner(location), QStringLiteral("the link"));
+    claim.reset();
+    claim = ports.reservePort(location);
+    QVERIFY(claim);
+    QVERIFY(!ports.canReservePort(link));
+    claim.reset();
+
+    // Unplugged: the link leads nowhere, and so to no port
+    QVERIFY(QFile::remove(location));
+    QVERIFY(SerialPortManager::linkTarget(link).isEmpty());
+    QVERIFY(!ports.port(link));
+#else
+    QSKIP("Ports are device files only on desktop Unix");
+#endif
+}
+
+void SerialPortManagerTest::_portLinksLeadToListedPorts()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // Device files, links to them as udev makes in /dev/serial/by-id, and other entries there
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto makeFile = [&dir](const QString& name) {
+        QFile file(dir.filePath(name));
+        return file.open(QIODevice::WriteOnly) ? QFileInfo(file.fileName()).canonicalFilePath() : QString();
+    };
+    const QString location = makeFile(QStringLiteral("ttyACM4"));
+    const QString unlisted = makeFile(QStringLiteral("ttyUSB0"));
+    QVERIFY(!location.isEmpty());
+    QVERIFY(!unlisted.isEmpty());
+    QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("by-id")));
+    const QString byId = dir.filePath(QStringLiteral("by-id"));
+    const QString link = dir.filePath(QStringLiteral("by-id/usb-ArduPilot_Pixhawk6X_0123-if00"));
+    QVERIFY(QFile::link(location, link));
+    QVERIFY(QFile::link(unlisted, dir.filePath(QStringLiteral("by-id/usb-FTDI_FT232R_0456-if00-port0"))));
+    QVERIFY(QFile::link(dir.filePath(QStringLiteral("absent")), dir.filePath(QStringLiteral("by-id/dangling"))));
+    QVERIFY(!makeFile(QStringLiteral("by-id/not-a-link")).isEmpty());
+
+    QList<SerialPortManager::Port> inventory{
+        {location, QStringLiteral("ttyACM4"), QGCSerialPortInfo::BoardTypePixhawk, QStringLiteral("Pixhawk6X")}};
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    (void) ports.availablePorts();
+
+    QCOMPARE(ports.portLinks(byId), QStringList{link});
+    QVERIFY(ports.portLinks(dir.filePath(QStringLiteral("no-such-directory"))).isEmpty());
+
+    // Unplugged: the link leads nowhere
+    QVERIFY(QFile::remove(location));
+    QVERIFY(ports.portLinks(byId).isEmpty());
+#else
+    QSKIP("Ports are device files only on desktop Unix");
+#endif
 }
 
 UT_REGISTER_TEST(SerialPortManagerTest, TestLabel::Unit)

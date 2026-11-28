@@ -88,6 +88,14 @@ public:
     QStringList serialPorts() const { return _serialPorts; }
 
     static QStringList supportedBaudRates();
+    /// Where the path @a name leads once its links are followed, when that is somewhere else: the port that a
+    /// link such as /dev/serial/by-id/usb-ArduPilot_Pixhawk6X_<serial>-if00 or a udev alias points to. A port is
+    /// found by such a path as by its own names. Empty when @a name is not such a path, or leads nowhere. Only on
+    /// desktop Unix, whose ports are device files.
+    static QString linkTarget(const QString& name);
+    /// The links in @a directory that lead to listed ports, such as the ones udev makes in /dev/serial/by-id, which
+    /// are named after each USB device's maker, product and serial number. Only on desktop Unix.
+    QStringList portLinks(const QString& directory = QStringLiteral("/dev/serial/by-id")) const;
     ReservationPtr reservePort(const QString& systemLocation, const QString& owner = {});
     bool canReservePort(const QString& systemLocation) const;
     bool isPortReserved(const QString& systemLocation) const;
@@ -133,7 +141,8 @@ private:
     static bool _requestPlatformAccess(const QString& name);
     static bool _platformAccessDenied(const QString& name);
     /// The only listed port with this name, or null. A stable name that several listed ports share stands for
-    /// none of them: the first one found could be on another vehicle than the one that was meant.
+    /// none of them: the first one found could be on another vehicle than the one that was meant. A name that
+    /// is none of a port's names may be a link to it (see linkTarget()).
     const Port* _portNamed(const QString& name) const;
     /// The system location of the listed port with this name, or the name itself if it stands for no listed port.
     QString _systemLocation(const QString& name) const;

@@ -981,10 +981,13 @@ void LinkManager::_updateSerialPorts()
         portList += SerialPortManager::instance()->persistentName(info.systemLocation);
         displayList += info.displayName.isEmpty() ? info.portName : info.displayName;
     }
-    const bool portsChanged = _commPortList != portList;
+    // Listed at each scan: udev makes a port's links just after the port appears
+    QStringList linkList = SerialPortManager::instance()->portLinks();
+    const bool portsChanged = (_commPortList != portList) || (_commPortLinkList != linkList);
     const bool displayChanged = _commPortDisplayList != displayList;
     _commPortList = std::move(portList);
     _commPortDisplayList = std::move(displayList);
+    _commPortLinkList = std::move(linkList);
     if (portsChanged) {
         emit commPortsChanged();
     }
@@ -1032,6 +1035,16 @@ QStringList LinkManager::serialPorts()
 QStringList LinkManager::serialBaudRates()
 {
     return SerialConfiguration::supportedBaudRates();
+}
+
+QString LinkManager::serialPortLinkTo(const QString& portName) const
+{
+    for (const QString& link : _commPortLinkList) {
+        if (SerialPortManager::instance()->isSamePort(link, portName)) {
+            return link;
+        }
+    }
+    return {};
 }
 
 bool LinkManager::serialPortHasFlowControl(const QString& portName) const

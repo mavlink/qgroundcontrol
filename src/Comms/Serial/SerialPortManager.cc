@@ -1,11 +1,13 @@
 #include "SerialPortManager.h"
 
-#include <QtCore/QApplicationStatic>
-#include <QtCore/QSet>
-
 #include <algorithm>
 #include <iterator>
 #include <utility>
+
+#include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
+#include <QtCore/QSet>
 
 #include "QGCLoggingCategory.h"
 
@@ -147,7 +149,52 @@ const SerialPortManager::Port* SerialPortManager::_portNamed(const QString& name
         }
         found = &port;
     }
-    return found;
+    if (found) {
+        return found;
+    }
+    const QString target = linkTarget(name);
+    if (target.isEmpty()) {
+        return nullptr;
+    }
+    for (const Port& port : _ports) {
+        if (port.systemLocation == target) {
+            return &port;
+        }
+    }
+    return nullptr;
+}
+
+QString SerialPortManager::linkTarget([[maybe_unused]] const QString& name)
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    const QString path = name.trimmed();
+    if (!path.startsWith(QLatin1Char('/'))) {
+        return {};
+    }
+    // Empty when the path, or what it leads to, does not exist
+    const QString target = QFileInfo(path).canonicalFilePath();
+    return (target == path) ? QString() : target;
+#else
+    return {};
+#endif
+}
+
+QStringList SerialPortManager::portLinks([[maybe_unused]] const QString& directory) const
+{
+    QStringList links;
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    const QFileInfoList entries =
+        QDir(directory).entryInfoList(QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo& entry : entries) {
+        const QString link = entry.absoluteFilePath();
+        const QString target = linkTarget(link);
+        const auto leadsHere = [&target](const Port& port) { return port.systemLocation == target; };
+        if (!target.isEmpty() && std::any_of(_ports.cbegin(), _ports.cend(), leadsHere)) {
+            links.append(link);
+        }
+    }
+#endif
+    return links;
 }
 
 QString SerialPortManager::_systemLocation(const QString& name) const
